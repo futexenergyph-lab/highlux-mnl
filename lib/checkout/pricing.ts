@@ -67,9 +67,14 @@ export function layawaySchedule(total: number, cfg: PricingConfig, start = new D
   return out;
 }
 
-/** Which payment methods make sense for a fulfillment + plan. */
-export function allowedMethods(f: Fulfillment, plan: PaymentPlan, online: boolean): PaymentMethod[] {
+/** Which payment methods make sense for a fulfillment + plan (before store-level switches). */
+export function offeredMethods(f: Fulfillment, plan: PaymentPlan, online: boolean): PaymentMethod[] {
   const methods: PaymentMethod[] = [...(online ? ONLINE_METHODS : []), "bank_transfer"];
   if (f === "meetup" && plan === "full") methods.push("pay_at_meetup");
   return methods;
+}
+
+/** Offered methods minus the ones the store has switched off. */
+export function allowedMethods(f: Fulfillment, plan: PaymentPlan, online: boolean, disabled: PaymentMethod[] = []): PaymentMethod[] {
+  return offeredMethods(f, plan, online).filter((m) => !disabled.includes(m));
 }

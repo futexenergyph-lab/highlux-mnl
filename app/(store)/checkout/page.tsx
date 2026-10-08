@@ -17,6 +17,7 @@ export default async function CheckoutPage() {
         holdMinutes: s.holds.checkoutMinutes,
         bankTransferHours: s.holds.bankTransferHours,
         bankAccounts: s.bankAccounts,
+        disabledMethods: s.disabledMethods,
         online: onlinePaymentsMode(),
       }}
     />

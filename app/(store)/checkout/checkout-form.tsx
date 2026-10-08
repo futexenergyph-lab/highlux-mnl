@@ -9,6 +9,7 @@ import {
   FULFILLMENT_LABELS,
   PAYMENT_LABELS,
   allowedMethods,
+  offeredMethods,
   isShipping,
   layawayEligible,
   layawaySchedule,
@@ -30,6 +31,7 @@ interface Config extends PricingConfig {
   holdMinutes: number;
   bankTransferHours: number;
   bankAccounts: BankAccount[];
+  disabledMethods: PaymentMethod[];
   online: "live" | "mock" | "off";
 }
 
@@ -76,13 +78,13 @@ function Field({ label, error, className, ...props }: React.InputHTMLAttributes<
   );
 }
 
-function Choice({ checked, onSelect, title, detail, price, Icon, disabled }: { checked: boolean; onSelect: () => void; title: string; detail?: React.ReactNode; price?: string; Icon: React.ElementType; disabled?: boolean }) {
+function Choice({ checked, onSelect, title, detail, price, Icon, disabled, soon }: { checked: boolean; onSelect: () => void; title: string; detail?: React.ReactNode; price?: string; Icon: React.ElementType; disabled?: boolean; soon?: boolean }) {
   return (
     <label
       className={cn(
         "flex cursor-pointer items-start gap-4 border p-4 transition-colors",
         checked ? "border-gold bg-gold/[0.06]" : "border-gold/20 hover:border-gold/50",
-        disabled && "cursor-not-allowed opacity-40",
+        disabled && "cursor-not-allowed border-cream/10 bg-transparent opacity-40 grayscale hover:border-cream/10",
       )}
     >
       <input type="radio" className="peer sr-only" checked={checked} onChange={onSelect} disabled={disabled} />
@@ -91,7 +93,11 @@ function Choice({ checked, onSelect, title, detail, price, Icon, disabled }: { c
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline justify-between gap-2">
           <span className="text-sm font-medium text-cream">{title}</span>
-          {price && <span className="shrink-0 text-sm text-cream">{price}</span>}
+          {soon ? (
+            <span className="shrink-0 border border-cream/30 px-1.5 py-0.5 text-[0.55rem] uppercase tracking-[0.14em] text-cream-muted">Coming soon</span>
+          ) : (
+            price && <span className="shrink-0 text-sm text-cream">{price}</span>
+          )}
         </span>
         {detail && <span className="mt-1 block text-xs leading-relaxed text-cream-muted">{detail}</span>}
       </span>
@@ -137,7 +143,7 @@ export function CheckoutForm({ config }: { config: Config }) {
   const [addr, setAddr] = React.useState({ line1: "", barangay: "", city: "", province: "", zip: "" });
   const [notes, setNotes] = React.useState("");
   const [plan, setPlan] = React.useState<PaymentPlan>("full");
-  const [method, setMethod] = React.useState<PaymentMethod>(config.online !== "off" ? "gcash" : "bank_transfer");
+  const [method, setMethod] = React.useState<PaymentMethod>(config.online !== "off" && !config.disabledMethods.includes("gcash") ? "gcash" : "bank_transfer");
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [formError, setFormError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
@@ -178,7 +184,9 @@ export function CheckoutForm({ config }: { config: Config }) {
   const canLayaway = layawayEligible(subtotal, config);
   const schedule = plan === "layaway" ? layawaySchedule(total, config) : [];
   const dueToday = plan === "layaway" ? schedule[0].amount : total;
-  const methods = allowedMethods(fulfillment, plan, config.online !== "off");
+  const methods = allowedMethods(fulfillment, plan, config.online !== "off", config.disabledMethods);
+  // Switched-off methods still show, grayed out, so customers know they're coming.
+  const shownMethods = offeredMethods(fulfillment, plan, config.online !== "off");
 
   React.useEffect(() => {
     if (!methods.includes(method)) setMethod(methods[0]);
@@ -396,12 +404,15 @@ export function CheckoutForm({ config }: { config: Config }) {
                 checked={plan === "layaway"}
                 onSelect={() => setPlan("layaway")}
                 disabled={!canLayaway}
+                soon={!config.layaway.enabled}
                 title="Layaway"
                 price={canLayaway ? `${config.layaway.downPaymentPercent}% down` : undefined}
                 detail={
-                  canLayaway
-                    ? `${formatPHP(layawaySchedule(total, config)[0].amount)} today, then ${config.layaway.installments} payments every ${config.layaway.intervalDays} days. Item released once fully paid.`
-                    : `Available on orders of ${formatPHP(config.layaway.minSubtotal)} and up.`
+                  !config.layaway.enabled
+                    ? "Pay in installments — available soon."
+                    : canLayaway
+                      ? `${formatPHP(layawaySchedule(total, config)[0].amount)} today, then ${config.layaway.installments} payments every ${config.layaway.intervalDays} days. Item released once fully paid.`
+                      : `Available on orders of ${formatPHP(config.layaway.minSubtotal)} and up.`
                 }
               />
             </div>
@@ -410,15 +421,21 @@ export function CheckoutForm({ config }: { config: Config }) {
 
           <Step n={4} title="Payment method">
             <div className="grid gap-3 sm:grid-cols-2">
-              {methods.map((m) => (
+              {shownMethods.map((m) => (
                 <Choice
                   key={m}
                   Icon={METHOD_ICONS[m]}
                   checked={method === m}
                   onSelect={() => setMethod(m)}
+                  disabled={!methods.includes(m)}
+                  soon={!methods.includes(m)}
                   title={PAYMENT_LABELS[m]}
                   detail={
-                    m === "bank_transfer"
+                    !methods.includes(m)
+                      ? m === "card"
+                        ? "Online card payments are coming soon. Cards are accepted at meet-ups."
+                        : "Coming soon."
+                      : m === "bank_transfer"
                       ? `Transfer, then upload your proof of payment within ${config.bankTransferHours}h.`
                       : m === "pay_at_meetup"
                         ? "We’ll confirm your meet-up schedule by phone or Messenger."

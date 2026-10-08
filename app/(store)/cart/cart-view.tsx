@@ -8,7 +8,7 @@ import { useProductSummaries } from "@/components/product/recently-viewed";
 import { productHref } from "@/lib/catalog";
 import { cn, formatPHP } from "@/lib/utils";
 
-export function CartView() {
+export function CartView({ paymentLine }: { paymentLine: string }) {
   const { items, remove } = useCart();
   const live = useProductSummaries(items.map((i) => i.productId));
   const byId = new Map((live ?? []).map((p) => [p.id, p]));
@@ -96,7 +96,7 @@ export function CartView() {
               <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-gold" strokeWidth={1.25} /> 100% authentic or your money back</li>
               <li className="flex items-center gap-2"><Lock className="h-4 w-4 text-gold" strokeWidth={1.25} /> Secure payment via PayMongo</li>
             </ul>
-            <p className="mt-4 text-center text-[0.65rem] uppercase tracking-[0.14em] text-cream-dim">GCash · Maya · Card · Bank Transfer · Layaway</p>
+            <p className="mt-4 text-center text-[0.65rem] uppercase tracking-[0.14em] text-cream-dim">{paymentLine}</p>
           </aside>
         </div>
       )}

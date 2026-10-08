@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ONLINE_METHODS } from "@/lib/checkout/pricing";
-import { onlinePaymentsMode } from "@/lib/checkout/settings";
+import { getCheckoutSettings, onlinePaymentsMode } from "@/lib/checkout/settings";
 import { PROOF_MAX_BYTES, PROOF_TYPES, getOrderForToken, startOnlinePayment, submitBankProof } from "@/lib/orders/service";
 import { amountDueNow, hasPendingProof } from "@/lib/orders/types";
 
@@ -12,6 +12,7 @@ export async function payNowAction(orderNumber: string, token: string, method: s
   const order = await getOrderForToken(orderNumber, token);
   if (!order || !PAYABLE.includes(order.status) || amountDueNow(order) <= 0) return { error: "This order can't be paid online right now." };
   if (onlinePaymentsMode() === "off" || !ONLINE_METHODS.includes(method as never)) return { error: "Online payment isn't available." };
+  if ((await getCheckoutSettings()).disabledMethods.includes(method as never)) return { error: "That payment method isn't available yet." };
   if (order.holdExpiresAt && new Date(order.holdExpiresAt) < new Date()) return { error: "This order's reservation has expired. Please message us." };
   let url: string;
   try {

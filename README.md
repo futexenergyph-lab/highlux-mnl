@@ -116,7 +116,13 @@ Customers never see a lapsed hold either way, because pages already treat expire
 2. Under Webhooks, add `https://<your-domain>/api/webhooks/paymongo` for the event `checkout_session.payment.paid`, and copy its signing secret into `PAYMONGO_WEBHOOK_SECRET`.
 3. The webhook verifies the signature, rejects events older than 5 minutes, and checks the amount PayMongo collected before marking anything paid.
 
-**Layaway.** Configured in `site_settings` key `checkout`; defaults are in `lib/checkout/settings.ts`. The defaults are a 30% down payment, 2 installments 30 days apart, and a ₱20,000 minimum order. Installments can be paid online or by bank transfer from the order page. The balance and installment status update automatically as payments land.
+**Currently switched off (shown grayed out as "Coming soon"):**
+- **Layaway:** `layaway.enabled = false`.
+- **Online card payments via PayMongo:** `disabledMethods = ["card"]`. Cards are still accepted at meet-ups.
+
+The server refuses both even if someone tampers with the request. To turn them on, set `layaway.enabled` to `true` and/or remove `"card"` from `disabledMethods` in `site_settings` key `checkout`, or change the defaults in `lib/checkout/settings.ts`. The product page, bag and footer text update to match.
+
+**Layaway.** Configured in `site_settings` key `checkout`; defaults are in `lib/checkout/settings.ts`. Once switched on, the defaults are a 30% down payment, 2 installments 30 days apart, and a ₱20,000 minimum order. Installments can be paid online or by bank transfer from the order page. The balance and installment status update automatically as payments land.
 
 **Other checkout settings** in the same key: Metro Manila / provincial shipping rates and an optional free-shipping threshold, whether meet-up and pickup are offered (with their notes), hold durations, bank accounts shown to customers, and the staff notification email.
 

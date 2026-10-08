@@ -39,6 +39,7 @@ export function PayPanel({
   preferred,
   online,
   bankAccounts,
+  disabledMethods,
   holdExpiresAt,
   isInstallment,
 }: {
@@ -49,6 +50,7 @@ export function PayPanel({
   preferred: PaymentMethod;
   online: boolean;
   bankAccounts: BankAccount[];
+  disabledMethods: PaymentMethod[];
   holdExpiresAt: string | null;
   isInstallment: boolean;
 }) {
@@ -77,7 +79,7 @@ export function PayPanel({
         <div className="mt-5 flex border-b border-gold/20" role="tablist">
           {(["online", "bank"] as const).map((t) => (
             <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 px-4 py-2.5 text-xs uppercase tracking-wider2", tab === t ? "border-gold text-gold-light" : "border-transparent text-cream-muted hover:text-cream")}>
-              {t === "online" ? "GCash · Maya · Card" : "Bank transfer"}
+              {t === "online" ? ONLINE_METHODS.filter((m) => !disabledMethods.includes(m)).map((m) => PAYMENT_LABELS[m].split(" /")[0]).join(" · ") : "Bank transfer"}
             </button>
           ))}
         </div>
@@ -88,6 +90,15 @@ export function PayPanel({
           <div className="grid gap-3 sm:grid-cols-3">
             {ONLINE_METHODS.map((m) => {
               const Icon = ICONS[m]!;
+              const off = disabledMethods.includes(m);
+              if (off) {
+                return (
+                  <span key={m} aria-disabled className="flex h-14 cursor-not-allowed flex-col items-center justify-center border border-cream/10 text-sm text-cream-dim opacity-50">
+                    <span className="flex items-center gap-2"><Icon className="h-4 w-4" strokeWidth={1.5} /> {PAYMENT_LABELS[m].split(" /")[0]}</span>
+                    <span className="text-[0.55rem] uppercase tracking-[0.14em]">Coming soon</span>
+                  </span>
+                );
+              }
               return (
                 <button
                   key={m}

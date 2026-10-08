@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Clock, Facebook, Instagram, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { contactLinks, site } from "@/lib/site";
+import { getCheckoutSettings } from "@/lib/checkout/settings";
 
 const COLUMNS = [
   {
@@ -36,7 +37,8 @@ const COLUMNS = [
   },
 ];
 
-const PAYMENTS = ["GCash", "Maya", "VISA", "Mastercard", "Bank Transfer", "Layaway"];
+// VISA/Mastercard stay: cards are accepted at meet-ups even while online card payment is off.
+const PAYMENTS = ["GCash", "Maya", "VISA", "Mastercard", "Bank Transfer"];
 
 function ChatButtons() {
   const items = [
@@ -61,7 +63,9 @@ function ChatButtons() {
   );
 }
 
-export function Footer() {
+export async function Footer() {
+  const { layaway } = await getCheckoutSettings();
+  const payments = layaway.enabled ? [...PAYMENTS, "Layaway"] : PAYMENTS;
   return (
     <footer className="bg-ink-200 pt-14 lg:pt-20">
       <div className="container">
@@ -117,7 +121,7 @@ export function Footer() {
 
         <div className="flex flex-col items-center gap-5 py-8 lg:flex-row lg:justify-between">
           <ul className="flex flex-wrap justify-center gap-2" aria-label="Accepted payment methods">
-            {PAYMENTS.map((p) => (
+            {payments.map((p) => (
               <li key={p} className="border border-cream/15 bg-cream/[0.03] px-3 py-1.5 font-sans text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-cream/70">
                 {p}
               </li>

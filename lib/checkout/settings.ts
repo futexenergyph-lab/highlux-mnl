@@ -1,6 +1,7 @@
 import "server-only";
 import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
+import type { PaymentMethod } from "./pricing";
 
 export interface BankAccount {
   bank: string;
@@ -16,6 +17,8 @@ export interface CheckoutSettings {
   holds: { checkoutMinutes: number; onlinePaymentMinutes: number; bankTransferHours: number; meetupHours: number };
   layaway: { enabled: boolean; downPaymentPercent: number; installments: number; intervalDays: number; minSubtotal: number; terms: string };
   bankAccounts: BankAccount[];
+  /** Methods shown grayed out as "Coming soon" and refused by the server. */
+  disabledMethods: PaymentMethod[];
   notifyEmail: string;
 }
 
@@ -28,7 +31,8 @@ export const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
   pickup: { enabled: true, address: "Showroom pickup by appointment — Makati City" },
   holds: { checkoutMinutes: 15, onlinePaymentMinutes: 30, bankTransferHours: 24, meetupHours: 48 },
   layaway: {
-    enabled: true,
+    // Shown grayed out as "Coming soon" until switched on.
+    enabled: false,
     downPaymentPercent: 30,
     installments: 2,
     intervalDays: 30,
@@ -40,6 +44,8 @@ export const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
     { bank: "BDO", accountName: "HIGHLUX MNL", accountNumber: "0000-0000-0000" },
     { bank: "BPI", accountName: "HIGHLUX MNL", accountNumber: "0000-0000-00" },
   ],
+  // Card payments via PayMongo aren't live yet (cards are still accepted at meet-ups).
+  disabledMethods: ["card"],
   notifyEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@highluxmnl.com",
 };
 

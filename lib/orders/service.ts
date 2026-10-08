@@ -78,7 +78,7 @@ export async function placeOrder(input: PlaceOrderInput, sessionId: string, user
   if (input.fulfillment === "meetup" && !settings.meetup.enabled) return { ok: false, error: "Meet-up isn't available right now." };
   if (input.fulfillment === "pickup" && !settings.pickup.enabled) return { ok: false, error: "Store pickup isn't available right now." };
   if (isShipping(input.fulfillment) && !input.shippingAddress) return { ok: false, error: "Please enter your delivery address." };
-  if (!allowedMethods(input.fulfillment, input.paymentPlan, online).includes(input.paymentMethod)) {
+  if (!allowedMethods(input.fulfillment, input.paymentPlan, online, settings.disabledMethods).includes(input.paymentMethod)) {
     return { ok: false, error: "That payment method isn't available for this order." };
   }
 
@@ -140,6 +140,7 @@ export async function placeOrder(input: PlaceOrderInput, sessionId: string, user
 /** Creates a pending payment for what's due now and returns the hosted checkout URL. */
 export async function startOnlinePayment(order: OrderDetail, method: PaymentMethod): Promise<string> {
   if (!ONLINE_METHODS.includes(method)) throw new Error("Not an online method");
+  if ((await getCheckoutSettings()).disabledMethods.includes(method)) throw new Error("Payment method disabled");
   const amount = amountDueNow(order);
   if (amount <= 0) throw new Error("Nothing due");
   const repo = await getOrderRepo();

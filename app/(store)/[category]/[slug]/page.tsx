@@ -10,6 +10,7 @@ import { ProductCard } from "@/components/product/product-card";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
 import { CATEGORIES, categoryBySlug, productHref } from "@/lib/catalog";
 import { getCatalog, getProduct, getRelated } from "@/lib/data";
+import { getCheckoutSettings } from "@/lib/checkout/settings";
 import { site } from "@/lib/site";
 import { CONDITION_LABELS, type CategorySlug } from "@/lib/types";
 import { formatPHP } from "@/lib/utils";
@@ -46,7 +47,9 @@ export default async function ProductPage({ params }: { params: Params }) {
   if (!p) notFound();
   const cat = categoryBySlug(p.category)!;
   const sub = cat.subCategories.find((s) => s.slug === p.subCategory);
-  const related = await getRelated(p);
+  const [related, checkout] = await Promise.all([getRelated(p), getCheckoutSettings()]);
+  const layaway = checkout.layaway.enabled;
+  const cardOnline = !checkout.disabledMethods.includes("card");
 
   const action: ActionProduct = {
     id: p.id,
@@ -89,7 +92,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </>
               )}
             </div>
-            {p.status === "available" && <p className="mt-2 text-xs text-cream-dim">Only one available · Layaway accepted</p>}
+            {p.status === "available" && <p className="mt-2 text-xs text-cream-dim">Only one available{layaway && " · Layaway accepted"}</p>}
             {p.status === "reserved" && <p className="mt-2 text-sm text-gold-light">This piece is currently on hold for another client.</p>}
             {p.status === "sold" && <p className="mt-2 text-sm text-cream-muted">This piece has found its new home. Message us and we&rsquo;ll help source a similar one.</p>}
 
@@ -103,7 +106,7 @@ export default async function ProductPage({ params }: { params: Params }) {
               {[
                 { Icon: Truck, label: "Nationwide shipping" },
                 { Icon: Wallet, label: "GCash · Maya · Bank" },
-                { Icon: CreditCard, label: "Card & Layaway" },
+                { Icon: CreditCard, label: layaway ? "Card & Layaway" : cardOnline ? "Credit / Debit Card" : "Card at meet-up" },
               ].map(({ Icon, label }) => (
                 <li key={label} className="flex flex-col items-center gap-1.5 border border-gold/10 px-2 py-3">
                   <Icon className="h-5 w-5 text-gold" strokeWidth={1} />
@@ -138,7 +141,7 @@ export default async function ProductPage({ params }: { params: Params }) {
               <h2 className="eyebrow mb-3 text-gold">Shipping &amp; Payment</h2>
               <p>Ships within 1–2 business days, insured and discreetly packed. Metro Manila and provincial delivery, or meet-up / store pickup by appointment.</p>
               <p>
-                Pay via GCash, Maya, credit/debit card, or bank transfer. Layaway available.{" "}
+                Pay via GCash, Maya{cardOnline ? ", credit/debit card" : ""} or bank transfer{cardOnline ? "" : " — credit cards accepted at meet-ups"}.{layaway && " Layaway available."}{" "}
                 <Link href="/how-to-order" className="text-gold-light underline underline-offset-4">How to order</Link>
               </p>
             </section>

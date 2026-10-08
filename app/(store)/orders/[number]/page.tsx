@@ -130,6 +130,7 @@ export default async function OrderPage({ params, searchParams }: { params: { nu
                   preferred={order.paymentMethod}
                   online={onlinePaymentsMode() !== "off"}
                   bankAccounts={settings.bankAccounts}
+                  disabledMethods={settings.disabledMethods}
                   holdExpiresAt={order.holdExpiresAt}
                   isInstallment={order.paymentPlan === "layaway" && order.amountPaid > 0}
                 />
