@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  
+  <defs>
+    <radialGradient id="spot" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#3b352b"/>
+      <stop offset="1" stop-color="#0d0b09"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e7b8"/><stop offset=".45" stop-color="#c9a24a"/>
+      <stop offset=".7" stop-color="#8a6a25"/><stop offset="1" stop-color="#e8cf8a"/>
+    </linearGradient>
+    <linearGradient id="marble" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3a342c"/><stop offset=".5" stop-color="#5a5145"/><stop offset="1" stop-color="#2c2721"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .06 0"/></filter>
+  </defs>
+  <rect width="800" height="500" fill="url(#spot)"/>
+  <rect y="400" width="800" height="100" fill="url(#marble)" opacity=".5"/>
+  <g transform="translate(266.66666666666663 250) scale(0.9) translate(-200 -200)">
+    <ellipse cx="200" cy="250" rx="110" ry="80" fill="none" stroke="url(#metal)" stroke-width="22"/>
+    <ellipse cx="200" cy="250" rx="110" ry="80" fill="none" stroke="#e8cf8a" stroke-opacity=".5" stroke-width="2"/>
+    <path d="M170 172 L200 120 L230 172 Z" fill="#c9a24a" />
+    <path d="M150 120 L175 85 H225 L250 120 L200 185 Z" fill="#e8f1f7" stroke="#fff" stroke-opacity=".9" stroke-width="2"/>
+    <path d="M150 120 H250 M175 85 L190 120 L200 185 L210 120 L225 85 M190 120 L200 85 L210 120" stroke="#fff" stroke-opacity=".7" stroke-width="1.5" fill="none"/>
+    <circle cx="232" cy="96" r="3" fill="#fff"/></g><g transform="translate(533.3333333333333 250) scale(0.9) translate(-200 -200)">
+    <path d="M90 70 C90 220 150 290 200 300 C250 290 310 220 310 70" fill="none" stroke="url(#metal)" stroke-width="6"/>
+    <circle cx="90" cy="70" r="5" fill="#e8cf8a"/><circle cx="108.33333333333333" cy="127.74252896237238" r="5" fill="#e8cf8a"/><circle cx="126.66666666666666" cy="181.54999999999998" r="5" fill="#e8cf8a"/><circle cx="145" cy="227.75552288271874" r="5" fill="#e8cf8a"/><circle cx="163.33333333333331" cy="263.2102675843082" r="5" fill="#e8cf8a"/><circle cx="181.66666666666669" cy="285.49805184509114" r="5" fill="#e8cf8a"/><circle cx="200" cy="293.1" r="5" fill="#e8cf8a"/><circle cx="218.33333333333334" cy="285.49805184509114" r="5" fill="#e8cf8a"/><circle cx="236.66666666666666" cy="263.21026758430827" r="5" fill="#e8cf8a"/><circle cx="255" cy="227.75552288271876" r="5" fill="#e8cf8a"/><circle cx="273.33333333333337" cy="181.54999999999998" r="5" fill="#e8cf8a"/><circle cx="291.66666666666663" cy="127.74252896237243" r="5" fill="#e8cf8a"/><circle cx="310" cy="70.00000000000003" r="5" fill="#e8cf8a"/>
+    <path d="M175 300 L200 270 L225 300 L200 345 Z" fill="#e8f1f7" stroke="#fff" stroke-opacity=".85" stroke-width="2"/>
+    <path d="M175 300 H225 M200 270 V345" stroke="#fff" stroke-opacity=".5"/></g>
+  <rect width="800" height="500" filter="url(#grain)"/>
+</svg>

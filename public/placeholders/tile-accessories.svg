@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  
+  <defs>
+    <radialGradient id="spot" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#33261a"/>
+      <stop offset="1" stop-color="#0d0b09"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e7b8"/><stop offset=".45" stop-color="#c9a24a"/>
+      <stop offset=".7" stop-color="#8a6a25"/><stop offset="1" stop-color="#e8cf8a"/>
+    </linearGradient>
+    <linearGradient id="marble" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3a342c"/><stop offset=".5" stop-color="#5a5145"/><stop offset="1" stop-color="#2c2721"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .06 0"/></filter>
+  </defs>
+  <rect width="800" height="500" fill="url(#spot)"/>
+  <rect y="400" width="800" height="100" fill="url(#marble)" opacity=".5"/>
+  <g transform="translate(266.66666666666663 250) scale(0.9) translate(-200 -200)">
+    <rect x="70" y="120" width="260" height="170" rx="10" fill="#151311" stroke="#e8cf8a" stroke-opacity=".5" stroke-width="2"/>
+    <path d="M70 140 Q70 120 90 120 H310 Q330 120 330 140 V200 H70 Z" fill="#000" fill-opacity=".2" stroke="#c9a24a" stroke-opacity=".5"/>
+    <rect x="270" y="185" width="30" height="30" rx="6" fill="#c9a24a"/>
+    <path d="M85 270 H315" stroke="#c9a24a" stroke-opacity=".4" stroke-dasharray="4 5"/>
+    <rect x="120" y="70" width="180" height="110" rx="8" fill="#151311" stroke="#e8cf8a" stroke-opacity=".4" transform="rotate(-12 210 125)" opacity=".7"/></g><g transform="translate(533.3333333333333 250) scale(0.9) translate(-200 -200)">
+    <rect x="70" y="120" width="260" height="170" rx="10" fill="#a0592c" stroke="#e8cf8a" stroke-opacity=".5" stroke-width="2"/>
+    <path d="M70 140 Q70 120 90 120 H310 Q330 120 330 140 V200 H70 Z" fill="#000" fill-opacity=".2" stroke="#c9a24a" stroke-opacity=".5"/>
+    <rect x="270" y="185" width="30" height="30" rx="6" fill="#c9a24a"/>
+    <path d="M85 270 H315" stroke="#c9a24a" stroke-opacity=".4" stroke-dasharray="4 5"/>
+    <rect x="120" y="70" width="180" height="110" rx="8" fill="#a0592c" stroke="#e8cf8a" stroke-opacity=".4" transform="rotate(-12 210 125)" opacity=".7"/></g>
+  <rect width="800" height="500" filter="url(#grain)"/>
+</svg>
