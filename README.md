@@ -10,8 +10,8 @@
 | --- | --- | --- |
 | 1 | Scaffold, design system, homepage, catalog schema + seed | ✅ Done |
 | 2 | Shop All + filters, category pages, product pages, search, wishlist, recently viewed | ✅ Done |
-| 3 | Cart, checkout, item reservation, PayMongo, bank transfer, layaway, emails, order tracking | ⏳ Next |
-| 4 | Customer accounts (email + Google) | — |
+| 3 | Cart, checkout, item reservation, PayMongo, bank transfer, layaway, emails, order tracking | ✅ Done |
+| 4 | Customer accounts (email + Google) | ⏳ Next |
 | 5 | Admin dashboard | — |
 | 6 | Meta Pixel + CAPI, catalog feed, OG images, sitemap, schema.org | — |
 
@@ -34,7 +34,9 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 | `NEXT_PUBLIC_SITE_URL` | Canonical URLs, OG tags, sitemap |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client (browser + server) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only jobs: payment webhooks, reservation expiry. **Never expose.** |
-| `PAYMONGO_*` | Payments (Phase 3) |
+| `PAYMONGO_SECRET_KEY`, `PAYMONGO_WEBHOOK_SECRET` | GCash, Maya and card payments via PayMongo Checkout |
+| `PAYMENTS_MOCK=1` | Local demos only: simulates online payments when no PayMongo key is set |
+| `CRON_SECRET` | Protects `/api/cron/expire-holds` |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Order emails (Phase 3) |
 | `NEXT_PUBLIC_META_PIXEL_ID`, `META_CAPI_ACCESS_TOKEN` | Meta Pixel + Conversions API (Phase 6) |
 | `NEXT_PUBLIC_MESSENGER_USERNAME`, `NEXT_PUBLIC_VIBER_NUMBER`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_INSTAGRAM_HANDLE` | Contact and chat links |
@@ -73,12 +75,54 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 | `/wishlist` | Saved items and recently viewed |
 | `/api/search?q=` | Instant search (top 6 results) |
 | `/api/products?ids=` | Fresh product summaries for the wishlist and recently viewed |
+| `/cart`, `/checkout` | Bag and checkout |
+| `/orders/<number>?t=<token>` | Order status, payments, layaway schedule, proof upload |
+| `/track-order` | Find an order by number + email |
+| `/api/checkout/hold`, `/api/checkout/release` | Start or end a checkout hold |
+| `/api/webhooks/paymongo` | PayMongo payment webhook |
+| `/api/cron/expire-holds` | Expiry sweep (cron) |
 
 **How catalog data works:** `lib/data.ts` loads the whole public catalog in one query, caches it for 60s with the tag `catalog`, and runs filtering, facet counts and search in memory (`lib/filters.ts`). That suits a one-of-a-kind inventory of up to a few thousand pieces. Beyond roughly 5,000, move filtering into SQL. Within each sort, available pieces come first, then reserved, then sold. Facet counts apply every *other* active filter, so no option leads to zero results.
 
 **Wishlist and recently viewed** are stored in the browser as product IDs. Price and status are re-fetched when shown, so a saved piece that has sold displays as sold. Phase 4 syncs the wishlist to the customer's account.
 
 **"Inquire via Messenger"** opens `m.me/<page>?text=…` with the item name, price and link. Some Messenger clients ignore pre-filled text, so the message is also copied to the clipboard.
+
+## Checkout, payments & layaway (Phase 3)
+
+**Flow:** Bag (`/cart`) → Checkout (`/checkout`) → PayMongo, or bank-transfer instructions → Order page (`/orders/HLX-1001?t=<token>`). Customers can find their order again at `/track-order` with order number + email.
+
+**Holding one-of-a-kind items.** Every hold rule lives in SQL functions (`supabase/migrations/…_orders.sql`):
+
+| Moment | What happens to the piece |
+| --- | --- |
+| Customer opens checkout | Held for their browser session for **15 min** (`reserve_products`). Everyone else sees **Reserved**. Concurrent attempts are race-safe: only one shopper gets it. |
+| Order placed (`place_order`) | The hold moves to the order and is extended: **30 min** for GCash/Maya/card, **24 h** for bank transfer, **48 h** for pay-at-meet-up. Prices are re-checked under lock. |
+| Proof of payment uploaded | The hold is paused (no expiry) while staff verify it. |
+| Layaway down payment received | Held for the customer with no expiry; shown publicly as **Reserved**. |
+| Fully paid (`record_payment`) | Marked **Sold** and kept visible as social proof. |
+| Hold lapses unpaid | Shown as available again immediately; `expire_holds()` marks the order expired. |
+
+`record_payment` is idempotent, so a webhook delivered twice changes nothing. If a payment arrives after the hold lapsed and someone else has taken the piece, the order is flagged `needs_review` for a refund or substitute instead of being silently double-sold.
+
+**Expiry sweep.** `vercel.json` runs `/api/cron/expire-holds` once a day, because that's the most often Vercel's free Hobby plan allows. For a 5-minute sweep, enable the `pg_cron` extension in Supabase and run:
+```sql
+select cron.schedule('expire-holds', '*/5 * * * *', 'select public.expire_holds()');
+```
+Customers never see a lapsed hold either way, because pages already treat expired holds as available.
+
+**PayMongo setup**
+1. Copy the secret key from PayMongo Dashboard → Developers into `PAYMONGO_SECRET_KEY` (`sk_test_…` while testing).
+2. Under Webhooks, add `https://<your-domain>/api/webhooks/paymongo` for the event `checkout_session.payment.paid`, and copy its signing secret into `PAYMONGO_WEBHOOK_SECRET`.
+3. The webhook verifies the signature, rejects events older than 5 minutes, and checks the amount PayMongo collected before marking anything paid.
+
+**Layaway.** Configured in `site_settings` key `checkout`; defaults are in `lib/checkout/settings.ts`. The defaults are a 30% down payment, 2 installments 30 days apart, and a ₱20,000 minimum order. Installments can be paid online or by bank transfer from the order page. The balance and installment status update automatically as payments land.
+
+**Other checkout settings** in the same key: Metro Manila / provincial shipping rates and an optional free-shipping threshold, whether meet-up and pickup are offered (with their notes), hold durations, bank accounts shown to customers, and the staff notification email.
+
+**Emails** go through Resend (`RESEND_API_KEY`). Customers get: order received (with bank or layaway instructions), proof received, and payment received. Staff get notified of new orders, proofs and payments. Without a key, emails are only logged to the console.
+
+**Demo without any keys:** without Supabase, orders live in server memory (`lib/orders/memory-repo.ts`, which mirrors the SQL functions) and reset on restart. Run `PAYMENTS_MOCK=1 npm run dev` to walk the whole flow with simulated GCash/Maya/card.
 
 ## Design system
 

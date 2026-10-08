@@ -3,7 +3,8 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { isSupabaseConfigured } from "./supabase/server";
 import { createPublicClient } from "./supabase/public";
-import { DEFAULT_HOME_CONTENT, SAMPLE_PRODUCTS, SAMPLE_REVIEWS } from "./sample-data";
+import { DEFAULT_HOME_CONTENT, SAMPLE_REVIEWS } from "./sample-data";
+import { memoryStore } from "./orders/memory-repo";
 import { PAGE_SIZE, applyFilters, compareProducts, computeFacets, matchesQuery, type Filters } from "./filters";
 import type { CategorySlug, HomeContent, Product, Review } from "./types";
 
@@ -11,7 +12,12 @@ import type { CategorySlug, HomeContent, Product, Review } from "./types";
 export const CATALOG_TAG = "catalog";
 
 const PRODUCT_SELECT =
-  "id, slug, model, title, category, sub_category, price, compare_at_price, condition, condition_notes, inclusions, authenticity_method, authenticity_certificate_url, specs, color, video_url, status, featured, created_at, brand:brands(name, slug), images:product_images(url, alt, position)";
+  "id, slug, model, title, category, sub_category, price, compare_at_price, condition, condition_notes, inclusions, authenticity_method, authenticity_certificate_url, specs, color, video_url, status, reserved_until, featured, created_at, brand:brands(name, slug), images:product_images(url, alt, position)";
+
+/** A timed hold that has lapsed is available again, even before the cron sweep runs. */
+export function effectiveStatus(status: Product["status"], reservedUntil: string | null | undefined): Product["status"] {
+  return status === "reserved" && reservedUntil && new Date(reservedUntil) < new Date() ? "available" : status;
+}
 
 function mapProduct(row: any): Product {
   return {
@@ -36,7 +42,7 @@ function mapProduct(row: any): Product {
     images: [...(row.images ?? [])]
       .sort((a: { position: number }, b: { position: number }) => a.position - b.position)
       .map(({ url, alt }: { url: string; alt: string }) => ({ url, alt })),
-    status: row.status,
+    status: effectiveStatus(row.status, row.reserved_until),
     featured: row.featured,
     createdAt: row.created_at,
   };
@@ -63,7 +69,12 @@ const fetchCatalog = unstable_cache(
 );
 
 export const getCatalog = cache(async (): Promise<Product[]> => {
-  if (!isSupabaseConfigured()) return SAMPLE_PRODUCTS.filter((p) => p.status !== "hidden");
+  if (!isSupabaseConfigured()) {
+    // Sample mode reads the in-memory store so checkout holds and sales show up live.
+    return memoryStore()
+      .products.filter((p) => p.status !== "hidden")
+      .map(({ reservedSession: _s, reservedUntil, soldAt: _x, ...p }) => ({ ...p, status: effectiveStatus(p.status, reservedUntil) }));
+  }
   return fetchCatalog();
 });
 

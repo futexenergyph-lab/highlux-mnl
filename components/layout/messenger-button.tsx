@@ -5,11 +5,14 @@ import { contactLinks } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const PRODUCT_PATH = /^\/(bags|watches|jewelry|accessories)\/[^/]+$/;
+// Pages with their own bottom-of-screen actions on mobile.
+const CROWDED_PATH = /^\/(checkout|cart)(\/|$)/;
 
 /** Floating Messenger shortcut (mobile-first: most traffic arrives from Facebook). */
 export function MessengerButton() {
-  // On product pages the mobile sticky buy bar carries its own Messenger button.
-  const onProduct = PRODUCT_PATH.test(usePathname());
+  // On product pages the mobile sticky buy bar carries its own Messenger button; checkout needs the room.
+  const path = usePathname();
+  const onProduct = PRODUCT_PATH.test(path) || CROWDED_PATH.test(path);
   return (
     <a
       href={contactLinks.messenger("Hi HIGHLUX MNL! I'd like to inquire.")}
