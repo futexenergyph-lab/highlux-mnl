@@ -26,5 +26,6 @@
     <path d="M150 120 L175 85 H225 L250 120 L200 185 Z" fill="#e8f1f7" stroke="#fff" stroke-opacity=".9" stroke-width="2"/>
     <path d="M150 120 H250 M175 85 L190 120 L200 185 L210 120 L225 85 M190 120 L200 85 L210 120" stroke="#fff" stroke-opacity=".7" stroke-width="1.5" fill="none"/>
     <circle cx="232" cy="96" r="3" fill="#fff"/></g>
+  
   <rect width="1000" height="1000" filter="url(#grain)"/>
 </svg>

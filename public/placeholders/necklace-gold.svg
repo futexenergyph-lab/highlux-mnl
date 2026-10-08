@@ -24,5 +24,6 @@
     <circle cx="90" cy="70" r="5" fill="#e8cf8a"/><circle cx="108.33333333333333" cy="127.74252896237238" r="5" fill="#e8cf8a"/><circle cx="126.66666666666666" cy="181.54999999999998" r="5" fill="#e8cf8a"/><circle cx="145" cy="227.75552288271874" r="5" fill="#e8cf8a"/><circle cx="163.33333333333331" cy="263.2102675843082" r="5" fill="#e8cf8a"/><circle cx="181.66666666666669" cy="285.49805184509114" r="5" fill="#e8cf8a"/><circle cx="200" cy="293.1" r="5" fill="#e8cf8a"/><circle cx="218.33333333333334" cy="285.49805184509114" r="5" fill="#e8cf8a"/><circle cx="236.66666666666666" cy="263.21026758430827" r="5" fill="#e8cf8a"/><circle cx="255" cy="227.75552288271876" r="5" fill="#e8cf8a"/><circle cx="273.33333333333337" cy="181.54999999999998" r="5" fill="#e8cf8a"/><circle cx="291.66666666666663" cy="127.74252896237243" r="5" fill="#e8cf8a"/><circle cx="310" cy="70.00000000000003" r="5" fill="#e8cf8a"/>
     <path d="M175 300 L200 270 L225 300 L200 345 Z" fill="#e8f1f7" stroke="#fff" stroke-opacity=".85" stroke-width="2"/>
     <path d="M175 300 H225 M200 270 V345" stroke="#fff" stroke-opacity=".5"/></g>
+  
   <rect width="1000" height="1000" filter="url(#grain)"/>
 </svg>

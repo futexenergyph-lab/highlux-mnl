@@ -25,5 +25,6 @@
     <rect x="270" y="185" width="30" height="30" rx="6" fill="#c9a24a"/>
     <path d="M85 270 H315" stroke="#c9a24a" stroke-opacity=".4" stroke-dasharray="4 5"/>
     <rect x="120" y="70" width="180" height="110" rx="8" fill="#5a3a22" stroke="#e8cf8a" stroke-opacity=".4" transform="rotate(-12 210 125)" opacity=".7"/></g>
+  
   <rect width="1000" height="1000" filter="url(#grain)"/>
 </svg>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { productHref } from "@/lib/catalog";
 import { CONDITION_LABELS, type Product } from "@/lib/types";
 import { cn, formatPHP } from "@/lib/utils";
+import { WishlistButton } from "@/components/wishlist/wishlist-button";
 
 export function StatusBadge({ status }: { status: Product["status"] }) {
   if (status === "available" || status === "hidden") return null;
@@ -36,6 +37,10 @@ export function ProductCard({ product, priority = false }: { product: Product; p
             unoptimized={img.url.endsWith(".svg")}
           />
         )}
+        <WishlistButton
+          productId={product.id}
+          className="absolute bottom-3 right-3 z-10 h-9 w-9 rounded-full bg-ink/70 backdrop-blur hover:bg-ink"
+        />
         {product.compareAtPrice && !sold && (
           <span className="absolute right-3 top-3 bg-gold-gradient px-2 py-1 font-sans text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink">
             Price drop

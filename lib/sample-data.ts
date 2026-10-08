@@ -5,7 +5,11 @@
  */
 import type { HomeContent, Product, Review } from "./types";
 
-const img = (name: string, alt: string) => [{ url: `/placeholders/${name}.svg`, alt }];
+const img = (name: string, alt: string) => [
+  { url: `/placeholders/${name}.svg`, alt },
+  { url: `/placeholders/${name}-angle.svg`, alt: `${alt} — side view` },
+  { url: `/placeholders/${name}-detail.svg`, alt: `${alt} — hardware detail` },
+];
 
 const daysAgo = (n: number) => new Date(Date.UTC(2026, 9, 8) - n * 86_400_000).toISOString();
 

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  
+  <defs>
+    <radialGradient id="spot" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#2a2219"/>
+      <stop offset="1" stop-color="#0d0b09"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e7b8"/><stop offset=".45" stop-color="#c9a24a"/>
+      <stop offset=".7" stop-color="#8a6a25"/><stop offset="1" stop-color="#e8cf8a"/>
+    </linearGradient>
+    <linearGradient id="marble" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3a342c"/><stop offset=".5" stop-color="#5a5145"/><stop offset="1" stop-color="#2c2721"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .06 0"/></filter>
+  </defs>
+  <rect width="1000" height="1000" fill="url(#spot)"/>
+  <rect y="760" width="1000" height="240" fill="url(#marble)" opacity=".55"/>
+  <path d="M0 760 H1000" stroke="#c9a24a" stroke-opacity=".25"/>
+  <ellipse cx="500" cy="790" rx="300" ry="34" fill="#000" opacity=".55" filter="url(#soft)"/>
+  <g transform="translate(500 430) scale(3.4) translate(-200 -215)">
+    <path d="M140 150 C140 85 260 85 260 150" fill="none" stroke="#c9a24a" stroke-width="7" stroke-linecap="round"/>
+    <path d="M95 160 H305 L330 330 Q332 345 316 345 H84 Q68 345 70 330 Z" fill="#151311" stroke="#e8cf8a" stroke-opacity=".55" stroke-width="2"/>
+    <path d="M95 160 H305 L298 225 Q200 255 102 225 Z" fill="#000" fill-opacity=".18" stroke="#c9a24a" stroke-opacity=".5" stroke-width="1.5"/>
+    <rect x="186" y="222" width="28" height="22" rx="4" fill="#c9a24a" />
+    <rect x="193" y="228" width="14" height="10" rx="2" fill="#e8cf8a"/>
+    <path d="M84 345 H316" stroke="#000" stroke-opacity=".35" stroke-width="3"/></g>
+  
+  <rect width="1000" height="1000" filter="url(#grain)"/>
+</svg>

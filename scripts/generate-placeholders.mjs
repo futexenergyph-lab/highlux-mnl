@@ -73,14 +73,23 @@ const defs = (bg1, bg2) => `
     <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .06 0"/></filter>
   </defs>`;
 
-function productSvg({ shape, fill, bg = ["#2a2219", "#0d0b09"] }) {
+// view: "front" (hero shot), "detail" (close-up), "angle" (tilted, lighter backdrop)
+const VIEWS = {
+  front: { t: "translate(500 470) scale(1.55) translate(-200 -200)", light: 0 },
+  detail: { t: "translate(500 430) scale(3.4) translate(-200 -215)", light: 0 },
+  angle: { t: "translate(520 480) rotate(-9) scale(1.35) translate(-200 -200)", light: 0.12 },
+};
+
+function productSvg({ shape, fill, bg = ["#2a2219", "#0d0b09"] }, view = "front") {
+  const v = VIEWS[view];
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
   ${defs(bg[0], bg[1])}
   <rect width="1000" height="1000" fill="url(#spot)"/>
   <rect y="760" width="1000" height="240" fill="url(#marble)" opacity=".55"/>
   <path d="M0 760 H1000" stroke="${GOLD}" stroke-opacity=".25"/>
   <ellipse cx="500" cy="790" rx="300" ry="34" fill="#000" opacity=".55" filter="url(#soft)"/>
-  <g transform="translate(500 470) scale(1.55) translate(-200 -200)">${shapes[shape](fill)}</g>
+  <g transform="${v.t}">${shapes[shape](fill)}</g>
+  ${v.light ? `<rect width="1000" height="1000" fill="#f3ead8" opacity="${v.light}"/>` : ""}
   <rect width="1000" height="1000" filter="url(#grain)"/>
 </svg>`;
 }
@@ -167,7 +176,11 @@ const products = {
   "necklace-gold": { shape: "necklace", fill: "#e8f1f7" },
   "wallet-brown": { shape: "wallet", fill: "#5a3a22" },
 };
-for (const [name, cfg] of Object.entries(products)) writeFileSync(join(OUT, `${name}.svg`), productSvg(cfg));
+for (const [name, cfg] of Object.entries(products)) {
+  writeFileSync(join(OUT, `${name}.svg`), productSvg(cfg));
+  writeFileSync(join(OUT, `${name}-detail.svg`), productSvg(cfg, "detail"));
+  writeFileSync(join(OUT, `${name}-angle.svg`), productSvg(cfg, "angle"));
+}
 
 const tiles = {
   "tile-bags": { shapesList: [["bag", "#5a3a22"], ["bag", "#a07a4f"]], bg: ["#3a2a1a", "#0d0b09"] },

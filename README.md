@@ -9,8 +9,8 @@
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Scaffold, design system, homepage, catalog schema + seed | ✅ Done |
-| 2 | Shop All + filters, category pages, product pages, search, wishlist, recently viewed | ⏳ Next |
-| 3 | Cart, checkout, item reservation, PayMongo, bank transfer, layaway, emails, order tracking | — |
+| 2 | Shop All + filters, category pages, product pages, search, wishlist, recently viewed | ✅ Done |
+| 3 | Cart, checkout, item reservation, PayMongo, bank transfer, layaway, emails, order tracking | ⏳ Next |
 | 4 | Customer accounts (email + Google) | — |
 | 5 | Admin dashboard | — |
 | 6 | Meta Pixel + CAPI, catalog feed, OG images, sitemap, schema.org | — |
@@ -61,6 +61,24 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 - `site_settings` (key `home` holds the editable hero), `reviews`, `newsletter_subscribers`.
 - **RLS:** the public can read everything except `hidden` products (sold items stay visible as social proof). Only staff and admins can write. Customers can't change their own role.
 - **Storage buckets:** `product-media` and `site-assets` (public read, staff write).
+
+## Storefront routes
+
+| Route | What it is |
+| --- | --- |
+| `/` | Homepage |
+| `/shop` | Shop All. Query params: `q`, `brand` (comma list of slugs), `condition`, `color`, `min`, `max`, `status=available\|sold`, `sort=newest\|price-asc\|price-desc`, `page` |
+| `/bags`, `/watches`, `/jewelry`, `/accessories` | Category pages: same filters, plus `type=<sub-category>` |
+| `/<category>/<slug>` | Product page, e.g. `/bags/louis-vuitton-speedy-30-monogram` |
+| `/wishlist` | Saved items and recently viewed |
+| `/api/search?q=` | Instant search (top 6 results) |
+| `/api/products?ids=` | Fresh product summaries for the wishlist and recently viewed |
+
+**How catalog data works:** `lib/data.ts` loads the whole public catalog in one query, caches it for 60s with the tag `catalog`, and runs filtering, facet counts and search in memory (`lib/filters.ts`). That suits a one-of-a-kind inventory of up to a few thousand pieces. Beyond roughly 5,000, move filtering into SQL. Within each sort, available pieces come first, then reserved, then sold. Facet counts apply every *other* active filter, so no option leads to zero results.
+
+**Wishlist and recently viewed** are stored in the browser as product IDs. Price and status are re-fetched when shown, so a saved piece that has sold displays as sold. Phase 4 syncs the wishlist to the customer's account.
+
+**"Inquire via Messenger"** opens `m.me/<page>?text=…` with the item name, price and link. Some Messenger clients ignore pre-filled text, so the message is also copied to the clipboard.
 
 ## Design system
 

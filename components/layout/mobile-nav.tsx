@@ -77,7 +77,7 @@ export function MobileNav({ trigger }: { trigger: React.ReactNode }) {
           <ul className="space-y-1">
             {[
               { href: "/account", label: "My Account", Icon: User },
-              { href: "/account/wishlist", label: "Wishlist", Icon: Heart },
+              { href: "/wishlist", label: "Wishlist", Icon: Heart },
               { href: "/track-order", label: "Track Order", Icon: Package },
             ].map(({ href, label, Icon }) => (
               <li key={href}>

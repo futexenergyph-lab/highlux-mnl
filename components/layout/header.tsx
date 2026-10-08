@@ -2,11 +2,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, Search, ShoppingBag, User } from "lucide-react";
+import { ChevronDown, Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { SearchOverlay } from "./search-overlay";
 import { MobileNav } from "./mobile-nav";
 import { useCart } from "@/components/cart/cart-provider";
+import { useWishlist } from "@/components/wishlist/wishlist-provider";
 import { NAV, brandsFor, categoryBySlug } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,18 @@ function CartButton() {
       <span className="absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold-gradient px-1 font-sans text-[0.62rem] font-bold text-ink">
         {count}
       </span>
+    </Link>
+  );
+}
+
+function WishlistLink() {
+  const { wishlist } = useWishlist();
+  return (
+    <Link href="/wishlist" className={cn(iconBtn, "hidden md:inline-flex")} aria-label={`Wishlist, ${wishlist.length} saved`}>
+      <Heart className="h-[22px] w-[22px] lg:h-6 lg:w-6" strokeWidth={1.1} />
+      {wishlist.length > 0 && (
+        <span className="absolute right-0.5 top-1 h-2 w-2 rounded-full bg-gold" aria-hidden />
+      )}
     </Link>
   );
 }
@@ -126,7 +139,7 @@ export function Header() {
           </ul>
         </nav>
 
-        <div className="flex w-20 items-center justify-end gap-0 sm:gap-1 lg:w-auto lg:gap-4">
+        <div className="flex w-20 items-center justify-end gap-0 sm:gap-1 lg:w-auto lg:gap-2 xl:gap-3">
           <SearchOverlay
             trigger={
               <button className={iconBtn} aria-label="Search">
@@ -137,6 +150,7 @@ export function Header() {
           <Link href="/account" className={cn(iconBtn, "hidden sm:inline-flex")} aria-label="Account">
             <User className="h-[22px] w-[22px] lg:h-6 lg:w-6" strokeWidth={1.1} />
           </Link>
+          <WishlistLink />
           <CartButton />
         </div>
       </div>
