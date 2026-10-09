@@ -92,7 +92,7 @@ export function FilterPanel({ filters, facets, onNavigate }: { filters: Filters;
                 All {cat.name}
               </button>
             </li>
-            {cat.subCategories.map((s) => {
+            {[...cat.subCategories, ...[...typeCount.keys()].filter((t) => !cat.subCategories.some((s) => s.slug === t)).sort().map((t) => ({ name: t, slug: t }))].map((s) => {
               const n = typeCount.get(s.slug) ?? 0;
               return (
                 <li key={s.slug} className="flex items-center justify-between">

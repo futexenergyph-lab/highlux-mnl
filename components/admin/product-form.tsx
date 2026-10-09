@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ExternalLink, FileUp, Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { CATEGORIES } from "@/lib/catalog";
 import { brandOptions } from "@/lib/brand-options";
+import { BrandCombobox } from "./brand-combobox";
 import { CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type CategorySlug, type ConditionGrade, type Inclusion, type Product, type ProductImage, type ProductStatus } from "@/lib/types";
 import { uploadFile } from "@/lib/client/upload";
 import { cn, slugify } from "@/lib/utils";
@@ -68,13 +69,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-const OTHER_BRAND = "__other__";
+const OTHER_TYPE = "__other__";
 
 export function ProductForm({ product, brands: existingBrands, lockedByOrder }: { product?: Product; brands: string[]; lockedByOrder?: boolean }) {
   const brands = React.useMemo(() => brandOptions(existingBrands), [existingBrands]);
   const router = useRouter();
   const [brandName, setBrand] = React.useState(product?.brand ?? "");
-  const [brandOther, setBrandOther] = React.useState(!!product?.brand && !brands.includes(product.brand));
   const [model, setModel] = React.useState(product?.model ?? "");
   const [title, setTitle] = React.useState(product?.title ?? "");
   const [titleTouched, setTitleTouched] = React.useState(!!product);
@@ -82,6 +82,7 @@ export function ProductForm({ product, brands: existingBrands, lockedByOrder }: 
   const [slugTouched, setSlugTouched] = React.useState(!!product);
   const [category, setCategory] = React.useState<CategorySlug>(product?.category ?? "bags");
   const [subCategory, setSub] = React.useState(product?.subCategory ?? "");
+  const [typeOther, setTypeOther] = React.useState(() => !!product?.subCategory && !CATEGORIES.find((c) => c.slug === product.category)?.subCategories.some((s) => s.slug === product.subCategory));
   const [price, setPrice] = React.useState(product?.price?.toString() ?? "");
   const [compareAt, setCompareAt] = React.useState(product?.compareAtPrice?.toString() ?? "");
   const [condition, setCondition] = React.useState<ConditionGrade>(product?.condition ?? "excellent");
@@ -164,32 +165,29 @@ export function ProductForm({ product, brands: existingBrands, lockedByOrder }: 
       <Section title="Item">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Category">
-            <select value={category} onChange={(e) => { setCategory(e.target.value as CategorySlug); setSub(""); }} className={inputCls}>
+            <select value={category} onChange={(e) => { setCategory(e.target.value as CategorySlug); setSub(""); setTypeOther(false); }} className={inputCls}>
               {CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.tileTitle}</option>)}
             </select>
           </Field>
           <Field label="Type" error={fe("subCategory")}>
-            <select value={subCategory} onChange={(e) => setSub(e.target.value)} required className={inputCls}>
-              <option value="">Choose…</option>
-              {cat.subCategories.map((s) => <option key={s.slug} value={s.slug}>{s.name}</option>)}
-            </select>
-          </Field>
-          <Field label="Brand" error={fe("brandName")}>
             <select
-              value={brandOther ? OTHER_BRAND : brandName}
+              value={typeOther ? OTHER_TYPE : subCategory}
               onChange={(e) => {
                 const v = e.target.value;
-                setBrandOther(v === OTHER_BRAND);
-                setBrand(v === OTHER_BRAND ? "" : v);
+                setTypeOther(v === OTHER_TYPE);
+                setSub(v === OTHER_TYPE ? "" : v);
               }}
               required
               className={inputCls}
             >
-              <option value="">Choose a brand…</option>
-              {brands.map((b) => <option key={b} value={b}>{b}</option>)}
-              <option value={OTHER_BRAND}>Others</option>
+              <option value="">Choose…</option>
+              {cat.subCategories.map((s) => <option key={s.slug} value={s.slug}>{s.name}</option>)}
+              <option value={OTHER_TYPE}>Others</option>
             </select>
-            {brandOther && <input value={brandName} onChange={(e) => setBrand(e.target.value)} required autoFocus className={cn(inputCls, "mt-2")} placeholder="Type the brand name" />}
+            {typeOther && <input value={subCategory} onChange={(e) => setSub(e.target.value)} required maxLength={40} autoFocus className={cn(inputCls, "mt-2")} placeholder="Type it, e.g. Bucket Bags" />}
+          </Field>
+          <Field label="Brand" error={fe("brandName")}>
+            <BrandCombobox value={brandName} onChange={setBrand} brands={brands} />
           </Field>
           <Field label="Model" error={fe("model")}>
             <input value={model} onChange={(e) => setModel(e.target.value)} required className={inputCls} placeholder="Speedy 30" />
