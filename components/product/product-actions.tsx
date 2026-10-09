@@ -3,6 +3,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Check, MessageCircle, Share2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/components/cart/cart-provider";
+import { trackMeta } from "@/components/meta/pixel";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
 import { contactLinks } from "@/lib/site";
 import type { ProductStatus } from "@/lib/types";
@@ -76,7 +77,10 @@ export function AddToCartButton({ product, className }: { product: ActionProduct
   }
   return (
     <button
-      onClick={() => add({ productId: product.id, slug: product.slug, title: product.title, price: product.price, image: product.image })}
+      onClick={() => {
+        add({ productId: product.id, slug: product.slug, title: product.title, price: product.price, image: product.image });
+        trackMeta("AddToCart", { productIds: [product.id], value: product.price });
+      }}
       className={cn("btn-gold h-14 w-full", className)}
     >
       <ShoppingBag className="h-4 w-4" strokeWidth={1.5} /> Add to Bag

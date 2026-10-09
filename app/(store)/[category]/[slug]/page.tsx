@@ -14,6 +14,8 @@ import { getCheckoutSettings } from "@/lib/checkout/settings";
 import { site } from "@/lib/site";
 import { CONDITION_LABELS, type CategorySlug } from "@/lib/types";
 import { formatPHP } from "@/lib/utils";
+import { JsonLd } from "@/components/seo/json-ld";
+import { TrackViewContent } from "@/components/meta/pixel";
 
 type Params = { category: string; slug: string };
 
@@ -33,12 +35,12 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const p = await load(params);
   if (!p) return {};
   const description = `${p.status === "sold" ? "SOLD — " : ""}${p.title} in ${CONDITION_LABELS[p.condition]} condition. ${formatPHP(p.price)}. 100% authentic, nationwide shipping from Manila.`;
-  const image = p.images[0]?.url;
   return {
     title: p.title,
     description,
     alternates: { canonical: productHref(p) },
-    openGraph: { title: `${p.title} — ${formatPHP(p.price)}`, description, url: productHref(p), images: image ? [{ url: image, alt: p.title }] : undefined },
+    openGraph: { title: `${p.title} — ${formatPHP(p.price)}`, description, url: productHref(p), type: "website" },
+    twitter: { card: "summary_large_image" },
   };
 }
 
@@ -62,8 +64,44 @@ export default async function ProductPage({ params }: { params: Params }) {
   };
   const saving = p.compareAtPrice && p.compareAtPrice > p.price ? p.compareAtPrice - p.price : 0;
 
+  const url = `${site.url}${productHref(p)}`;
+  const productLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.title,
+    sku: p.id,
+    url,
+    image: p.images.map((i) => (i.url.startsWith("/") ? `${site.url}${i.url}` : i.url)),
+    description: p.description ?? `${p.title} in ${CONDITION_LABELS[p.condition]} condition. ${p.conditionNotes ?? ""}`.trim(),
+    brand: { "@type": "Brand", name: p.brand },
+    category: cat.tileTitle,
+    ...(p.color ? { color: p.color } : {}),
+    ...(p.specs.material ? { material: p.specs.material } : {}),
+    offers: {
+      "@type": "Offer",
+      url,
+      priceCurrency: "PHP",
+      price: p.price.toFixed(2),
+      itemCondition: p.condition === "brand_new" ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition",
+      availability: p.status === "available" ? "https://schema.org/InStock" : p.status === "sold" ? "https://schema.org/SoldOut" : "https://schema.org/LimitedAvailability",
+      seller: { "@type": "Organization", name: site.name },
+      shippingDetails: { "@type": "OfferShippingDetails", shippingDestination: { "@type": "DefinedRegion", addressCountry: "PH" } },
+    },
+  };
+  const crumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: site.url },
+      { "@type": "ListItem", position: 2, name: cat.tileTitle, item: `${site.url}/${cat.slug}` },
+      { "@type": "ListItem", position: 3, name: p.title, item: url },
+    ],
+  };
+
   return (
     <>
+      <JsonLd data={[productLd, crumbLd]} />
+      <TrackViewContent productId={p.id} value={p.price} />
       <div className="container pb-8">
         <Breadcrumbs
           items={[

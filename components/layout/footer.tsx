@@ -32,6 +32,7 @@ const COLUMNS = [
       { href: "/about", label: "About Us" },
       { href: "/sell-to-us", label: "Sell to Us / Consign" },
       { href: "/contact", label: "Contact" },
+      { href: "/privacy", label: "Privacy Policy" },
       { href: "/account", label: "My Account" },
     ],
   },

@@ -13,7 +13,7 @@
 | 3 | Cart, checkout, item reservation, PayMongo, bank transfer, layaway, emails, order tracking | ✅ Done |
 | 4 | Customer accounts (email + Google) | ✅ Done |
 | 5 | Admin dashboard | ✅ Done |
-| 6 | Meta Pixel + CAPI, catalog feed, OG images, sitemap, schema.org | ⏳ Next |
+| 6 | Meta Pixel + CAPI, catalog feed, OG images, sitemap, schema.org, informational pages | ✅ Done |
 
 ## Run locally
 
@@ -40,7 +40,9 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 | `ACCOUNTS_DEMO=1` | Local demos only: in-memory demo accounts when Supabase isn't configured |
 | `DEMO_ADMIN_EMAILS` | Demo mode only: which demo accounts get admin access |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Order emails (Phase 3) |
-| `NEXT_PUBLIC_META_PIXEL_ID`, `META_CAPI_ACCESS_TOKEN` | Meta Pixel + Conversions API (Phase 6) |
+| `NEXT_PUBLIC_META_PIXEL_ID`, `META_CAPI_ACCESS_TOKEN` | Meta Pixel + Conversions API |
+| `META_TEST_EVENT_CODE` | Optional: see server events under Events Manager → Test events |
+| `META_GRAPH_API_VERSION` | Optional: Graph API version for the Conversions API (default `v23.0`) |
 | `NEXT_PUBLIC_MESSENGER_USERNAME`, `NEXT_PUBLIC_VIBER_NUMBER`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_INSTAGRAM_HANDLE` | Contact and chat links |
 
 ## Supabase setup
@@ -89,6 +91,12 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 | `/sell-to-us`, `/api/consign` | "Sell to Us / Consign" form (photos go to a private bucket) |
 | `/admin/…` | Admin dashboard (staff/admin only) |
 | `/api/admin/upload` | Staff uploads (product photos, certificates, hero image) |
+| `/how-to-order`, `/about`, `/authenticity`, `/shipping-returns`, `/faq`, `/contact`, `/privacy` | Informational pages (shipping rates, holds and payment methods read live from checkout settings) |
+| `/sitemap.xml`, `/robots.txt` | Search engine sitemap and crawl rules |
+| `/api/catalog.xml` | Facebook / Instagram (and Google Merchant) product feed |
+| `/opengraph-image`, `/<category>/<slug>/opengraph-image`, `/api/og/<category>/<slug>` | Generated 1200×630 share images |
+| `/api/meta/event` | Server copy of browser Pixel events (Conversions API) |
+| `/api/contact` | Contact form → staff email |
 | `/api/cron/expire-holds` | Expiry sweep (cron) |
 
 **How catalog data works:** `lib/data.ts` loads the whole public catalog in one query, caches it for 60s with the tag `catalog`, and runs filtering, facet counts and search in memory (`lib/filters.ts`). That suits a one-of-a-kind inventory of up to a few thousand pieces. Beyond roughly 5,000, move filtering into SQL. Within each sort, available pieces come first, then reserved, then sold. Facet counts apply every *other* active filter, so no option leads to zero results.
@@ -191,6 +199,38 @@ Changes in the admin refresh the affected storefront pages immediately.
 **Storage buckets:** `product-media` and `site-assets` (public); `payment-proofs` and `consignments` (private, viewed by staff through short-lived signed links).
 
 **Demo:** with `ACCOUNTS_DEMO=1`, create an account as `admin@highluxmnl.com` (or any address in `DEMO_ADMIN_EMAILS`) to open `/admin`.
+
+## Marketing & SEO (Phase 6)
+
+**Meta Pixel + Conversions API**
+- **Events:** PageView on every store navigation (never in `/admin`), **ViewContent** on product pages, **AddToCart**, **InitiateCheckout** once the pieces are held, and **Purchase**.
+- **Sent twice, counted once:** each event goes from the browser *and* from the server with the same `event_id`, so Meta counts it once even when ad blockers or iOS block the browser pixel.
+- **Purchase** is sent by the server the moment an order becomes fully paid: on a PayMongo webhook, a staff-approved proof, or a recorded meet-up payment. It includes the customer's email, phone, name, city and ZIP, **SHA-256 hashed** and never sent raw. It also includes the visitor's `_fbp`/`_fbc` cookies, IP and browser, captured at checkout (`orders.attribution`), so the sale is credited to the ad click.
+- **Prices** in server events come from the catalog, never from the browser.
+
+**Setup**
+1. In Meta Events Manager, create a Pixel and put its ID in `NEXT_PUBLIC_META_PIXEL_ID`. Then redeploy: the ID is built into the page.
+2. Pixel → Settings → Conversions API → **Generate access token**, and put it in `META_CAPI_ACCESS_TOKEN`.
+3. Optional: put the Test events code in `META_TEST_EVENT_CODE` to watch events arrive live, and remove it afterwards.
+
+**Facebook / Instagram catalog:** in Commerce Manager, go to Catalog → Data sources → Add items → **Data feed** → Scheduled feed, use `https://<your-domain>/api/catalog.xml`, and set it to hourly.
+- **What's in it:** every listed piece with price and sale price, condition (new/used), stock (sold and reserved pieces show as *out of stock*; hidden ones are left out), brand, Google category, color, material, up to 11 photos, and labels for ad sets by condition and price band.
+- **Photos:** Meta rejects SVG, so the sample products link to their generated PNG card. Uploaded JPG/PNG photos are used directly.
+
+**Share previews:** every product gets a 1200×630 card with photo, brand, model, condition and price (SOLD pieces show it). Every other page uses the site card built from the homepage hero. Fonts are in `assets/fonts` (SIL OFL).
+
+**Search engines**
+- `sitemap.xml` lists all pages, categories and products.
+- `robots.txt` keeps admin, account, checkout, cart, orders and API routes out of search, and blocks preview deployments entirely.
+- Product pages include schema.org **Product** (price in PHP, new/used condition, in stock / sold out, brand, images) and **BreadcrumbList**.
+- The homepage includes **Store** and **WebSite** with a search box. The FAQ includes **FAQPage**.
+- Every page has a canonical URL.
+
+**Site URL:** links in emails, PayMongo returns, the feed and share cards use `NEXT_PUBLIC_SITE_URL`. On Vercel it falls back to the project's production domain (or the preview URL). Set it once you have a custom domain.
+
+**Messenger:** Meta retired the embedded Messenger Chat Plugin in 2024, so the site uses the floating button that opens `m.me/<page>`. On product pages the message comes pre-filled with the item.
+
+**Privacy:** `/privacy` is a template written for the Data Privacy Act of 2012. Have it reviewed and fill in your details before launch.
 
 ## Design system
 

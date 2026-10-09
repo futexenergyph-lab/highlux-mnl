@@ -84,6 +84,16 @@ export interface Order {
   cancelledAt?: string | null;
   /** Staff-only notes; never rendered on customer pages. */
   adminNotes?: string | null;
+  /** Ad-attribution data captured at checkout (server-side Meta events only). */
+  attribution?: OrderAttribution | null;
+}
+
+export interface OrderAttribution {
+  fbp?: string;
+  fbc?: string;
+  ip?: string;
+  ua?: string;
+  url?: string;
 }
 
 export interface OrderDetail extends Order {

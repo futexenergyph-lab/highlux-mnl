@@ -5,7 +5,11 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
 
 const nextConfig = {
   // Proof-of-payment uploads (max 8 MB) go through a server action.
-  experimental: { serverActions: { bodySizeLimit: "10mb" } },
+  experimental: {
+    serverActions: { bodySizeLimit: "10mb" },
+    // Share-image routes read these from disk at runtime.
+    outputFileTracingIncludes: { "/**": ["./assets/fonts/**/*", "./public/placeholders/**/*"] },
+  },
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
