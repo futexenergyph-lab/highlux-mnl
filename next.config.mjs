@@ -5,7 +5,11 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
 
 const nextConfig = {
   // Proof-of-payment uploads (max 8 MB) go through a server action.
-  experimental: { serverActions: { bodySizeLimit: "10mb" } },
+  experimental: {
+    serverActions: { bodySizeLimit: "10mb" },
+    // The watermark logo is read from disk at runtime by the upload route.
+    outputFileTracingIncludes: { "/api/admin/upload": ["./lib/watermark/**"] },
+  },
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
