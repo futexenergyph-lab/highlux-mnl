@@ -47,7 +47,7 @@ function Feedback({ state }: { state: AuthState }) {
   );
 }
 
-export function LoginForm({ next, initialTab, error, mode }: { next: string; initialTab: "signin" | "signup"; error?: string; mode: AuthMode }) {
+export function LoginForm({ next, initialTab, error, mode, google }: { next: string; initialTab: "signin" | "signup"; error?: string; mode: AuthMode; google: boolean }) {
   const [tab, setTab] = React.useState<"signin" | "signup" | "link">(initialTab);
   const [signInState, signIn] = useFormState(signInAction, null);
   const [signUpState, signUp] = useFormState(signUpAction, null);
@@ -81,14 +81,18 @@ export function LoginForm({ next, initialTab, error, mode }: { next: string; ini
         {mode === "demo" && <p className="mb-5 text-center text-[0.65rem] uppercase tracking-wider text-gold">Demo accounts — stored in memory, reset on restart</p>}
         {error && <p role="alert" className="mb-5 border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">{error}</p>}
 
-        <form action={googleAction}>
-          <input type="hidden" name="next" value={next} />
-          <GoogleButton />
-        </form>
+        {google && (
+          <>
+            <form action={googleAction}>
+              <input type="hidden" name="next" value={next} />
+              <GoogleButton />
+            </form>
 
-        <div className="my-6 flex items-center gap-4 text-[0.65rem] uppercase tracking-[0.2em] text-cream-dim">
-          <span className="h-px flex-1 bg-gold/20" /> or with email <span className="h-px flex-1 bg-gold/20" />
-        </div>
+            <div className="my-6 flex items-center gap-4 text-[0.65rem] uppercase tracking-[0.2em] text-cream-dim">
+              <span className="h-px flex-1 bg-gold/20" /> or with email <span className="h-px flex-1 bg-gold/20" />
+            </div>
+          </>
+        )}
 
         <div className="mb-6 grid grid-cols-2 border-b border-gold/20" role="tablist">
           {(["signin", "signup"] as const).map((t) => (

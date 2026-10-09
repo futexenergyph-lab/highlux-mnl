@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { authMode, getCurrentUser, safeNext } from "@/lib/auth/server";
+import { authMode, getCurrentUser, googleAuthEnabled, safeNext } from "@/lib/auth/server";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Sign In", robots: { index: false } };
@@ -20,6 +20,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { next
       initialTab={searchParams.tab === "signup" ? "signup" : "signin"}
       error={searchParams.error ? ERRORS[searchParams.error] : undefined}
       mode={authMode()}
+      google={googleAuthEnabled()}
     />
   );
 }

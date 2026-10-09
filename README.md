@@ -157,7 +157,7 @@ Accounts are optional, and guest checkout always works. Signed-in customers get:
 
 **Supabase Auth setup**
 1. **Authentication → Providers → Email:** keep it enabled and leave **Confirm email** on. New customers verify their email before an account is created, and only verified emails claim guest orders.
-2. **Authentication → Providers → Google:** create an OAuth client in Google Cloud Console (APIs & Services → Credentials → OAuth client ID → Web). Add `https://<project-ref>.supabase.co/auth/v1/callback` as an authorised redirect URI, then paste the client ID and secret into Supabase.
+2. **Authentication → Providers → Google:** create an OAuth client in Google Cloud Console (APIs & Services → Credentials → OAuth client ID → Web). Add `https://<project-ref>.supabase.co/auth/v1/callback` as an authorised redirect URI, then paste the client ID and secret into Supabase. Finally set `GOOGLE_AUTH_ENABLED=1` in Vercel and redeploy — the Google button stays hidden until then.
 3. **Authentication → URL Configuration:** set the Site URL to your domain and add `https://<your-domain>/auth/callback` (plus `http://localhost:3000/auth/callback` for development) to the Redirect URLs.
 4. **Optional:** under Authentication → Email Templates, brand the confirmation and sign-in-link emails.
 

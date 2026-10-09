@@ -2,7 +2,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { authMode, safeNext } from "@/lib/auth/server";
+import { authMode, googleAuthEnabled, safeNext } from "@/lib/auth/server";
 import { demoGoogle, demoSignIn, demoSignOut, demoSignUp } from "@/lib/auth/demo";
 import { createClient } from "@/lib/supabase/server";
 import { site } from "@/lib/site";
@@ -86,6 +86,7 @@ export async function googleAction(form: FormData) {
   const next = safeNext(form.get("next") as string);
   const mode = authMode();
   if (mode === "off") redirect(`/login?error=unavailable&next=${encodeURIComponent(next)}`);
+  if (!googleAuthEnabled()) redirect(`/login?error=google&next=${encodeURIComponent(next)}`);
   if (mode === "demo") {
     demoGoogle();
     redirect(next);
