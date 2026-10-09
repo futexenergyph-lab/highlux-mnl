@@ -27,9 +27,9 @@ export const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
   shipping: { metroManila: 250, provincial: 450, freeOver: null },
   meetup: {
     enabled: true,
-    note: "Meet-ups at partner malls in Makati / BGC by appointment. Cash or credit card accepted on the spot.",
+    note: "Meet-ups in Quezon City by appointment. Cash or credit card accepted on the spot.",
   },
-  pickup: { enabled: true, address: "Showroom pickup by appointment — Makati City" },
+  pickup: { enabled: true, address: "Pickup by appointment — Quezon City" },
   holds: { checkoutMinutes: 15, onlinePaymentMinutes: 30, bankTransferHours: 24, meetupHours: 48 },
   layaway: {
     // Shown grayed out as "Coming soon" until switched on.
@@ -49,7 +49,7 @@ export const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
   ],
   // Card payments via PayMongo aren't live yet (cards are still accepted at meet-ups).
   disabledMethods: ["card"],
-  notifyEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@highluxmnl.com",
+  notifyEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "highluxmnl@gmail.com",
 };
 
 export function merge<T extends object>(base: T, over: Partial<T> | undefined): T {
