@@ -91,7 +91,7 @@ export default async function Dashboard({ searchParams }: { searchParams: { rang
         ))}
       </ul>
 
-      <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
         <Card title={`Revenue received per day · ${range.days ? `last ${range.days} days` : "last 30 days shown"}`}>
           {sales.revenue === 0 && range.days ? <p className="mb-2 text-xs text-cream-dim">No payments in this period yet.</p> : null}
           <RevenueChart data={sales.daily} />

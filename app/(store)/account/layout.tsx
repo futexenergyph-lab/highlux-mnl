@@ -14,7 +14,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   if (!user) return children;
   return (
     <div className="container pb-20 pt-8">
-      <div className="grid gap-8 lg:grid-cols-[240px_1fr] lg:gap-12">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr] lg:gap-12">
         <AccountNav name={user.fullName ?? user.email} email={user.email} isStaff={!!(await getStaffUser())} />
         <div className="min-w-0">{children}</div>
       </div>

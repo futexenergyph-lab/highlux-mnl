@@ -70,7 +70,7 @@ export async function Footer() {
   return (
     <footer className="bg-ink-200 pt-14 lg:pt-20">
       <div className="container">
-        <div className="grid gap-10 lg:grid-cols-[1.3fr_repeat(3,1fr)_1.3fr] lg:gap-8">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.3fr_repeat(3,1fr)_1.3fr] lg:gap-8">
           <div className="flex flex-col items-start gap-5">
             <Logo className="items-start" />
             <p className="max-w-xs text-sm leading-relaxed text-cream-muted">

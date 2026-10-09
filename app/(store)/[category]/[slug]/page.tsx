@@ -112,7 +112,7 @@ export default async function ProductPage({ params }: { params: Params }) {
           ]}
         />
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-14">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-14">
           <ProductGallery images={p.images} videoUrl={p.videoUrl} title={p.title} sold={p.status === "sold"} />
 
           <div className="lg:pt-2">

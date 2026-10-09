@@ -18,7 +18,7 @@ export default function ContactPage() {
   ];
   return (
     <ContentPage eyebrow="We’re here to help" title="Contact Us" crumb="Contact" intro="Questions about a piece, an order, or selling to us? Message us any way you like." wide>
-      <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr]">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.2fr]">
         <div className="space-y-6">
           <ul className="grid gap-3">
             {channels.map((c) => (

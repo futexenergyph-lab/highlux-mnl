@@ -42,7 +42,7 @@ export default async function AdminOrderPage({ params }: { params: { number: str
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_340px]">
         <div className="space-y-5">
           {pending && (
             <Card title="Proof of payment to verify" className="border-gold/50">

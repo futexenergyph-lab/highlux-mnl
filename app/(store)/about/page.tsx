@@ -20,7 +20,7 @@ const VALUES = [
 export default function AboutPage() {
   return (
     <ContentPage eyebrow="Our story" title="Authentic Luxury, Timeless Investment." crumb="About Us" wide>
-      <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr]">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.1fr_1fr]">
         <Prose>
           <p className="font-serif text-xl leading-relaxed text-cream">{site.name} began with a simple belief: owning a beautiful, well-made piece shouldn’t require guesswork.</p>
           <p>The pre-loved market is full of great finds and, sadly, too many fakes. We started {site.name} in Manila to be the reseller we wished existed: one where every bag, watch and jewel is authenticated, honestly described and fairly priced.</p>

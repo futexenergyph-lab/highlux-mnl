@@ -65,7 +65,7 @@ export function ProductGallery({ images, videoUrl, title, sold }: { images: Prod
   if (!slides.length) return <div className="aspect-square border border-gold/15 bg-ink-50" />;
 
   return (
-    <div className="flex flex-col self-start lg:sticky lg:top-28 lg:grid lg:grid-cols-[84px_1fr] lg:items-start lg:gap-4">
+    <div className="flex min-w-0 flex-col self-start lg:sticky lg:top-28 lg:grid lg:grid-cols-[84px_1fr] lg:items-start lg:gap-4">
       {/* Thumbnails (desktop: vertical rail) */}
       <ul className="no-scrollbar order-2 mt-3 flex gap-2 overflow-x-auto lg:order-1 lg:mt-0 lg:max-h-[640px] lg:flex-col lg:overflow-y-auto">
         {slides.map((s, i) => (

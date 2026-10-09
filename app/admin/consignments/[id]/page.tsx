@@ -22,7 +22,7 @@ export default async function ConsignmentPage({ params }: { params: { id: string
     <>
       <Link href="/admin/consignments" className="text-xs uppercase tracking-wider text-cream-muted hover:text-gold-light">← Consignments</Link>
       <PageHeader title={`${c.brand} · ${c.model}`} description={`Submitted ${fmtDateTime(c.createdAt)} · wants to ${c.wants}`} />
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5">
           <Card title={`Photos (${photos.length})`}>
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">

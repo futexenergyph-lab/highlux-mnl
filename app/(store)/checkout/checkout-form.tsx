@@ -391,7 +391,7 @@ export function CheckoutForm({ config, account }: { config: Config; account: Acc
         {summaryOpen && <div className="border-t border-gold/15 p-4">{summary}</div>}
       </div>
 
-      <div className="grid gap-12 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_400px]">
         <form onSubmit={submit} noValidate>
           <Step n={1} title="Contact">
             {account ? (
