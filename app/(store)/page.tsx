@@ -7,12 +7,12 @@ import { ShopByBrand } from "@/components/home/shop-by-brand";
 import { Reviews } from "@/components/home/reviews";
 import { SocialStrip } from "@/components/home/social-strip";
 import { Newsletter } from "@/components/home/newsletter";
-import { getHomeContent, getNewArrivals, getReviews } from "@/lib/data";
+import { getFeatured, getHomeContent, getNewArrivals, getReviews } from "@/lib/data";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [content, arrivals, reviews] = await Promise.all([getHomeContent(), getNewArrivals(10), getReviews()]);
+  const [content, arrivals, reviews, featured] = await Promise.all([getHomeContent(), getNewArrivals(10), getReviews(), getFeatured(10)]);
 
   return (
     <>
@@ -21,6 +21,13 @@ export default async function HomePage() {
         <TrustBar />
       </div>
       <CategoryTiles />
+
+ {featured.length > 0 && (
+        <section className="container pt-16 lg:pt-24">
+          <SectionHeading eyebrow="Hand-selected" title="Curated Picks" />
+          <NewArrivalsCarousel products={featured} />
+        </section>
+      )}
 
       <section className="container py-16 lg:py-24">
         <SectionHeading eyebrow="Just in" title="New Arrivals" href="/shop?sort=newest" linkLabel="Shop all new arrivals" />

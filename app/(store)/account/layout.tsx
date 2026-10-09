@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/server";
 import { AccountNav } from "@/components/account/account-nav";
+import { getStaffUser } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   return (
     <div className="container pb-20 pt-8">
       <div className="grid gap-8 lg:grid-cols-[240px_1fr] lg:gap-12">
-        <AccountNav name={user.fullName ?? user.email} email={user.email} />
+        <AccountNav name={user.fullName ?? user.email} email={user.email} isStaff={!!(await getStaffUser())} />
         <div className="min-w-0">{children}</div>
       </div>
     </div>

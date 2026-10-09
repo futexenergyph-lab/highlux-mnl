@@ -101,6 +101,30 @@ export function proofReceivedEmail(o: OrderDetail, amount: number) {
   };
 }
 
+export function fulfillmentEmail(o: OrderDetail, step: "shipped" | "ready" | "delivered") {
+  const tracking = o.trackingNumber ? `<p>${esc(o.courier ?? "Courier")} tracking number: <strong style="color:#e8cf8a">${esc(o.trackingNumber)}</strong></p>` : "";
+  const copy = {
+    shipped: { subject: `Your order ${o.orderNumber} has shipped`, title: "It&rsquo;s on its way.", body: `<p>Your piece has been carefully packed and handed to the courier.</p>${tracking}` },
+    ready: {
+      subject: `Your order ${o.orderNumber} is ready`,
+      title: "Your piece is ready.",
+      body: `<p>Your order is ready for ${o.fulfillment === "meetup" ? "your meet-up" : "pickup"}. We&rsquo;ll message you to confirm the schedule.</p>`,
+    },
+    delivered: { subject: `Delivered — ${o.orderNumber}`, title: "Enjoy your new piece.", body: `<p>Your order has been delivered. Thank you for choosing ${site.name}! We&rsquo;d love to see it — tag us @${site.instagram}.</p>` },
+  }[step];
+  return { subject: copy.subject, html: layout(copy.title, `${copy.body}${itemsTable(o)}${button(orderUrl(o), "View your order")}`) };
+}
+
+export function proofRejectedEmail(o: OrderDetail, reason: string, holdHours: number) {
+  return {
+    subject: `Action needed: payment for ${o.orderNumber}`,
+    html: layout(
+      "We couldn&rsquo;t verify your payment.",
+      `<p>We reviewed the proof of payment for order ${o.orderNumber} and couldn&rsquo;t match it:</p><p style="border-left:2px solid #c9a24a;padding-left:12px;color:#f3ead8">${esc(reason)}</p><p>Your piece stays reserved for another ${holdHours} hours. Please upload a clearer or corrected proof from your order page, or message us and we&rsquo;ll help.</p>${button(orderUrl(o), "Upload proof again")}`,
+    ),
+  };
+}
+
 export function staffNotificationEmail(o: OrderDetail, event: string) {
   return {
     subject: `[${site.name}] ${event} — ${o.orderNumber}`,

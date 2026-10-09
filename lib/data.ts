@@ -5,21 +5,22 @@ import { isSupabaseConfigured } from "./supabase/server";
 import { createPublicClient } from "./supabase/public";
 import { DEFAULT_HOME_CONTENT, SAMPLE_REVIEWS } from "./sample-data";
 import { memoryStore } from "./orders/memory-repo";
+import { getMemorySetting } from "./memory-settings";
 import { PAGE_SIZE, applyFilters, compareProducts, computeFacets, matchesQuery, type Filters } from "./filters";
 import type { CategorySlug, HomeContent, Product, Review } from "./types";
 
 /** Cache tag — admin mutations call revalidateTag(CATALOG_TAG) (Phase 5). */
 export const CATALOG_TAG = "catalog";
 
-const PRODUCT_SELECT =
-  "id, slug, model, title, category, sub_category, price, compare_at_price, condition, condition_notes, inclusions, authenticity_method, authenticity_certificate_url, specs, color, video_url, status, reserved_until, featured, created_at, brand:brands(name, slug), images:product_images(url, alt, position)";
+export const PRODUCT_SELECT =
+  "id, slug, model, title, category, sub_category, price, compare_at_price, condition, condition_notes, inclusions, authenticity_method, authenticity_certificate_url, specs, color, video_url, description, status, reserved_until, featured, created_at, brand:brands(name, slug), images:product_images(url, alt, position)";
 
 /** A timed hold that has lapsed is available again, even before the cron sweep runs. */
 export function effectiveStatus(status: Product["status"], reservedUntil: string | null | undefined): Product["status"] {
   return status === "reserved" && reservedUntil && new Date(reservedUntil) < new Date() ? "available" : status;
 }
 
-function mapProduct(row: any): Product {
+export function mapProduct(row: any): Product {
   return {
     id: row.id,
     slug: row.slug,
@@ -39,6 +40,7 @@ function mapProduct(row: any): Product {
     specs: row.specs ?? {},
     color: row.color,
     videoUrl: row.video_url,
+    description: row.description ?? null,
     images: [...(row.images ?? [])]
       .sort((a: { position: number }, b: { position: number }) => a.position - b.position)
       .map(({ url, alt }: { url: string; alt: string }) => ({ url, alt })),
@@ -118,6 +120,12 @@ export const getNewArrivals = cache(async (limit = 10): Promise<Product[]> => {
   return [...catalog].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, limit);
 });
 
+/** Admin-curated pieces (featured flag), still for sale. */
+export const getFeatured = cache(async (limit = 10): Promise<Product[]> => {
+  const catalog = await getCatalog();
+  return catalog.filter((p) => p.featured && p.status !== "sold").sort(compareProducts("newest")).slice(0, limit);
+});
+
 export const getReviews = cache(async (): Promise<Review[]> => {
   if (!isSupabaseConfigured()) return SAMPLE_REVIEWS;
   const { data, error } = await createPublicClient()
@@ -131,7 +139,7 @@ export const getReviews = cache(async (): Promise<Review[]> => {
 });
 
 export const getHomeContent = cache(async (): Promise<HomeContent> => {
-  if (!isSupabaseConfigured()) return DEFAULT_HOME_CONTENT;
+  if (!isSupabaseConfigured()) return { ...DEFAULT_HOME_CONTENT, ...(getMemorySetting<HomeContent>("home") ?? {}) };
   const { data } = await createPublicClient().from("site_settings").select("value").eq("key", "home").maybeSingle();
   return { ...DEFAULT_HOME_CONTENT, ...((data?.value as Partial<HomeContent>) ?? {}) };
 });

@@ -2,6 +2,7 @@ import "server-only";
 import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import type { PaymentMethod } from "./pricing";
+import { getMemorySetting } from "@/lib/memory-settings";
 
 export interface BankAccount {
   bank: string;
@@ -49,7 +50,7 @@ export const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
   notifyEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@highluxmnl.com",
 };
 
-function merge<T extends object>(base: T, over: Partial<T> | undefined): T {
+export function merge<T extends object>(base: T, over: Partial<T> | undefined): T {
   if (!over) return base;
   const out = { ...base } as Record<string, unknown>;
   for (const [k, v] of Object.entries(over)) {
@@ -60,7 +61,7 @@ function merge<T extends object>(base: T, over: Partial<T> | undefined): T {
 }
 
 export async function getCheckoutSettings(): Promise<CheckoutSettings> {
-  if (!isSupabaseConfigured()) return DEFAULT_CHECKOUT_SETTINGS;
+  if (!isSupabaseConfigured()) return merge(DEFAULT_CHECKOUT_SETTINGS, getMemorySetting<CheckoutSettings>("checkout"));
   const { data } = await createPublicClient().from("site_settings").select("value").eq("key", "checkout").maybeSingle();
   return merge(DEFAULT_CHECKOUT_SETTINGS, (data?.value as Partial<CheckoutSettings>) ?? undefined);
 }

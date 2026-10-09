@@ -85,6 +85,11 @@ export function demoSetPassword(id: string, password: string) {
   if (u) u.passwordHash = hash(password);
 }
 
+/** Admin customer list in demo mode. */
+export function demoListUsers(): SessionUser[] {
+  return [...users().values()].map(publicUser);
+}
+
 export function demoSignOut() {
   cookies().delete(COOKIE);
 }

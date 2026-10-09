@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes, randomUUID } from "node:crypto";
 import { SAMPLE_PRODUCTS } from "@/lib/sample-data";
+import { safeName, uploadPrivate } from "@/lib/media";
 import type { Product } from "@/lib/types";
 import { OrderError, type CheckoutProduct, type HoldResult, type NewPayment, type OrderRepo, type PlaceOrderArgs } from "./repo";
 import type { Order, OrderDetail, OrderInstallment, OrderItem, Payment, PaymentStatus } from "./types";
@@ -223,9 +224,7 @@ export class MemoryOrderRepo implements OrderRepo {
   }
 
   async uploadProof(orderId: string, file: { name: string; type: string; bytes: ArrayBuffer }) {
-    const path = `${orderId}/${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
-    this.s.proofs.set(path, { type: file.type, bytes: file.bytes });
-    return path;
+    return uploadPrivate("payment-proofs", `${orderId}/${safeName(file.name)}`, file.bytes, file.type);
   }
 
   async listOrdersForUser(userId: string) {

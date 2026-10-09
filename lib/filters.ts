@@ -51,7 +51,8 @@ export function parseFilters(sp: SearchParams, category?: CategorySlug): Filters
     q: str(sp.q)?.slice(0, 80),
     category,
     type: str(sp.type),
-    brands: list(sp.brand).filter((b) => BRANDS.some((x) => x.slug === b)),
+    // Any slug-shaped value: brands come from the catalog (admins can add new ones).
+    brands: list(sp.brand).filter((b) => /^[a-z0-9-]{1,60}$/.test(b)),
     conditions: list(sp.condition).filter((c): c is ConditionGrade => c in CONDITION_LABELS),
     colors: list(sp.color),
     min: num(sp.min),
@@ -126,12 +127,17 @@ export function computeFacets(products: Product[], f: Filters): Facets {
   const colorCounts = count(applyFilters(products, f, { color: true }), (p) => p.color);
   const typeCounts = count(applyFilters(products, { ...f, type: undefined }), (p) => p.subCategory);
 
+  // Brand names as they appear on products; curated order first, then any others A–Z.
+  const names = new Map(products.map((p) => [p.brandSlug, p.brand]));
+  const rank = (slug: string) => {
+    const i = BRANDS.findIndex((b) => b.slug === slug);
+    return i === -1 ? BRANDS.length : i;
+  };
+  const brandSlugs = [...new Set([...brandCounts.keys(), ...f.brands])].filter((s) => names.has(s));
   return {
-    brands: BRANDS.filter((b) => brandCounts.has(b.slug) || f.brands.includes(b.slug)).map((b) => ({
-      slug: b.slug,
-      name: b.name,
-      count: brandCounts.get(b.slug) ?? 0,
-    })),
+    brands: brandSlugs
+      .sort((a, b) => rank(a) - rank(b) || names.get(a)!.localeCompare(names.get(b)!))
+      .map((slug) => ({ slug, name: names.get(slug)!, count: brandCounts.get(slug) ?? 0 })),
     conditions: (Object.keys(CONDITION_LABELS) as ConditionGrade[]).map((c) => ({
       value: c,
       label: CONDITION_LABELS[c],

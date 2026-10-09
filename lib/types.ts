@@ -77,6 +77,7 @@ export interface Product {
   color?: string | null;
   images: ProductImage[];
   videoUrl?: string | null;
+  description?: string | null;
   status: ProductStatus;
   featured: boolean;
   createdAt: string;

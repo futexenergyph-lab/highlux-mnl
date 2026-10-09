@@ -81,6 +81,9 @@ export interface Order {
   packedAt: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
+  cancelledAt?: string | null;
+  /** Staff-only notes; never rendered on customer pages. */
+  adminNotes?: string | null;
 }
 
 export interface OrderDetail extends Order {

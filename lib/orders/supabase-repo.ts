@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { safeName, uploadPrivate } from "@/lib/media";
 import { OrderError, type CheckoutProduct, type HoldResult, type NewPayment, type OrderRepo, type PlaceOrderArgs } from "./repo";
 import type { Order, OrderDetail, Payment, PaymentStatus } from "./types";
 
@@ -33,6 +34,8 @@ export function mapOrder(r: any): Order {
     packedAt: r.packed_at,
     shippedAt: r.shipped_at,
     deliveredAt: r.delivered_at,
+    cancelledAt: r.cancelled_at ?? null,
+    adminNotes: r.admin_notes ?? null,
   };
 }
 
@@ -206,11 +209,7 @@ export class SupabaseOrderRepo implements OrderRepo {
   }
 
   async uploadProof(orderId: string, file: { name: string; type: string; bytes: ArrayBuffer }) {
-    const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
-    const path = `${orderId}/${Date.now()}.${ext}`;
-    const { error } = await this.db.storage.from("payment-proofs").upload(path, file.bytes, { contentType: file.type, upsert: false });
-    if (error) throw error;
-    return path;
+    return uploadPrivate("payment-proofs", `${orderId}/${safeName(file.name)}`, file.bytes, file.type);
   }
 
   async expireHolds() {

@@ -12,8 +12,8 @@
 | 2 | Shop All + filters, category pages, product pages, search, wishlist, recently viewed | ✅ Done |
 | 3 | Cart, checkout, item reservation, PayMongo, bank transfer, layaway, emails, order tracking | ✅ Done |
 | 4 | Customer accounts (email + Google) | ✅ Done |
-| 5 | Admin dashboard | ⏳ Next |
-| 6 | Meta Pixel + CAPI, catalog feed, OG images, sitemap, schema.org | — |
+| 5 | Admin dashboard | ✅ Done |
+| 6 | Meta Pixel + CAPI, catalog feed, OG images, sitemap, schema.org | ⏳ Next |
 
 ## Run locally
 
@@ -38,6 +38,7 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 | `PAYMENTS_MOCK=1` | Local demos only: simulates online payments when no PayMongo key is set |
 | `CRON_SECRET` | Protects `/api/cron/expire-holds` |
 | `ACCOUNTS_DEMO=1` | Local demos only: in-memory demo accounts when Supabase isn't configured |
+| `DEMO_ADMIN_EMAILS` | Demo mode only: which demo accounts get admin access |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Order emails (Phase 3) |
 | `NEXT_PUBLIC_META_PIXEL_ID`, `META_CAPI_ACCESS_TOKEN` | Meta Pixel + Conversions API (Phase 6) |
 | `NEXT_PUBLIC_MESSENGER_USERNAME`, `NEXT_PUBLIC_VIBER_NUMBER`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_INSTAGRAM_HANDLE` | Contact and chat links |
@@ -85,6 +86,9 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 | `/auth/callback` | Return URL for Google, email confirmation and sign-in links |
 | `/account`, `/account/orders`, `/account/wishlist`, `/account/addresses`, `/account/profile` | Customer account area |
 | `/api/account/session`, `/api/account/wishlist` | Sign-in check and wishlist sync for client components |
+| `/sell-to-us`, `/api/consign` | "Sell to Us / Consign" form (photos go to a private bucket) |
+| `/admin/…` | Admin dashboard (staff/admin only) |
+| `/api/admin/upload` | Staff uploads (product photos, certificates, hero image) |
 | `/api/cron/expire-holds` | Expiry sweep (cron) |
 
 **How catalog data works:** `lib/data.ts` loads the whole public catalog in one query, caches it for 60s with the tag `catalog`, and runs filtering, facet counts and search in memory (`lib/filters.ts`). That suits a one-of-a-kind inventory of up to a few thousand pieces. Beyond roughly 5,000, move filtering into SQL. Within each sort, available pieces come first, then reserved, then sold. Facet counts apply every *other* active filter, so no option leads to zero results.
@@ -158,6 +162,35 @@ Accounts are optional, and guest checkout always works. Signed-in customers get:
 4. **Optional:** under Authentication → Email Templates, brand the confirmation and sign-in-link emails.
 
 **Demo without Supabase:** `ACCOUNTS_DEMO=1 PAYMENTS_MOCK=1 npm run dev` enables in-memory demo accounts. "Continue with Google" signs in a sample Google user, and everything resets on restart.
+
+## Admin dashboard (Phase 5)
+
+`/admin` is for accounts whose `profiles.role` is `staff` or `admin`. To grant access:
+```sql
+update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');
+```
+- **Guests** are sent to sign in.
+- **Signed-in non-staff** get a 404, so the admin isn't advertised.
+- **Every admin action and upload checks the role on the server.** The page layout's check isn't relied on.
+- **Settings:** only `admin` can change them; `staff` can do everything else.
+
+| Section | What it does |
+| --- | --- |
+| **Dashboard** | Needs-attention list (proofs to verify, orders to pack or ship, flagged orders, new consignments). Revenue received, pieces sold, average piece value, outstanding balances. Revenue per day (7 / 30 / 90 days / all time), top brands, payments by method, inventory counts. |
+| **Orders** | Tabs: needs action, proof to verify, pending, to pack/ship, shipped, delivered, layaway, closed. Search by order number, name, email or phone. |
+| **Order detail** | **Verify bank-transfer proofs:** view the image or PDF. Approve to record the payment and email the customer. Reject with a reason to email the customer and give them another 24 h to re-upload.<br>**Record a payment received without an upload:** cash or card at meet-up, or a direct transfer.<br>**Fulfilment:** Paid → **Packed** → **Shipped** (courier + tracking required for deliveries; email sent) → **Delivered**. Meet-up and pickup orders say "Ready" instead.<br>**Also:** cancel unpaid orders (releases the pieces), staff-only notes, quick Viber/WhatsApp links. |
+| **Products** | Create, edit and delete. **Drag-and-drop photo upload** (up to 15): photos are resized in the browser to ≤2000 px and can be reordered by mouse, touch or keyboard (Space + arrows). The first photo is the cover.<br>**Fields:** brand (pick or type a new one), model, title and URL auto-filled, category/type, price and "was" price, condition grade and notes, inclusions, authenticity method and certificate upload, per-category specs plus custom fields, color, description, video, status, featured.<br>**Quick status menu** in the list. A piece that's on an order can't be deleted; hide it instead. |
+| **Layaway** | Active plans with progress, next due date and overdue flags, plus outstanding totals. |
+| **Consignments** | Inbox for `/sell-to-us` submissions: photos, details, status (new → reviewing → offered → accepted/declined → received), notes, quick contact links. |
+| **Customers** | Account holders and guest buyers merged by email, with order count, amount paid and last order. |
+| **Homepage** | Upload the hero image, edit every hero line with a live preview, and pick the **Curated Picks** shown above New Arrivals. |
+| **Settings** | Payment methods on/off ("Coming soon" when off), layaway on/off and terms, shipping rates and free-shipping threshold, meet-up and pickup, hold durations, bank accounts, staff notification email. |
+
+Changes in the admin refresh the affected storefront pages immediately.
+
+**Storage buckets:** `product-media` and `site-assets` (public); `payment-proofs` and `consignments` (private, viewed by staff through short-lived signed links).
+
+**Demo:** with `ACCOUNTS_DEMO=1`, create an account as `admin@highluxmnl.com` (or any address in `DEMO_ADMIN_EMAILS`) to open `/admin`.
 
 ## Design system
 
