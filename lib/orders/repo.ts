@@ -77,6 +77,7 @@ export interface OrderRepo {
   pauseHold(orderId: string): Promise<void>;
   uploadProof(orderId: string, file: { name: string; type: string; bytes: ArrayBuffer }): Promise<string>;
   expireHolds(): Promise<number>;
+  setAttribution(orderId: string, attribution: import("./types").OrderAttribution): Promise<void>;
   /** A customer's orders, newest first. */
   listOrdersForUser(userId: string): Promise<OrderDetail[]>;
   /** Attach earlier guest orders placed with this (verified) email to the account. Returns how many. */

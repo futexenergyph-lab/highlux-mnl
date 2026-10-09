@@ -19,7 +19,8 @@ import { orderPlacedEmail, orderUrl, paymentReceivedEmail, proofReceivedEmail, s
 import { site } from "@/lib/site";
 import type { CategorySlug } from "@/lib/types";
 import { getOrderRepo, OrderError } from "./repo";
-import { amountDueNow, type OrderDetail, type ShippingAddress } from "./types";
+import { amountDueNow, type OrderAttribution, type OrderDetail, type ShippingAddress } from "./types";
+import { sendCapiEvent } from "@/lib/meta/capi";
 
 /** Bust cached catalog pages after any status change. */
 async function refreshProducts(ids: string[]) {
@@ -69,7 +70,7 @@ function holdMinutesFor(method: PaymentMethod, s: Awaited<ReturnType<typeof getC
   return s.holds.meetupHours * 60;
 }
 
-export async function placeOrder(input: PlaceOrderInput, sessionId: string, userId: string | null = null): Promise<PlaceOrderResult> {
+export async function placeOrder(input: PlaceOrderInput, sessionId: string, userId: string | null = null, attribution?: OrderAttribution): Promise<PlaceOrderResult> {
   const settings = await getCheckoutSettings();
   const repo = await getOrderRepo();
   const online = onlinePaymentsMode() !== "off";
@@ -117,6 +118,7 @@ export async function placeOrder(input: PlaceOrderInput, sessionId: string, user
   }
 
   await refreshProducts(input.productIds);
+  if (attribution) await repo.setAttribution(order.id, attribution).catch((e) => console.error("[checkout] attribution not saved", e));
   const detail = (await repo.getOrder(order.orderNumber))!;
 
   const mail = orderPlacedEmail(detail, settings);
@@ -181,6 +183,26 @@ export async function confirmPayment(paymentId: string) {
   const order = await repo.recordPayment(paymentId);
   const detail = (await repo.getOrder(order.orderNumber))!;
   await refreshProducts(detail.items.map((i) => i.productId));
+
+  // Purchase (server side) the moment the order becomes fully paid; the browser sends the same event_id.
+  const wasPaid = detail.amountPaid - before.amount >= detail.total;
+  if (!wasPaid && detail.amountPaid >= detail.total) {
+    await sendCapiEvent({
+      name: "Purchase",
+      eventId: `purchase_${detail.id}`,
+      url: `${site.url}/orders/${detail.orderNumber}`,
+      user: {
+        email: detail.email,
+        phone: detail.phone,
+        fullName: detail.fullName,
+        city: detail.shippingAddress?.city,
+        zip: detail.shippingAddress?.zip,
+        externalId: detail.userId,
+        attribution: detail.attribution,
+      },
+      custom: { value: detail.total, content_ids: detail.items.map((i) => i.productId), content_type: "product", num_items: detail.items.length, order_id: detail.orderNumber },
+    });
+  }
   const settings = await getCheckoutSettings();
   const mail = paymentReceivedEmail(detail, before.amount);
   const staff = staffNotificationEmail(detail, detail.needsReview ? "PAYMENT NEEDS REVIEW (item no longer held)" : "Payment received");

@@ -36,6 +36,7 @@ export function mapOrder(r: any): Order {
     deliveredAt: r.delivered_at,
     cancelledAt: r.cancelled_at ?? null,
     adminNotes: r.admin_notes ?? null,
+    attribution: r.attribution ?? null,
   };
 }
 
@@ -140,6 +141,11 @@ export class SupabaseOrderRepo implements OrderRepo {
       .maybeSingle();
     if (error) throw error;
     return data ? this.detail(data) : null;
+  }
+
+  async setAttribution(orderId: string, attribution: import("./types").OrderAttribution) {
+    const { error } = await this.db.from("orders").update({ attribution }).eq("id", orderId);
+    if (error) throw error;
   }
 
   async listOrdersForUser(userId: string): Promise<OrderDetail[]> {

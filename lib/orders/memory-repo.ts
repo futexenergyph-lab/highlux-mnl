@@ -227,6 +227,11 @@ export class MemoryOrderRepo implements OrderRepo {
     return uploadPrivate("payment-proofs", `${orderId}/${safeName(file.name)}`, file.bytes, file.type);
   }
 
+  async setAttribution(orderId: string, attribution: import("./types").OrderAttribution) {
+    const o = this.s.orders.find((x) => x.id === orderId);
+    if (o) o.attribution = attribution;
+  }
+
   async listOrdersForUser(userId: string) {
     const mine = this.s.orders.filter((o) => o.userId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return Promise.all(mine.map((o) => this.getOrder(o.orderNumber).then((d) => d!)));

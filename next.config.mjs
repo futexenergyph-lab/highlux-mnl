@@ -7,8 +7,11 @@ const nextConfig = {
   // Proof-of-payment uploads (max 8 MB) go through a server action.
   experimental: {
     serverActions: { bodySizeLimit: "10mb" },
-    // The watermark logo is read from disk at runtime by the upload route.
-    outputFileTracingIncludes: { "/api/admin/upload": ["./lib/watermark/**"] },
+    // Share-image routes read fonts/placeholders, and the upload route the watermark logo, from disk at runtime.
+    outputFileTracingIncludes: {
+      "/**": ["./assets/fonts/**/*", "./public/placeholders/**/*"],
+      "/api/admin/upload": ["./lib/watermark/**"],
+    },
   },
   images: {
     dangerouslyAllowSVG: true,

@@ -24,6 +24,7 @@ import type { SavedAddress } from "@/lib/account/types";
 import { METRO_MANILA_CITIES } from "@/lib/ph";
 import { cn, formatPHP } from "@/lib/utils";
 import { placeOrderAction } from "./actions";
+import { trackMeta } from "@/components/meta/pixel";
 
 interface Config extends PricingConfig {
   layaway: PricingConfig["layaway"] & { terms: string };
@@ -186,6 +187,15 @@ export function CheckoutForm({ config, account }: { config: Config; account: Acc
   }, [requestHold]);
 
   const onExpire = React.useCallback(() => setHold({ kind: "expired" }), []);
+
+  // InitiateCheckout once per visit, after the pieces are actually held.
+  const initiated = React.useRef(false);
+  React.useEffect(() => {
+    if (hold.kind !== "held" || initiated.current || !live) return;
+    initiated.current = true;
+    const held = items.filter((i) => !lost.includes(i.productId));
+    trackMeta("InitiateCheckout", { productIds: held.map((i) => i.productId), value: held.reduce((s, i) => s + (live.find((p) => p.id === i.productId)?.price ?? i.price), 0) });
+  }, [hold.kind, live, items, lost]);
 
   // Pricing preview (the server recomputes everything).
   const byId = new Map((live ?? []).map((p) => [p.id, p]));

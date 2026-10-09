@@ -1,9 +1,24 @@
+/**
+ * Absolute site URL for emails, PayMongo return URLs, canonical tags and share
+ * images. NEXT_PUBLIC_SITE_URL wins; on Vercel it falls back to the project's
+ * production domain (or this deployment's URL for previews).
+ */
+function siteUrl() {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  if (explicit) return explicit.replace(/\/$/, "");
+  const vercel =
+    process.env.VERCEL_ENV === "preview"
+      ? process.env.VERCEL_URL ?? process.env.NEXT_PUBLIC_VERCEL_URL
+      : process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+  return vercel ? `https://${vercel}` : "http://localhost:3000";
+}
+
 export const site = {
   name: "HIGHLUX MNL",
   tagline: "Authentic Luxury, Timeless Investment.",
   description:
     "Authentic pre-loved luxury bags, watches, diamonds and jewelry in the Philippines. 100% authentic with money-back guarantee. Nationwide shipping.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  url: siteUrl(),
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "highluxmnl@gmail.com",
   phone: "+63 968 477 2475",
   address: "By appointment · Quezon City, Metro Manila",

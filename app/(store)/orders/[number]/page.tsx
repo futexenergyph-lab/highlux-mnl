@@ -13,6 +13,7 @@ import { contactLinks } from "@/lib/site";
 import { cn, formatPHP } from "@/lib/utils";
 import { PayPanel } from "./pay-panel";
 import { PaymentPoller } from "./payment-poller";
+import { TrackPurchase } from "@/components/meta/pixel";
 
 export const metadata: Metadata = { title: "Your Order", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -86,6 +87,7 @@ export default async function OrderPage({ params, searchParams }: { params: { nu
       </header>
 
       {justPaid && <PaymentPoller />}
+      {order.amountPaid >= order.total && <TrackPurchase orderId={order.id} value={order.total} productIds={order.items.map((i) => i.productId)} />}
 
       {status === "expired" && (
         <div className="mt-8 flex items-start gap-3 border border-red-400/40 bg-red-500/10 p-4 text-sm text-red-200">

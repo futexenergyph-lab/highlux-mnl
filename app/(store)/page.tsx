@@ -8,6 +8,8 @@ import { Reviews } from "@/components/home/reviews";
 import { SocialStrip } from "@/components/home/social-strip";
 import { Newsletter } from "@/components/home/newsletter";
 import { getFeatured, getHomeContent, getNewArrivals, getReviews } from "@/lib/data";
+import { JsonLd } from "@/components/seo/json-ld";
+import { contactLinks, site } from "@/lib/site";
 
 export const revalidate = 60;
 
@@ -16,6 +18,30 @@ export default async function HomePage() {
 
   return (
     <>
+      <JsonLd
+        data={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Store",
+            name: site.name,
+            slogan: site.tagline,
+            url: site.url,
+            logo: `${site.url}/opengraph-image`,
+            email: site.email,
+            telephone: site.phone,
+            address: { "@type": "PostalAddress", addressLocality: "Makati City", addressRegion: "Metro Manila", addressCountry: "PH" },
+            sameAs: [contactLinks.facebook(), contactLinks.instagram()],
+            priceRange: "₱₱₱",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: site.name,
+            url: site.url,
+            potentialAction: { "@type": "SearchAction", target: `${site.url}/shop?q={search_term_string}`, "query-input": "required name=search_term_string" },
+          },
+        ]}
+      />
       <Hero content={content} />
       <div className="lg:hidden">
         <TrustBar />

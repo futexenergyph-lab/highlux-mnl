@@ -6,6 +6,7 @@ import { getOrCreateSessionId } from "@/lib/session";
 import { getCurrentUser } from "@/lib/auth/server";
 import { getAccountRepo } from "@/lib/account/repo";
 import { METRO_MANILA_CITIES } from "@/lib/ph";
+import { requestAttribution } from "@/lib/meta/capi";
 
 const phone = z
   .string()
@@ -57,7 +58,7 @@ export async function placeOrderAction(payload: CheckoutPayload): Promise<PlaceO
     const { saveAddress, ...input } = parsed.data;
     // Signed-in orders always use the account email, so they show up under My Orders.
     if (user) input.email = user.email;
-    const result = await placeOrder(input, getOrCreateSessionId(), user?.id ?? null);
+    const result = await placeOrder(input, getOrCreateSessionId(), user?.id ?? null, requestAttribution());
     if (result.ok && user && saveAddress && input.shippingAddress) {
       await (await getAccountRepo())
         .saveAddress(user, { label: "Home", fullName: input.fullName, phone: input.phone, ...input.shippingAddress })
