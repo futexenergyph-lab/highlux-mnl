@@ -20,8 +20,9 @@ export function Hero({ content }: { content: HomeContent }) {
         className="-z-20 object-cover object-[70%_center] lg:object-center"
         unoptimized={content.heroImageUrl.endsWith(".svg")}
       />
-      {/* Legibility: dark left-to-right wash + bottom fade into the trust bar */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink via-ink/75 to-ink/10 lg:via-ink/55 lg:to-transparent" />
+      {/* Legibility: overall shade, dark left-to-right wash, and bottom fade into the trust bar */}
+      <div className="absolute inset-0 -z-10 bg-ink/45" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink/95 via-ink/70 to-ink/20 lg:via-ink/55 lg:to-ink/10" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-transparent to-ink/30" />
 
       <div className="container flex min-h-[480px] flex-col justify-center pb-10 pt-10 sm:min-h-[620px] lg:min-h-[640px] lg:pb-36 lg:pt-20">

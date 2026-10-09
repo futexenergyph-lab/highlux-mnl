@@ -152,8 +152,17 @@ export const getReviews = cache(async (): Promise<Review[]> => {
   return data ?? [];
 });
 
+/** The starter illustration stored by the seed; treated as "not set" so the boutique photo shows instead. */
+const LEGACY_HERO = "/placeholders/hero.svg";
+
 export const getHomeContent = cache(async (): Promise<HomeContent> => {
-  if (!isSupabaseConfigured()) return { ...DEFAULT_HOME_CONTENT, ...(getMemorySetting<HomeContent>("home") ?? {}) };
-  const { data } = await createPublicClient().from("site_settings").select("value").eq("key", "home").maybeSingle();
-  return { ...DEFAULT_HOME_CONTENT, ...((data?.value as Partial<HomeContent>) ?? {}) };
+  let saved: Partial<HomeContent>;
+  if (!isSupabaseConfigured()) saved = getMemorySetting<HomeContent>("home") ?? {};
+  else {
+    const { data } = await createPublicClient().from("site_settings").select("value").eq("key", "home").maybeSingle();
+    saved = (data?.value as Partial<HomeContent>) ?? {};
+  }
+  const content = { ...DEFAULT_HOME_CONTENT, ...saved };
+  if (!content.heroImageUrl || content.heroImageUrl === LEGACY_HERO) content.heroImageUrl = DEFAULT_HOME_CONTENT.heroImageUrl;
+  return content;
 });
