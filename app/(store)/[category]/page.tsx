@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Listing } from "@/components/shop/listing";
-import { CATEGORIES, categoryBySlug } from "@/lib/catalog";
+import { CATEGORIES, categoryBySlug, productType } from "@/lib/catalog";
 import { parseFilters } from "@/lib/filters";
 import { queryProducts } from "@/lib/data";
 
@@ -34,7 +34,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
   if (!cat) notFound();
   const filters = parseFilters(searchParams, cat.slug);
   const result = await queryProducts(filters);
-  const type = cat.subCategories.find((s) => s.slug === filters.type);
+  const type = filters.type ? productType(cat, filters.type) : undefined;
 
   return (
     <Listing

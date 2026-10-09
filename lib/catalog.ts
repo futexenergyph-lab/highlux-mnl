@@ -21,6 +21,7 @@ export const CATEGORIES: CategoryDef[] = [
       { name: "Tote Bags", slug: "tote-bags" },
       { name: "Clutches & Pouches", slug: "clutches-pouches" },
       { name: "Backpacks", slug: "backpacks" },
+      { name: "Messenger Bags", slug: "messenger-bags" },
     ],
   },
   {
@@ -61,6 +62,11 @@ export const CATEGORIES: CategoryDef[] = [
     ],
   },
 ];
+
+/** A product's type: one of the category's listed types, or a custom one typed in admin ("Others"). */
+export function productType(cat: CategoryDef, value: string) {
+  return cat.subCategories.find((s) => s.slug === value) ?? (value ? { name: value, slug: value } : undefined);
+}
 
 export const BRANDS: Brand[] = [
   { name: "Hermès", slug: "hermes", categories: ["bags", "jewelry", "accessories"] },

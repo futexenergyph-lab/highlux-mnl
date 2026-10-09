@@ -8,7 +8,7 @@ import { ProductActions, StickyBuyBar, type ActionProduct } from "@/components/p
 import { AuthenticityBlock, ConditionMeter, Inclusions, SpecsTable } from "@/components/product/product-details";
 import { ProductCard } from "@/components/product/product-card";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
-import { CATEGORIES, categoryBySlug, productHref } from "@/lib/catalog";
+import { CATEGORIES, categoryBySlug, productHref, productType } from "@/lib/catalog";
 import { getCatalog, getProduct, getRelated } from "@/lib/data";
 import { getCheckoutSettings } from "@/lib/checkout/settings";
 import { site } from "@/lib/site";
@@ -48,7 +48,7 @@ export default async function ProductPage({ params }: { params: Params }) {
   const p = await load(params);
   if (!p) notFound();
   const cat = categoryBySlug(p.category)!;
-  const sub = cat.subCategories.find((s) => s.slug === p.subCategory);
+  const sub = productType(cat, p.subCategory);
   const [related, checkout] = await Promise.all([getRelated(p), getCheckoutSettings()]);
   const layaway = checkout.layaway.enabled;
   const cardOnline = !checkout.disabledMethods.includes("card");
@@ -107,7 +107,7 @@ export default async function ProductPage({ params }: { params: Params }) {
           items={[
             { label: "Home", href: "/" },
             { label: cat.tileTitle, href: `/${cat.slug}` },
-            ...(sub ? [{ label: sub.name, href: `/${cat.slug}?type=${sub.slug}` }] : []),
+            ...(sub ? [{ label: sub.name, href: `/${cat.slug}?type=${encodeURIComponent(sub.slug)}` }] : []),
             { label: p.model },
           ]}
         />

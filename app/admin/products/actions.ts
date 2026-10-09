@@ -18,7 +18,7 @@ const schema = z
     title: z.string().trim().min(3, "Title is required").max(200),
     slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "URL slug: lowercase letters, numbers and dashes").max(120),
     category: z.enum(CATEGORIES.map((c) => c.slug) as [CategorySlug, ...CategorySlug[]]),
-    subCategory: z.string().min(1, "Choose a type"),
+    subCategory: z.string().trim().min(1, "Choose a type").max(40, "Type is too long"),
     price: z.coerce.number().positive("Price must be more than 0").max(100_000_000),
     compareAtPrice: z.union([z.coerce.number().positive(), z.literal("").transform(() => null), z.null()]),
     condition: z.enum(Object.keys(CONDITION_LABELS) as [ConditionGrade, ...ConditionGrade[]]),
@@ -36,7 +36,9 @@ const schema = z
   })
   .superRefine((v, ctx) => {
     const cat = CATEGORIES.find((c) => c.slug === v.category)!;
-    if (!cat.subCategories.some((s) => s.slug === v.subCategory)) ctx.addIssue({ code: "custom", path: ["subCategory"], message: "Choose a type for this category" });
+    // Listed types are stored by slug; "Others" stores the typed name. Reject another category's slug.
+    const otherCat = CATEGORIES.some((c) => c.slug !== cat.slug && c.subCategories.some((s) => s.slug === v.subCategory));
+    if (otherCat && !cat.subCategories.some((s) => s.slug === v.subCategory)) ctx.addIssue({ code: "custom", path: ["subCategory"], message: "Choose a type for this category" });
     if (v.compareAtPrice != null && v.compareAtPrice <= v.price) ctx.addIssue({ code: "custom", path: ["compareAtPrice"], message: "“Was” price must be higher than the price" });
     if (v.status !== "hidden" && v.images.length === 0) ctx.addIssue({ code: "custom", path: ["images"], message: "Add at least one photo (or save as Hidden)" });
   });
