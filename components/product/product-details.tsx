@@ -2,7 +2,7 @@ import { Check, Minus, ShieldCheck } from "lucide-react";
 import { CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type ConditionGrade, type Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const GRADES: ConditionGrade[] = ["good", "very_good", "excellent", "pristine", "brand_new"];
+const GRADES: ConditionGrade[] = ["well_used", "fair", "good", "very_good", "excellent", "pristine", "brand_new"];
 
 const GRADE_COPY: Record<ConditionGrade, string> = {
   brand_new: "Unused, with store tags or protective plastic intact.",
@@ -10,6 +10,8 @@ const GRADE_COPY: Record<ConditionGrade, string> = {
   excellent: "Lightly used. Minimal wear visible only on close inspection.",
   very_good: "Gently used. Light visible wear such as minor scratches or rubbing.",
   good: "Used with visible wear. Fully functional; priced accordingly.",
+  fair: "Noticeable wear such as scuffs, corner rubbing or creasing. Fully functional; priced accordingly.",
+  well_used: "Heavy signs of use — a loved piece with character. Details in the condition notes.",
 };
 
 export function ConditionMeter({ grade }: { grade: ConditionGrade }) {
@@ -18,14 +20,14 @@ export function ConditionMeter({ grade }: { grade: ConditionGrade }) {
     <div>
       <div className="flex items-baseline justify-between">
         <span className="font-serif text-lg text-cream">{CONDITION_LABELS[grade]}</span>
-        <span className="text-xs text-cream-dim">{level + 1} of 5</span>
+        <span className="text-xs text-cream-dim">{level + 1} of {GRADES.length}</span>
       </div>
-      <div className="mt-2 grid grid-cols-5 gap-1" aria-hidden>
+      <div className="mt-2 grid grid-cols-7 gap-1" aria-hidden>
         {GRADES.map((g, i) => (
           <span key={g} className={cn("h-1.5", i <= level ? "bg-gold-gradient" : "bg-cream/10")} />
         ))}
       </div>
-      <div className="mt-1.5 grid grid-cols-5 gap-1 text-[0.55rem] uppercase tracking-wider text-cream-dim" aria-hidden>
+      <div className="mt-1.5 grid grid-cols-7 gap-1 text-[0.5rem] uppercase leading-tight tracking-wider text-cream-dim" aria-hidden>
         {GRADES.map((g) => (
           <span key={g} className="text-center">{CONDITION_LABELS[g]}</span>
         ))}

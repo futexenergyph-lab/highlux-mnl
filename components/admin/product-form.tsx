@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExternalLink, FileUp, Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { CATEGORIES } from "@/lib/catalog";
+import { brandOptions } from "@/lib/brand-options";
 import { CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type CategorySlug, type ConditionGrade, type Inclusion, type Product, type ProductImage, type ProductStatus } from "@/lib/types";
 import { uploadFile } from "@/lib/client/upload";
 import { cn, slugify } from "@/lib/utils";
@@ -67,9 +68,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function ProductForm({ product, brands, lockedByOrder }: { product?: Product; brands: string[]; lockedByOrder?: boolean }) {
+const OTHER_BRAND = "__other__";
+
+export function ProductForm({ product, brands: existingBrands, lockedByOrder }: { product?: Product; brands: string[]; lockedByOrder?: boolean }) {
+  const brands = React.useMemo(() => brandOptions(existingBrands), [existingBrands]);
   const router = useRouter();
   const [brandName, setBrand] = React.useState(product?.brand ?? "");
+  const [brandOther, setBrandOther] = React.useState(!!product?.brand && !brands.includes(product.brand));
   const [model, setModel] = React.useState(product?.model ?? "");
   const [title, setTitle] = React.useState(product?.title ?? "");
   const [titleTouched, setTitleTouched] = React.useState(!!product);
@@ -158,9 +163,33 @@ export function ProductForm({ product, brands, lockedByOrder }: { product?: Prod
 
       <Section title="Item">
         <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Category">
+            <select value={category} onChange={(e) => { setCategory(e.target.value as CategorySlug); setSub(""); }} className={inputCls}>
+              {CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.tileTitle}</option>)}
+            </select>
+          </Field>
+          <Field label="Type" error={fe("subCategory")}>
+            <select value={subCategory} onChange={(e) => setSub(e.target.value)} required className={inputCls}>
+              <option value="">Choose…</option>
+              {cat.subCategories.map((s) => <option key={s.slug} value={s.slug}>{s.name}</option>)}
+            </select>
+          </Field>
           <Field label="Brand" error={fe("brandName")}>
-            <input list="brand-list" value={brandName} onChange={(e) => setBrand(e.target.value)} required className={inputCls} placeholder="Choose or type a new brand" />
-            <datalist id="brand-list">{brands.map((b) => <option key={b} value={b} />)}</datalist>
+            <select
+              value={brandOther ? OTHER_BRAND : brandName}
+              onChange={(e) => {
+                const v = e.target.value;
+                setBrandOther(v === OTHER_BRAND);
+                setBrand(v === OTHER_BRAND ? "" : v);
+              }}
+              required
+              className={inputCls}
+            >
+              <option value="">Choose a brand…</option>
+              {brands.map((b) => <option key={b} value={b}>{b}</option>)}
+              <option value={OTHER_BRAND}>Others</option>
+            </select>
+            {brandOther && <input value={brandName} onChange={(e) => setBrand(e.target.value)} required autoFocus className={cn(inputCls, "mt-2")} placeholder="Type the brand name" />}
           </Field>
           <Field label="Model" error={fe("model")}>
             <input value={model} onChange={(e) => setModel(e.target.value)} required className={inputCls} placeholder="Speedy 30" />
@@ -173,17 +202,6 @@ export function ProductForm({ product, brands, lockedByOrder }: { product?: Prod
               <span className="flex h-10 items-center border border-r-0 border-gold/25 bg-ink-100 px-3 text-xs text-cream-dim">/{category}/</span>
               <input value={slug} onChange={(e) => { setSlug(slugify(e.target.value)); setSlugTouched(true); }} required className={inputCls} />
             </div>
-          </Field>
-          <Field label="Category">
-            <select value={category} onChange={(e) => { setCategory(e.target.value as CategorySlug); setSub(""); }} className={inputCls}>
-              {CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.tileTitle}</option>)}
-            </select>
-          </Field>
-          <Field label="Type" error={fe("subCategory")}>
-            <select value={subCategory} onChange={(e) => setSub(e.target.value)} required className={inputCls}>
-              <option value="">Choose…</option>
-              {cat.subCategories.map((s) => <option key={s.slug} value={s.slug}>{s.name}</option>)}
-            </select>
           </Field>
           <Field label="Color (for the color filter)">
             <input value={color} onChange={(e) => setColor(e.target.value)} className={inputCls} placeholder="Black, Brown, Gold…" />
@@ -221,7 +239,7 @@ export function ProductForm({ product, brands, lockedByOrder }: { product?: Prod
       </Section>
 
       <Section title="Condition">
-        <div className="grid gap-2 sm:grid-cols-5">
+        <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-7">
           {(Object.keys(CONDITION_LABELS) as ConditionGrade[]).map((c) => (
             <label key={c} className={cn("cursor-pointer border p-2.5 text-center text-sm", condition === c ? "border-gold bg-gold/[0.06] text-gold-light" : "border-gold/15 text-cream-muted")}>
               <input type="radio" className="sr-only" checked={condition === c} onChange={() => setCondition(c)} />

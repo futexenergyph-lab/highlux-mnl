@@ -1,6 +1,6 @@
 export type CategorySlug = "bags" | "watches" | "jewelry" | "accessories";
 
-export type ConditionGrade = "brand_new" | "pristine" | "excellent" | "very_good" | "good";
+export type ConditionGrade = "brand_new" | "pristine" | "excellent" | "very_good" | "good" | "fair" | "well_used";
 export type ProductStatus = "available" | "reserved" | "sold" | "hidden";
 
 export const CONDITION_LABELS: Record<ConditionGrade, string> = {
@@ -9,6 +9,8 @@ export const CONDITION_LABELS: Record<ConditionGrade, string> = {
   excellent: "Excellent",
   very_good: "Very Good",
   good: "Good",
+  fair: "Fair",
+  well_used: "Well-used",
 };
 
 export const INCLUSION_OPTIONS = [
