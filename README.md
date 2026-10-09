@@ -11,8 +11,8 @@
 | 1 | Scaffold, design system, homepage, catalog schema + seed | ✅ Done |
 | 2 | Shop All + filters, category pages, product pages, search, wishlist, recently viewed | ✅ Done |
 | 3 | Cart, checkout, item reservation, PayMongo, bank transfer, layaway, emails, order tracking | ✅ Done |
-| 4 | Customer accounts (email + Google) | ⏳ Next |
-| 5 | Admin dashboard | — |
+| 4 | Customer accounts (email + Google) | ✅ Done |
+| 5 | Admin dashboard | ⏳ Next |
 | 6 | Meta Pixel + CAPI, catalog feed, OG images, sitemap, schema.org | — |
 
 ## Run locally
@@ -37,6 +37,7 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 | `PAYMONGO_SECRET_KEY`, `PAYMONGO_WEBHOOK_SECRET` | GCash, Maya and card payments via PayMongo Checkout |
 | `PAYMENTS_MOCK=1` | Local demos only: simulates online payments when no PayMongo key is set |
 | `CRON_SECRET` | Protects `/api/cron/expire-holds` |
+| `ACCOUNTS_DEMO=1` | Local demos only: in-memory demo accounts when Supabase isn't configured |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Order emails (Phase 3) |
 | `NEXT_PUBLIC_META_PIXEL_ID`, `META_CAPI_ACCESS_TOKEN` | Meta Pixel + Conversions API (Phase 6) |
 | `NEXT_PUBLIC_MESSENGER_USERNAME`, `NEXT_PUBLIC_VIBER_NUMBER`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_INSTAGRAM_HANDLE` | Contact and chat links |
@@ -80,6 +81,10 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 | `/track-order` | Find an order by number + email |
 | `/api/checkout/hold`, `/api/checkout/release` | Start or end a checkout hold |
 | `/api/webhooks/paymongo` | PayMongo payment webhook |
+| `/login` | Sign in, create account, email sign-in link, Google |
+| `/auth/callback` | Return URL for Google, email confirmation and sign-in links |
+| `/account`, `/account/orders`, `/account/wishlist`, `/account/addresses`, `/account/profile` | Customer account area |
+| `/api/account/session`, `/api/account/wishlist` | Sign-in check and wishlist sync for client components |
 | `/api/cron/expire-holds` | Expiry sweep (cron) |
 
 **How catalog data works:** `lib/data.ts` loads the whole public catalog in one query, caches it for 60s with the tag `catalog`, and runs filtering, facet counts and search in memory (`lib/filters.ts`). That suits a one-of-a-kind inventory of up to a few thousand pieces. Beyond roughly 5,000, move filtering into SQL. Within each sort, available pieces come first, then reserved, then sold. Facet counts apply every *other* active filter, so no option leads to zero results.
@@ -129,6 +134,30 @@ The server refuses both even if someone tampers with the request. To turn them o
 **Emails** go through Resend (`RESEND_API_KEY`). Customers get: order received (with bank or layaway instructions), proof received, and payment received. Staff get notified of new orders, proofs and payments. Without a key, emails are only logged to the console.
 
 **Demo without any keys:** without Supabase, orders live in server memory (`lib/orders/memory-repo.ts`, which mirrors the SQL functions) and reset on restart. Run `PAYMENTS_MOCK=1 npm run dev` to walk the whole flow with simulated GCash/Maya/card.
+
+## Customer accounts (Phase 4)
+
+Accounts are optional, and guest checkout always works. Signed-in customers get:
+- **Order history:** includes their earlier guest orders. Any unclaimed order placed with the account's *verified* email is attached the first time they open their account.
+- **Balance due and layaway status** on the overview.
+- **Wishlist on every device:** device and account wishlists merge on sign-in. Signing out clears the device copy, which matters on shared phones.
+- **Saved addresses:** add, edit, delete and set a default. Checkout preselects the default and picks the matching shipping zone, and a new address can be saved during checkout.
+- **Faster checkout:** name, phone and email are prefilled, and orders are tied to the account automatically.
+- **Profile:** edit name and phone; change or add a password.
+
+**Security**
+- Every account table uses row-level security. The account code runs as the signed-in user, so each customer can only read or change their own rows; this is tested in Postgres.
+- Customers can edit their name and phone but can't change their own role.
+- Order pages open for whoever holds the order's private link, or for its owner when signed in. Anyone else gets a 404.
+- Checkout now also checks on the server that the shipping zone matches the address. The cheaper Metro Manila rate requires a Metro Manila city.
+
+**Supabase Auth setup**
+1. **Authentication → Providers → Email:** keep it enabled and leave **Confirm email** on. New customers verify their email before an account is created, and only verified emails claim guest orders.
+2. **Authentication → Providers → Google:** create an OAuth client in Google Cloud Console (APIs & Services → Credentials → OAuth client ID → Web). Add `https://<project-ref>.supabase.co/auth/v1/callback` as an authorised redirect URI, then paste the client ID and secret into Supabase.
+3. **Authentication → URL Configuration:** set the Site URL to your domain and add `https://<your-domain>/auth/callback` (plus `http://localhost:3000/auth/callback` for development) to the Redirect URLs.
+4. **Optional:** under Authentication → Email Templates, brand the confirmation and sign-in-link emails.
+
+**Demo without Supabase:** `ACCOUNTS_DEMO=1 PAYMENTS_MOCK=1 npm run dev` enables in-memory demo accounts. "Continue with Google" signs in a sample Google user, and everything resets on restart.
 
 ## Design system
 

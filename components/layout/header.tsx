@@ -26,6 +26,22 @@ function CartButton() {
   );
 }
 
+function AccountLink() {
+  const { account } = useWishlist();
+  if (account) {
+    return (
+      <Link href="/account" className={cn(iconBtn, "hidden sm:inline-flex")} aria-label={`My account (${account.name})`} title={account.name}>
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gold-gradient font-serif text-sm text-ink">{account.name.charAt(0).toUpperCase()}</span>
+      </Link>
+    );
+  }
+  return (
+    <Link href="/login" className={cn(iconBtn, "hidden sm:inline-flex")} aria-label="Sign in">
+      <User className="h-[22px] w-[22px] lg:h-6 lg:w-6" strokeWidth={1.1} />
+    </Link>
+  );
+}
+
 function WishlistLink() {
   const { wishlist } = useWishlist();
   return (
@@ -147,9 +163,7 @@ export function Header() {
               </button>
             }
           />
-          <Link href="/account" className={cn(iconBtn, "hidden sm:inline-flex")} aria-label="Account">
-            <User className="h-[22px] w-[22px] lg:h-6 lg:w-6" strokeWidth={1.1} />
-          </Link>
+          <AccountLink />
           <WishlistLink />
           <CartButton />
         </div>

@@ -6,7 +6,8 @@ import { AlertCircle, CheckCircle2, Clock, MessageCircle } from "lucide-react";
 import { Breadcrumbs } from "@/components/shop/breadcrumbs";
 import { FULFILLMENT_LABELS, PAYMENT_LABELS, isShipping } from "@/lib/checkout/pricing";
 import { getCheckoutSettings, onlinePaymentsMode } from "@/lib/checkout/settings";
-import { getOrderForToken } from "@/lib/orders/service";
+import { getOrderForViewer } from "@/lib/orders/service";
+import { getCurrentUser } from "@/lib/auth/server";
 import { ORDER_STATUS_LABELS, amountDueNow, hasPendingProof, type OrderDetail, type OrderStatus } from "@/lib/orders/types";
 import { contactLinks } from "@/lib/site";
 import { cn, formatPHP } from "@/lib/utils";
@@ -60,7 +61,8 @@ function Timeline({ order, status }: { order: OrderDetail; status: OrderStatus }
 }
 
 export default async function OrderPage({ params, searchParams }: { params: { number: string }; searchParams: { t?: string; paid?: string } }) {
-  const order = await getOrderForToken(params.number, searchParams.t);
+  const user = await getCurrentUser();
+  const order = await getOrderForViewer(params.number, searchParams.t, user?.id ?? null);
   if (!order) notFound();
   const settings = await getCheckoutSettings();
   const status = displayStatus(order);
@@ -73,7 +75,7 @@ export default async function OrderPage({ params, searchParams }: { params: { nu
 
   return (
     <div className="container max-w-5xl pb-20">
-      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Track Order", href: "/track-order" }, { label: order.orderNumber }]} />
+      <Breadcrumbs items={[{ label: "Home", href: "/" }, user && order.userId === user.id ? { label: "My Orders", href: "/account/orders" } : { label: "Track Order", href: "/track-order" }, { label: order.orderNumber }]} />
 
       <header className="border-b border-gold/15 pb-8 text-center">
         <p className="eyebrow text-gold">Order {order.orderNumber}</p>

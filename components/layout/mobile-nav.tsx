@@ -6,10 +6,12 @@ import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/com
 import { NAV, brandsFor, categoryBySlug } from "@/lib/catalog";
 import { contactLinks } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { useWishlist } from "@/components/wishlist/wishlist-provider";
 
 export function MobileNav({ trigger }: { trigger: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
   const [expanded, setExpanded] = React.useState<string | null>(null);
+  const { account } = useWishlist();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -76,7 +78,7 @@ export function MobileNav({ trigger }: { trigger: React.ReactNode }) {
           <div className="gold-divider my-6" />
           <ul className="space-y-1">
             {[
-              { href: "/account", label: "My Account", Icon: User },
+              account ? { href: "/account", label: `My Account · ${account.name.split(" ")[0]}`, Icon: User } : { href: "/login", label: "Sign in / Create account", Icon: User },
               { href: "/wishlist", label: "Wishlist", Icon: Heart },
               { href: "/track-order", label: "Track Order", Icon: Package },
             ].map(({ href, label, Icon }) => (

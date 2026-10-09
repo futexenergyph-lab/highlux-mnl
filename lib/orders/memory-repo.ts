@@ -228,6 +228,22 @@ export class MemoryOrderRepo implements OrderRepo {
     return path;
   }
 
+  async listOrdersForUser(userId: string) {
+    const mine = this.s.orders.filter((o) => o.userId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return Promise.all(mine.map((o) => this.getOrder(o.orderNumber).then((d) => d!)));
+  }
+
+  async claimGuestOrders(userId: string, email: string) {
+    let n = 0;
+    for (const o of this.s.orders) {
+      if (!o.userId && o.email.toLowerCase() === email.toLowerCase()) {
+        o.userId = userId;
+        n++;
+      }
+    }
+    return n;
+  }
+
   /** Mirrors public.expire_holds(). */
   async expireHolds() {
     const t = now();

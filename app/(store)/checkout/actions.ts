@@ -3,6 +3,9 @@ import { z } from "zod";
 import { FULFILLMENTS, PAYMENT_METHODS, isShipping } from "@/lib/checkout/pricing";
 import { placeOrder, type PlaceOrderResult } from "@/lib/orders/service";
 import { getOrCreateSessionId } from "@/lib/session";
+import { getCurrentUser } from "@/lib/auth/server";
+import { getAccountRepo } from "@/lib/account/repo";
+import { METRO_MANILA_CITIES } from "@/lib/ph";
 
 const phone = z
   .string()
@@ -28,9 +31,16 @@ const schema = z
     notes: z.string().trim().max(500).nullable(),
     paymentMethod: z.enum(PAYMENT_METHODS),
     paymentPlan: z.enum(["full", "layaway"]),
+    saveAddress: z.boolean().optional(),
   })
   .superRefine((v, ctx) => {
     if (isShipping(v.fulfillment) && !v.shippingAddress) ctx.addIssue({ code: "custom", path: ["shippingAddress"], message: "Enter your delivery address" });
+    // The shipping rate depends on the zone, so the address must actually be in it.
+    const a = v.shippingAddress;
+    if (a && v.fulfillment === "ship_metro_manila" && (a.province !== "Metro Manila" || !METRO_MANILA_CITIES.includes(a.city)))
+      ctx.addIssue({ code: "custom", path: ["shippingAddress", "city"], message: "Choose a Metro Manila city, or select Provincial delivery" });
+    if (a && v.fulfillment === "ship_provincial" && /^metro manila$/i.test(a.province.trim()))
+      ctx.addIssue({ code: "custom", path: ["shippingAddress", "province"], message: "Metro Manila addresses use Metro Manila delivery" });
   });
 
 export type CheckoutPayload = z.input<typeof schema>;
@@ -43,7 +53,17 @@ export async function placeOrderAction(payload: CheckoutPayload): Promise<PlaceO
     return { ok: false, error: "Please check the highlighted fields.", fieldErrors };
   }
   try {
-    return await placeOrder(parsed.data, getOrCreateSessionId());
+    const user = await getCurrentUser();
+    const { saveAddress, ...input } = parsed.data;
+    // Signed-in orders always use the account email, so they show up under My Orders.
+    if (user) input.email = user.email;
+    const result = await placeOrder(input, getOrCreateSessionId(), user?.id ?? null);
+    if (result.ok && user && saveAddress && input.shippingAddress) {
+      await (await getAccountRepo())
+        .saveAddress(user, { label: "Home", fullName: input.fullName, phone: input.phone, ...input.shippingAddress })
+        .catch((e) => console.error("[checkout] could not save address", e));
+    }
+    return result;
   } catch (e) {
     console.error("[checkout] placeOrder failed", e);
     return { ok: false, error: "Something went wrong placing your order. Please try again or message us on Messenger." };

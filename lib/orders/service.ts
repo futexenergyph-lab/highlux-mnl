@@ -216,6 +216,21 @@ export async function getOrderForToken(orderNumber: string, token: string | unde
   return timingSafeEqual(Buffer.from(order.accessToken), Buffer.from(token)) ? order : null;
 }
 
+/** Token holders and the signed-in owner may view an order. */
+export async function getOrderForViewer(orderNumber: string, token: string | undefined, userId: string | null) {
+  const byToken = await getOrderForToken(orderNumber, token);
+  if (byToken) return byToken;
+  if (!userId) return null;
+  const order = await (await getOrderRepo()).getOrder(orderNumber);
+  return order?.userId === userId ? order : null;
+}
+
+/** On sign-in to the account area: link past guest orders made with the same verified email. */
+export async function claimGuestOrdersFor(user: { id: string; email: string; emailVerified: boolean }) {
+  if (!user.emailVerified) return 0;
+  return (await getOrderRepo()).claimGuestOrders(user.id, user.email);
+}
+
 export async function expireHolds() {
   const repo = await getOrderRepo();
   const n = await repo.expireHolds();

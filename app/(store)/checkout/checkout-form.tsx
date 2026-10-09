@@ -20,6 +20,7 @@ import {
   type PricingConfig,
 } from "@/lib/checkout/pricing";
 import type { BankAccount } from "@/lib/checkout/settings";
+import type { SavedAddress } from "@/lib/account/types";
 import { METRO_MANILA_CITIES } from "@/lib/ph";
 import { cn, formatPHP } from "@/lib/utils";
 import { placeOrderAction } from "./actions";
@@ -128,7 +129,14 @@ function Countdown({ until, onExpire }: { until: number; onExpire: () => void })
 
 // ─── Form ────────────────────────────────────────────────────────────────
 
-export function CheckoutForm({ config }: { config: Config }) {
+interface Account {
+  email: string;
+  fullName: string;
+  phone: string;
+  addresses: SavedAddress[];
+}
+
+export function CheckoutForm({ config, account }: { config: Config; account: Account | null }) {
   const { items, remove, clear } = useCart();
   const ids = items.map((i) => i.productId);
   const live = useProductSummaries(ids);
@@ -136,9 +144,13 @@ export function CheckoutForm({ config }: { config: Config }) {
   const [hold, setHold] = React.useState<HoldState>({ kind: "loading" });
   const [lost, setLost] = React.useState<string[]>([]);
 
-  const [email, setEmail] = React.useState("");
-  const [fullName, setFullName] = React.useState("");
-  const [phone, setPhone] = React.useState("");
+  const defaultAddress = account?.addresses.find((a) => a.isDefault) ?? account?.addresses[0];
+  const [email, setEmail] = React.useState(account?.email ?? "");
+  const [fullName, setFullName] = React.useState(account?.fullName ?? "");
+  const [phone, setPhone] = React.useState(account?.phone || defaultAddress?.phone || "");
+  // "new" = typing a new address; otherwise the id of a saved one.
+  const [addressChoice, setAddressChoice] = React.useState<string>(defaultAddress?.id ?? "new");
+  const [saveAddress, setSaveAddress] = React.useState(true);
   const [fulfillment, setFulfillment] = React.useState<Fulfillment>("ship_metro_manila");
   const [addr, setAddr] = React.useState({ line1: "", barangay: "", city: "", province: "", zip: "" });
   const [notes, setNotes] = React.useState("");
@@ -195,13 +207,34 @@ export function CheckoutForm({ config }: { config: Config }) {
     if (plan === "layaway" && !canLayaway) setPlan("full");
   }, [plan, canLayaway]);
 
+  const pickAddress = (id: string) => {
+    setAddressChoice(id);
+    const a = account?.addresses.find((x) => x.id === id);
+    if (!a) {
+      setAddr({ line1: "", barangay: "", city: "", province: fulfillment === "ship_metro_manila" ? "Metro Manila" : "", zip: "" });
+      return;
+    }
+    setAddr({ line1: a.line1, barangay: a.barangay, city: a.city, province: a.province, zip: a.zip });
+    // The saved address decides the shipping zone.
+    setFulfillment(a.province === "Metro Manila" ? "ship_metro_manila" : "ship_provincial");
+    setErrors({});
+  };
+
   const chooseFulfillment = (f: Fulfillment) => {
     setFulfillment(f);
+    // A saved address belongs to one zone; switching zones means entering a different address.
+    const saved = account?.addresses.find((a) => a.id === addressChoice);
+    if (saved && isShipping(f) && (saved.province === "Metro Manila") !== (f === "ship_metro_manila")) {
+      setAddressChoice("new");
+      setAddr({ line1: "", barangay: "", city: "", province: f === "ship_metro_manila" ? "Metro Manila" : "", zip: "" });
+      return;
+    }
     if (f === "ship_metro_manila") setAddr((a) => ({ ...a, province: "Metro Manila", city: METRO_MANILA_CITIES.includes(a.city) ? a.city : "" }));
     if (f === "ship_provincial" && addr.province === "Metro Manila") setAddr((a) => ({ ...a, province: "", city: "" }));
   };
   React.useEffect(() => {
-    chooseFulfillment("ship_metro_manila");
+    if (defaultAddress) pickAddress(defaultAddress.id);
+    else chooseFulfillment("ship_metro_manila");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -220,6 +253,7 @@ export function CheckoutForm({ config }: { config: Config }) {
       notes: notes.trim() || null,
       paymentMethod: method,
       paymentPlan: plan,
+      saveAddress: Boolean(account) && addressChoice === "new" && saveAddress,
     });
     if (res.ok) {
       clear();
@@ -350,8 +384,15 @@ export function CheckoutForm({ config }: { config: Config }) {
       <div className="grid gap-12 lg:grid-cols-[1fr_400px]">
         <form onSubmit={submit} noValidate>
           <Step n={1} title="Contact">
+            {account ? (
+              <p className="mb-4 text-sm text-cream-muted">Signed in as <span className="text-cream">{account.email}</span> — this order will appear under My Orders.</p>
+            ) : (
+              <p className="mb-4 text-sm text-cream-muted">
+                Have an account? <Link href="/login?next=/checkout" className="text-gold-light underline underline-offset-4">Sign in</Link> for faster checkout — or continue as a guest.
+              </p>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Email" type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); clearError("email"); }} error={errors.email} className="sm:col-span-2" required />
+              {!account && <Field label="Email" type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); clearError("email"); }} error={errors.email} className="sm:col-span-2" required />}
               <Field label="Full name" autoComplete="name" value={fullName} onChange={(e) => { setFullName(e.target.value); clearError("fullName"); }} error={errors.fullName} required />
               <Field label="Mobile number" type="tel" inputMode="tel" autoComplete="tel" placeholder="0917 123 4567" value={phone} onChange={(e) => { setPhone(e.target.value); clearError("phone"); }} error={errors.phone} required />
             </div>
@@ -365,7 +406,36 @@ export function CheckoutForm({ config }: { config: Config }) {
               {config.pickup.enabled && <Choice Icon={Store} checked={fulfillment === "pickup"} onSelect={() => chooseFulfillment("pickup")} title="Store pickup" detail={config.pickup.address} price="Free" />}
             </div>
 
-            {isShipping(fulfillment) && (
+            {isShipping(fulfillment) && account && account.addresses.length > 0 && (
+              <fieldset className="mt-6">
+                <legend className="mb-2 font-sans text-[0.68rem] uppercase tracking-[0.14em] text-cream-muted">Deliver to</legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {account.addresses.map((a) => (
+                    <Choice
+                      key={a.id}
+                      Icon={MapPin}
+                      checked={addressChoice === a.id}
+                      onSelect={() => pickAddress(a.id)}
+                      title={`${a.label}${a.isDefault ? " · Default" : ""}`}
+                      detail={`${a.fullName} · ${a.line1}, ${a.barangay}, ${a.city}, ${a.province} ${a.zip}`}
+                    />
+                  ))}
+                  <Choice Icon={MapPin} checked={addressChoice === "new"} onSelect={() => pickAddress("new")} title="Use a new address" />
+                </div>
+                {/* The saved address's fields are hidden, so surface any server-side address error here. */}
+                {addressChoice !== "new" &&
+                  Object.entries(errors)
+                    .filter(([k]) => k.startsWith("shippingAddress"))
+                    .slice(0, 1)
+                    .map(([k, msg]) => (
+                      <p key={k} className="mt-2 text-xs text-red-300" role="alert">
+                        {msg}. <button type="button" onClick={() => pickAddress("new")} className="underline underline-offset-4">Edit address</button>
+                      </p>
+                    ))}
+              </fieldset>
+            )}
+
+            {isShipping(fulfillment) && (!account || addressChoice === "new" || account.addresses.length === 0) && (
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <Field label="House / unit no., street, building" autoComplete="address-line1" value={addr.line1} onChange={(e) => { setAddr({ ...addr, line1: e.target.value }); clearError("shippingAddress.line1"); }} error={errors["shippingAddress.line1"]} className="sm:col-span-2" />
                 <Field label="Barangay" value={addr.barangay} onChange={(e) => { setAddr({ ...addr, barangay: e.target.value }); clearError("shippingAddress.barangay"); }} error={errors["shippingAddress.barangay"]} />
@@ -388,6 +458,11 @@ export function CheckoutForm({ config }: { config: Config }) {
                 )}
                 <Field label="Province" autoComplete="address-level1" value={addr.province} readOnly={fulfillment === "ship_metro_manila"} onChange={(e) => { setAddr({ ...addr, province: e.target.value }); clearError("shippingAddress.province"); }} error={errors["shippingAddress.province"]} />
                 <Field label="ZIP code" inputMode="numeric" autoComplete="postal-code" maxLength={4} value={addr.zip} onChange={(e) => { setAddr({ ...addr, zip: e.target.value.replace(/\D/g, "") }); clearError("shippingAddress.zip"); }} error={errors["shippingAddress.zip"]} />
+                {account && (
+                  <label className="flex items-center gap-2 text-sm text-cream-muted sm:col-span-2">
+                    <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} className="accent-[#c9a24a]" /> Save this address to my account
+                  </label>
+                )}
               </div>
             )}
             <div className="mt-4">

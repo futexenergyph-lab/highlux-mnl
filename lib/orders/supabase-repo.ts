@@ -118,14 +118,7 @@ export class SupabaseOrderRepo implements OrderRepo {
     return mapOrder(data);
   }
 
-  async getOrder(orderNumber: string): Promise<OrderDetail | null> {
-    const { data, error } = await this.db
-      .from("orders")
-      .select("*, order_items(*), layaway_installments(*), payments(*)")
-      .eq("order_number", orderNumber)
-      .maybeSingle();
-    if (error) throw error;
-    if (!data) return null;
+  private detail(data: any): OrderDetail {
     return {
       ...mapOrder(data),
       items: (data.order_items ?? []).map((i: any) => ({ productId: i.product_id, title: i.title, brand: i.brand, price: num(i.price), imageUrl: i.image_url })),
@@ -134,6 +127,33 @@ export class SupabaseOrderRepo implements OrderRepo {
         .sort((a: any, b: any) => a.seq - b.seq),
       payments: (data.payments ?? []).map(mapPayment).sort((a: Payment, b: Payment) => a.createdAt.localeCompare(b.createdAt)),
     };
+  }
+
+  async getOrder(orderNumber: string): Promise<OrderDetail | null> {
+    const { data, error } = await this.db
+      .from("orders")
+      .select("*, order_items(*), layaway_installments(*), payments(*)")
+      .eq("order_number", orderNumber)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? this.detail(data) : null;
+  }
+
+  async listOrdersForUser(userId: string): Promise<OrderDetail[]> {
+    const { data, error } = await this.db
+      .from("orders")
+      .select("*, order_items(*), layaway_installments(*), payments(*)")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return (data ?? []).map((d) => this.detail(d));
+  }
+
+  async claimGuestOrders(userId: string, email: string) {
+    const { data, error } = await this.db.from("orders").update({ user_id: userId }).is("user_id", null).ilike("email", email).select("id");
+    if (error) throw error;
+    return data?.length ?? 0;
   }
 
   async findOrderNumber(orderNumber: string, email: string) {
