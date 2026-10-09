@@ -20,7 +20,7 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   gcash: "GCash",
   maya: "Maya",
   card: "Credit / Debit Card",
-  bank_transfer: "Bank Transfer",
+  bank_transfer: "Bank Transfer / GCash",
   pay_at_meetup: "Pay at meet-up (cash or card)",
 };
 

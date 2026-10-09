@@ -79,7 +79,7 @@ export function PayPanel({
         <div className="mt-5 flex border-b border-gold/20" role="tablist">
           {(["online", "bank"] as const).map((t) => (
             <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 px-4 py-2.5 text-xs uppercase tracking-wider2", tab === t ? "border-gold text-gold-light" : "border-transparent text-cream-muted hover:text-cream")}>
-              {t === "online" ? ONLINE_METHODS.filter((m) => !disabledMethods.includes(m)).map((m) => PAYMENT_LABELS[m].split(" /")[0]).join(" · ") : "Bank transfer"}
+              {t === "online" ? ONLINE_METHODS.filter((m) => !disabledMethods.includes(m)).map((m) => PAYMENT_LABELS[m].split(" /")[0]).join(" · ") : "Bank transfer / GCash"}
             </button>
           ))}
         </div>

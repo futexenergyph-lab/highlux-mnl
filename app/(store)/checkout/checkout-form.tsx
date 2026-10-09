@@ -511,7 +511,7 @@ export function CheckoutForm({ config, account }: { config: Config; account: Acc
                         ? "Online card payments are coming soon. Cards are accepted at meet-ups."
                         : "Coming soon."
                       : m === "bank_transfer"
-                      ? `Transfer, then upload your proof of payment within ${config.bankTransferHours}h.`
+                      ? `BDO, Metrobank, BPI or GCash. Send, then upload your proof of payment within ${config.bankTransferHours}h.`
                       : m === "pay_at_meetup"
                         ? "We’ll confirm your meet-up schedule by phone or Messenger."
                         : "Secure checkout by PayMongo."
