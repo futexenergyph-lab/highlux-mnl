@@ -11,6 +11,12 @@ export function authMode(): AuthMode {
   return "off";
 }
 
+/** Google sign-in needs the provider switched on in Supabase first, so it stays hidden until GOOGLE_AUTH_ENABLED=1. */
+export function googleAuthEnabled(): boolean {
+  const mode = authMode();
+  return mode === "demo" || (mode === "supabase" && process.env.GOOGLE_AUTH_ENABLED === "1");
+}
+
 /** The signed-in customer for this request, or null. Uses cookies, so callers render dynamically. */
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const mode = authMode();
