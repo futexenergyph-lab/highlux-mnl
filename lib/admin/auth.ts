@@ -19,6 +19,13 @@ export const getStaffUser = cache(async (): Promise<StaffUser | null> => {
   return data?.role === "staff" || data?.role === "admin" ? { ...user, role: data.role } : null;
 });
 
+/** Whether this account is staff/admin, looked up by id/email (used right after sign-in, before the session cookie is readable). */
+export async function isStaffAccount(id: string, email: string) {
+  if (authMode() === "demo") return demoAdmins().includes(email.toLowerCase());
+  const { data } = await createAdminClient().from("profiles").select("role").eq("id", id).maybeSingle();
+  return data?.role === "staff" || data?.role === "admin";
+}
+
 /** Admin pages: guests go to sign-in; signed-in non-staff get a 404 (the admin isn't advertised). */
 export async function requireStaff(returnTo = "/admin") {
   const user = await getCurrentUser();

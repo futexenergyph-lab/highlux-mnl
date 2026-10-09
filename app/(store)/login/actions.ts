@@ -6,6 +6,7 @@ import { authMode, googleAuthEnabled, safeNext } from "@/lib/auth/server";
 import { demoGoogle, demoSignIn, demoSignOut, demoSignUp } from "@/lib/auth/demo";
 import { createClient } from "@/lib/supabase/server";
 import { site } from "@/lib/site";
+import { isStaffAccount } from "@/lib/admin/auth";
 
 export type AuthState = { error?: string; message?: string } | null;
 
@@ -33,16 +34,21 @@ function unavailable(): AuthState {
 export async function signInAction(_prev: AuthState, form: FormData): Promise<AuthState> {
   const parsed = z.object({ email, password: z.string().min(1, "Enter your password") }).safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const next = safeNext(form.get("next") as string);
+  const requested = form.get("next") as string;
+  const next = safeNext(requested);
   const mode = authMode();
   if (mode === "off") return unavailable();
+  let userId = "";
   if (mode === "demo") {
     const r = demoSignIn(parsed.data.email, parsed.data.password);
     if (r.error) return { error: r.error };
   } else {
-    const { error } = await createClient().auth.signInWithPassword(parsed.data);
+    const { data, error } = await createClient().auth.signInWithPassword(parsed.data);
     if (error) return { error: friendly(error.message) };
+    userId = data.user.id;
   }
+  // Staff signing in without a specific destination go straight to the admin dashboard.
+  if ((!requested || requested === "/account") && (await isStaffAccount(userId, parsed.data.email))) redirect("/admin");
   redirect(next);
 }
 
