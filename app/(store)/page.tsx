@@ -55,10 +55,12 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="container py-16 lg:py-24">
-        <SectionHeading eyebrow="Just in" title="New Arrivals" href="/shop?sort=newest" linkLabel="Shop all new arrivals" />
-        <NewArrivalsCarousel products={arrivals} />
-      </section>
+      {arrivals.length > 0 && (
+        <section className="container py-16 lg:py-24">
+          <SectionHeading eyebrow="Just in" title="New Arrivals" href="/shop?sort=newest" linkLabel="Shop all new arrivals" />
+          <NewArrivalsCarousel products={arrivals} />
+        </section>
+      )}
 
       <section className="container pb-16 lg:pb-24">
         <SectionHeading eyebrow="The houses we carry" title="Shop by Brand" />
