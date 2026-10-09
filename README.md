@@ -48,10 +48,10 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
 ## Supabase setup
 
 1. Create a project at supabase.com and copy its URL and keys into `.env.local`.
-2. Apply the migrations. Either:
-   - **CLI:** `npx supabase link --project-ref <ref>` then `npx supabase db push`, or
-   - **Dashboard:** paste each file in `supabase/migrations/` (in filename order) into the SQL Editor.
-3. Seed the sample catalog: run `supabase/seed.sql` in the SQL Editor. It is safe to run more than once.
+2. Create the database. Either:
+   - **Easiest (new project):** open `supabase/setup.sql`, copy all of it, paste it into Supabase → **SQL Editor** → New query, and click **Run** once. It contains every migration plus the sample catalog. Regenerate it with `npm run db:setup-sql` after adding migrations.
+   - **CLI:** `npx supabase link --project-ref <ref>` then `npx supabase db push`, then run `supabase/seed.sql`.
+3. For later schema changes on an existing project, run only the new files in `supabase/migrations/`.
 4. Make yourself an admin after signing up:
    ```sql
    update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');
