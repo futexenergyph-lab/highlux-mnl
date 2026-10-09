@@ -42,8 +42,10 @@ export const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
       "The item is held for you and released once fully paid. Down payment is non-refundable. Installments more than 15 days overdue may forfeit the layaway.",
   },
   bankAccounts: [
-    { bank: "BDO", accountName: "HIGHLUX MNL", accountNumber: "0000-0000-0000" },
-    { bank: "BPI", accountName: "HIGHLUX MNL", accountNumber: "0000-0000-00" },
+    { bank: "BDO", accountName: "JEFFREY LOIS G. TALLA", accountNumber: "000190437200" },
+    { bank: "Metrobank", accountName: "JEFFREY LOIS G. TALLA", accountNumber: "3337333513400" },
+    { bank: "BPI", accountName: "JEFFREY LOIS G. TALLA", accountNumber: "0169251398" },
+    { bank: "GCash", accountName: "JEFFREY LOIS G. TALLA", accountNumber: "09478778895" },
   ],
   // Card payments via PayMongo aren't live yet (cards are still accepted at meet-ups).
   disabledMethods: ["card"],
