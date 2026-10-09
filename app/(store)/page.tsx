@@ -7,14 +7,14 @@ import { ShopByBrand } from "@/components/home/shop-by-brand";
 import { Reviews } from "@/components/home/reviews";
 import { SocialStrip } from "@/components/home/social-strip";
 import { Newsletter } from "@/components/home/newsletter";
-import { getFeatured, getHomeContent, getNewArrivals, getReviews } from "@/lib/data";
+import { getCategorySlides, getFeatured, getHomeContent, getNewArrivals, getReviews } from "@/lib/data";
 import { JsonLd } from "@/components/seo/json-ld";
 import { contactLinks, site } from "@/lib/site";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [content, arrivals, reviews, featured] = await Promise.all([getHomeContent(), getNewArrivals(10), getReviews(), getFeatured(10)]);
+  const [content, arrivals, reviews, featured, slides] = await Promise.all([getHomeContent(), getNewArrivals(10), getReviews(), getFeatured(10), getCategorySlides()]);
 
   return (
     <>
@@ -29,7 +29,7 @@ export default async function HomePage() {
             logo: `${site.url}/opengraph-image`,
             email: site.email,
             telephone: site.phone,
-            address: { "@type": "PostalAddress", addressLocality: "Makati City", addressRegion: "Metro Manila", addressCountry: "PH" },
+            address: { "@type": "PostalAddress", addressLocality: "Quezon City", addressRegion: "Metro Manila", addressCountry: "PH" },
             sameAs: [contactLinks.facebook(), contactLinks.instagram()],
             priceRange: "₱₱₱",
           },
@@ -46,7 +46,7 @@ export default async function HomePage() {
       <div className="lg:hidden">
         <TrustBar />
       </div>
-      <CategoryTiles />
+      <CategoryTiles slides={slides} />
 
  {featured.length > 0 && (
         <section className="container pt-16 lg:pt-24">

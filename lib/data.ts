@@ -126,6 +126,20 @@ export const getFeatured = cache(async (limit = 10): Promise<Product[]> => {
   return catalog.filter((p) => p.featured && p.status !== "sold").sort(compareProducts("newest")).slice(0, limit);
 });
 
+export interface TileSlide { slug: string; title: string; brand: string; price: number; image: string; reserved: boolean }
+
+/** Newest pieces with a photo in each category, for the homepage category tiles. Sold pieces are skipped. */
+export const getCategorySlides = cache(async (perCategory = 6): Promise<Record<string, TileSlide[]>> => {
+  const catalog = await getCatalog();
+  const out: Record<string, TileSlide[]> = {};
+  for (const p of [...catalog].sort((a, b) => b.createdAt.localeCompare(a.createdAt))) {
+    if (p.status === "sold" || !p.images[0]?.url) continue;
+    const list = (out[p.category] ??= []);
+    if (list.length < perCategory) list.push({ slug: p.slug, title: p.title, brand: p.brand, price: p.price, image: p.images[0].url, reserved: p.status === "reserved" });
+  }
+  return out;
+});
+
 export const getReviews = cache(async (): Promise<Review[]> => {
   if (!isSupabaseConfigured()) return SAMPLE_REVIEWS;
   const { data, error } = await createPublicClient()
