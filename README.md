@@ -218,6 +218,18 @@ supabase/migrations/    SQL migrations
 supabase/seed.sql       generated seed
 ```
 
+## Demo deployment (before Supabase is connected)
+
+To preview the site on Vercel without a database, add these under Project → Settings → Environment Variables, then redeploy:
+
+| Name | Value |
+| --- | --- |
+| `PAYMENTS_MOCK` | `1` |
+| `ACCOUNTS_DEMO` | `1` |
+| `DEMO_AUTH_SECRET` | any long random string |
+
+Browsing (homepage, shop, product pages, search, wishlist) works fully. Demo orders and accounts live in server memory, which Vercel resets and doesn't share between instances, so checkout, sign-in and the admin can lose data. Connect Supabase for those. **Remove all three variables before going live.**
+
 ## Deploy (Vercel)
 
 1. Import the repo in Vercel. The framework preset is detected as Next.js.
