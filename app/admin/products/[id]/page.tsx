@@ -5,6 +5,7 @@ import { getAdminRepo } from "@/lib/admin/repo";
 import { Plus } from "lucide-react";
 import { PageHeader, btnGold } from "@/components/admin/ui";
 import { ProductForm } from "@/components/admin/product-form";
+import { CopyLinkButton } from "@/components/admin/copy-link-button";
 
 export const metadata = { title: "Edit product" };
 
@@ -18,6 +19,7 @@ export default async function EditProductPage({ params, searchParams }: { params
     <>
       <PageHeader
         title={product.title}
+        titleAddon={<CopyLinkButton path={`/${product.category}/${product.slug}`} variant="icon" />}
         description={searchParams.created ? "Created — it's live on the shop if the status is Available." : `${product.brand} · ${product.category}`}
         actions={holder ? <Link href={`/admin/orders/${holder.orderNumber}`} className="text-xs uppercase tracking-wider text-gold-light underline">Held by {holder.orderNumber}</Link> : undefined}
       />

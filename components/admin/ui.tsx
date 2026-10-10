@@ -1,11 +1,24 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: React.ReactNode }) {
+export function PageHeader({ title, titleAddon, description, actions }: { title: string; titleAddon?: React.ReactNode; description?: string; actions?: React.ReactNode }) {
   return (
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="font-serif text-3xl text-cream">{title}</h1>
+        <h1 className="font-serif text-3xl text-cream">
+          {titleAddon ? (
+            <>
+              {/* Keep the last word and the addon together so the addon never wraps onto a line by itself. */}
+              {title.slice(0, title.lastIndexOf(" ") + 1)}
+              <span className="whitespace-nowrap">
+                {title.slice(title.lastIndexOf(" ") + 1)}
+                <span className="ml-2 inline-block -translate-y-0.5 align-middle">{titleAddon}</span>
+              </span>
+            </>
+          ) : (
+            title
+          )}
+        </h1>
         {description && <p className="mt-1 text-sm text-cream-muted">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}

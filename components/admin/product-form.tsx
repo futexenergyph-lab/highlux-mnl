@@ -10,6 +10,7 @@ import { CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type CategorySlu
 import { uploadFile } from "@/lib/client/upload";
 import { cn, slugify } from "@/lib/utils";
 import { PhotoManager } from "./photo-manager";
+import { CopyLinkButton } from "./copy-link-button";
 import { btnDanger, btnGold, btnOutline, inputCls, labelCls } from "./ui";
 import { deleteProductAction, saveProductAction, type ProductPayload } from "@/app/admin/products/actions";
 
@@ -325,6 +326,7 @@ export function ProductForm({ product, brands: existingBrands, lockedByOrder }: 
             View on site <ExternalLink className="h-3.5 w-3.5" />
           </Link>
         )}
+        {product && <CopyLinkButton path={`/${product.category}/${product.slug}`} />}
         {product && (
           <Link href="/admin/products/new" className={btnOutline}>
             <Plus className="h-4 w-4" /> Create a new listing
