@@ -6,6 +6,7 @@ import { ExternalLink, FileUp, Loader2, Plus, Save, Trash2, X } from "lucide-rea
 import { CATEGORIES } from "@/lib/catalog";
 import { brandOptions } from "@/lib/brand-options";
 import { BrandCombobox } from "./brand-combobox";
+import { parseListing } from "@/lib/listing-parser";
 import { CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type CategorySlug, type ConditionGrade, type Inclusion, type Product, type ProductImage, type ProductStatus } from "@/lib/types";
 import { uploadFile } from "@/lib/client/upload";
 import { cn, slugify } from "@/lib/utils";
@@ -115,6 +116,29 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
     if (!slugTouched) setSlug(slugify(title));
   }, [title, slugTouched]);
 
+  // Auto fill (new listings only): read the pasted caption into the fields, never overwriting a field edited by hand.
+  const touched = React.useRef(new Set<string>());
+  const touch = (...f: string[]) => f.forEach((x) => touched.current.add(x));
+  const onDescription = (text: string) => {
+    setDescription(text);
+    if (product) return;
+    const r = parseListing(text, brands);
+    const free = (f: string) => !touched.current.has(f);
+    if (r.brand && free("brand")) setBrand(r.brand);
+    if (r.model && free("model")) setModel(r.model);
+    if (r.condition && free("condition")) setCondition(r.condition);
+    if (free("inclusions")) setInclusions(r.inclusions);
+    if (r.price && free("price")) setPrice(String(r.price));
+    if (r.category && free("category") && r.category !== category) {
+      setCategory(r.category);
+      if (free("subCategory")) setSub("");
+    }
+    if (r.subCategory && free("subCategory")) {
+      setTypeOther(false);
+      setSub(r.subCategory);
+    }
+  };
+
   const cat = CATEGORIES.find((c) => c.slug === category)!;
   // A typed "Others" type that matches an existing one (any case) reuses it instead of making a near-duplicate.
   const typedType = (v: string) => {
@@ -173,8 +197,18 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
 
       <Section title="Item">
         <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={product ? "Description" : "Description (Auto fill)"} className="sm:col-span-2">
+            <textarea
+              value={description}
+              onChange={(e) => onDescription(e.target.value)}
+              rows={product ? 4 : 6}
+              className={cn(inputCls, "h-auto py-2 leading-relaxed")}
+              placeholder={product ? "" : "Paste your caption, e.g.\nGivenchy Antigona Smooth Grained Leather Bag\n💯% Authentic | with long strap\nIn very good condition\n₱29,500 fixed"}
+            />
+            {!product && <span className="mt-1.5 block text-xs text-cream-dim">Fills in brand, model, type, condition, inclusions and price below — check them before saving. Fields you change by hand aren&rsquo;t overwritten.</span>}
+          </Field>
           <Field label="Category">
-            <select value={category} onChange={(e) => { setCategory(e.target.value as CategorySlug); setSub(""); setTypeOther(false); }} className={inputCls}>
+            <select value={category} onChange={(e) => { touch("category", "subCategory"); setCategory(e.target.value as CategorySlug); setSub(""); setTypeOther(false); }} className={inputCls}>
               {CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.tileTitle}</option>)}
             </select>
           </Field>
@@ -183,6 +217,7 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
               value={typeOther ? OTHER_TYPE : subCategory}
               onChange={(e) => {
                 const v = e.target.value;
+                touch("subCategory");
                 setTypeOther(v === OTHER_TYPE);
                 setSub(v === OTHER_TYPE ? "" : v);
               }}
@@ -197,10 +232,10 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
             {typeOther && <input value={subCategory} onChange={(e) => setSub(e.target.value)} required maxLength={40} autoFocus className={cn(inputCls, "mt-2")} placeholder="Type it, e.g. Bucket Bags" />}
           </Field>
           <Field label="Brand" error={fe("brandName")}>
-            <BrandCombobox value={brandName} onChange={setBrand} brands={brands} />
+            <BrandCombobox value={brandName} onChange={(v) => { touch("brand"); setBrand(v); }} brands={brands} />
           </Field>
           <Field label="Model" error={fe("model")}>
-            <input value={model} onChange={(e) => setModel(e.target.value)} required className={inputCls} placeholder="Speedy 30" />
+            <input value={model} onChange={(e) => { touch("model"); setModel(e.target.value); }} required className={inputCls} placeholder="Speedy 30" />
           </Field>
           <Field label="Title (shown on site)" error={fe("title")} className="sm:col-span-2">
             <input value={title} onChange={(e) => { setTitle(e.target.value); setTitleTouched(true); }} required className={inputCls} />
@@ -217,16 +252,13 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
           <Field label="Video URL (optional, .mp4)" error={fe("videoUrl")}>
             <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} className={inputCls} placeholder="https://…" />
           </Field>
-          <Field label="Description (optional)" className="sm:col-span-2">
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={cn(inputCls, "h-auto py-2")} />
-          </Field>
         </div>
       </Section>
 
       <Section title="Price & status">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Price (₱)" error={fe("price")}>
-            <input inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))} required className={inputCls} />
+            <input inputMode="numeric" value={price} onChange={(e) => { touch("price"); setPrice(e.target.value.replace(/[^\d.]/g, "")); }} required className={inputCls} />
           </Field>
           <Field label="“Was” price (₱, optional)" error={fe("compareAtPrice")}>
             <input inputMode="numeric" value={compareAt} onChange={(e) => setCompareAt(e.target.value.replace(/[^\d.]/g, ""))} className={inputCls} placeholder="Shows a Price Drop badge" />
@@ -250,7 +282,7 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
         <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-7">
           {(Object.keys(CONDITION_LABELS) as ConditionGrade[]).map((c) => (
             <label key={c} className={cn("cursor-pointer border p-2.5 text-center text-sm", condition === c ? "border-gold bg-gold/[0.06] text-gold-light" : "border-gold/15 text-cream-muted")}>
-              <input type="radio" className="sr-only" checked={condition === c} onChange={() => setCondition(c)} />
+              <input type="radio" className="sr-only" checked={condition === c} onChange={() => { touch("condition"); setCondition(c); }} />
               {CONDITION_LABELS[c]}
             </label>
           ))}
@@ -263,7 +295,7 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
           {INCLUSION_OPTIONS.map((i) => {
             const on = inclusions.includes(i);
             return (
-              <button type="button" key={i} onClick={() => setInclusions(on ? inclusions.filter((x) => x !== i) : [...inclusions, i])} aria-pressed={on} className={cn("border px-3 py-1.5 text-xs", on ? "border-gold bg-gold/[0.08] text-gold-light" : "border-gold/20 text-cream-muted hover:border-gold/50")}>
+              <button type="button" key={i} onClick={() => { touch("inclusions"); setInclusions(on ? inclusions.filter((x) => x !== i) : [...inclusions, i]); }} aria-pressed={on} className={cn("border px-3 py-1.5 text-xs", on ? "border-gold bg-gold/[0.08] text-gold-light" : "border-gold/20 text-cream-muted hover:border-gold/50")}>
                 {INCLUSION_LABELS[i]}
               </button>
             );
