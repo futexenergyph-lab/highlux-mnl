@@ -325,6 +325,11 @@ export function ProductForm({ product, brands: existingBrands, lockedByOrder }: 
             View on site <ExternalLink className="h-3.5 w-3.5" />
           </Link>
         )}
+        {product && (
+          <Link href="/admin/products/new" className={btnOutline}>
+            <Plus className="h-4 w-4" /> Create a new listing
+          </Link>
+        )}
         {error && <p className="text-sm text-red-300" role="alert">{error.msg}</p>}
         {saved && !error && <p className="text-sm text-gold-light" role="status">Saved — the shop is updated.</p>}
         {product && !lockedByOrder && (

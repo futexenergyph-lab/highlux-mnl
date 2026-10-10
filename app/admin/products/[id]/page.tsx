@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
-import { PageHeader } from "@/components/admin/ui";
+import { Plus } from "lucide-react";
+import { PageHeader, btnGold } from "@/components/admin/ui";
 import { ProductForm } from "@/components/admin/product-form";
 
 export const metadata = { title: "Edit product" };
@@ -20,6 +21,14 @@ export default async function EditProductPage({ params, searchParams }: { params
         description={searchParams.created ? "Created — it's live on the shop if the status is Available." : `${product.brand} · ${product.category}`}
         actions={holder ? <Link href={`/admin/orders/${holder.orderNumber}`} className="text-xs uppercase tracking-wider text-gold-light underline">Held by {holder.orderNumber}</Link> : undefined}
       />
+      {searchParams.created && (
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border border-gold/40 bg-gold/[0.06] p-4">
+          <p className="text-sm text-cream">Listing created. Ready for the next piece?</p>
+          <Link href="/admin/products/new" className={btnGold}>
+            <Plus className="h-4 w-4" /> Create a new listing
+          </Link>
+        </div>
+      )}
       <ProductForm product={product} brands={brands} lockedByOrder={!!holder} />
     </>
   );
