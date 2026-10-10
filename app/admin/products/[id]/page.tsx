@@ -26,9 +26,12 @@ export default async function EditProductPage({ params, searchParams }: { params
       {searchParams.created && (
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border border-gold/40 bg-gold/[0.06] p-4">
           <p className="text-sm text-cream">Listing created. Ready for the next piece?</p>
-          <Link href="/admin/products/new" className={btnGold}>
-            <Plus className="h-4 w-4" /> Create a new listing
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <CopyLinkButton path={`/${product.category}/${product.slug}`} />
+            <Link href="/admin/products/new" className={btnGold}>
+              <Plus className="h-4 w-4" /> Create a new listing
+            </Link>
+          </div>
         </div>
       )}
       <ProductForm product={product} brands={brands} lockedByOrder={!!holder} />
