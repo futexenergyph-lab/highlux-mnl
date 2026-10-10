@@ -4,16 +4,16 @@ import { Check, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { btnOutline } from "./ui";
 
-/** Copies a shop link (e.g. https://highluxmnl.com/bags/…) for pasting to customers. */
+/** Copies "See details here: <shop link>" (e.g. https://highluxmnl.com/bags/…) for pasting to customers. */
 export function CopyLinkButton({ path, variant = "button", className }: { path: string; variant?: "button" | "icon"; className?: string }) {
   const [copied, setCopied] = React.useState(false);
   const copy = async () => {
-    const url = window.location.origin + path;
+    const text = `See details here: ${window.location.origin}${path}`;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(text);
     } catch {
       // Older browsers: fall back to a hidden textarea.
-      const ta = Object.assign(document.createElement("textarea"), { value: url });
+      const ta = Object.assign(document.createElement("textarea"), { value: text });
       ta.setAttribute("readonly", "");
       ta.style.cssText = "position:fixed;opacity:0";
       document.body.appendChild(ta);
