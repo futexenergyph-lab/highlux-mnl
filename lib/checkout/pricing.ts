@@ -1,3 +1,4 @@
+import { formatPHP } from "@/lib/utils";
 /** Pure checkout math, shared by the checkout UI (preview) and the server (source of truth). */
 
 export const FULFILLMENTS = ["ship_metro_manila", "ship_provincial", "meetup", "pickup"] as const;
@@ -10,7 +11,7 @@ export const ONLINE_METHODS: PaymentMethod[] = ["gcash", "maya", "card"];
 export type PaymentPlan = "full" | "layaway";
 
 export const FULFILLMENT_LABELS: Record<Fulfillment, string> = {
-  ship_metro_manila: "Shipping — Metro Manila",
+  ship_metro_manila: "Same-day delivery — Metro Manila",
   ship_provincial: "Shipping — Provincial",
   meetup: "Meet-up",
   pickup: "Store pickup",
@@ -25,7 +26,8 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
 };
 
 export interface PricingConfig {
-  shipping: { metroManila: number; provincial: number; freeOver: number | null };
+  /** Metro Manila is same-day by rider: metroManila–metroManilaMax is shown, and the customer pays the rider directly. */
+  shipping: { metroManila: number; metroManilaMax?: number | null; provincial: number; freeOver: number | null };
   layaway: { enabled: boolean; downPaymentPercent: number; installments: number; intervalDays: number; minSubtotal: number };
 }
 
@@ -33,10 +35,17 @@ export function isShipping(f: Fulfillment) {
   return f === "ship_metro_manila" || f === "ship_provincial";
 }
 
+/** "₱200–₱400": the same-day rider fee range, paid to the rider (not added to the order). */
+export function riderFeeRange(cfg: PricingConfig) {
+  const { metroManila: min, metroManilaMax: max } = cfg.shipping;
+  return max && max > min ? `${formatPHP(min)}–${formatPHP(max)}` : formatPHP(min);
+}
+
+/** Fee added to the order total. Metro Manila same-day is 0 here: the rider is paid on delivery. */
 export function shippingFee(f: Fulfillment, subtotal: number, cfg: PricingConfig) {
-  if (!isShipping(f)) return 0;
+  if (!isShipping(f) || f === "ship_metro_manila") return 0;
   if (cfg.shipping.freeOver != null && subtotal >= cfg.shipping.freeOver) return 0;
-  return f === "ship_metro_manila" ? cfg.shipping.metroManila : cfg.shipping.provincial;
+  return cfg.shipping.provincial;
 }
 
 export function layawayEligible(subtotal: number, cfg: PricingConfig) {

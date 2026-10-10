@@ -1,3 +1,4 @@
+import { riderFeeRange } from "@/lib/checkout/pricing";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
@@ -39,7 +40,7 @@ export default async function FaqPage() {
     {
       title: "Shipping & meet-ups",
       items: [
-        { q: "How much is shipping?", a: `${formatPHP(s.shipping.metroManila)} within Metro Manila (1–2 business days) and ${formatPHP(s.shipping.provincial)} provincial (2–5 business days). Every parcel is insured and discreetly packed.` },
+        { q: "How much is shipping?", a: `Metro Manila is same-day delivery by rider — ${riderFeeRange(s)} depending on distance, paid to the rider. Provincial is ${formatPHP(s.shipping.provincial)} (2–5 business days). Every parcel is insured and discreetly packed.` },
         ...(s.meetup.enabled ? [{ q: "Can we meet up?", a: s.meetup.note }] : []),
         { q: "Can I return an item?", a: "All sales are final as each piece is one of a kind — except if an item is not authentic (full refund, any time) or not as described (tell us within 48 hours of delivery). See Shipping & Returns for details." },
       ],

@@ -206,7 +206,7 @@ export default async function OrderPage({ params, searchParams }: { params: { nu
             <h2 className="eyebrow mb-3 text-gold">Summary</h2>
             <dl className="space-y-2">
               <div className="flex justify-between"><dt className="text-cream-muted">Subtotal</dt><dd className="text-cream">{formatPHP(order.subtotal)}</dd></div>
-              <div className="flex justify-between"><dt className="text-cream-muted">Shipping</dt><dd className="text-cream">{order.shippingFee ? formatPHP(order.shippingFee) : "Free"}</dd></div>
+              <div className="flex justify-between"><dt className="text-cream-muted">Shipping</dt><dd className="text-cream">{order.shippingFee ? formatPHP(order.shippingFee) : order.fulfillment === "ship_metro_manila" ? "Paid to rider" : "Free"}</dd></div>
               <div className="flex justify-between border-t border-gold/15 pt-2"><dt className="text-cream">Total</dt><dd className="text-gold-light">{formatPHP(order.total)}</dd></div>
               <div className="flex justify-between"><dt className="text-cream-muted">Paid</dt><dd className="text-cream">{formatPHP(order.amountPaid)}</dd></div>
               {balance > 0 && <div className="flex justify-between"><dt className="text-cream-muted">Balance</dt><dd className="text-cream">{formatPHP(balance)}</dd></div>}

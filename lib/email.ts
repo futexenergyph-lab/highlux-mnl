@@ -50,7 +50,7 @@ function itemsTable(o: OrderDetail) {
     .map((i) => `<tr><td style="padding:8px 0;border-bottom:1px solid #2a2219"><div style="font-size:11px;letter-spacing:2px;color:#c9a24a;text-transform:uppercase">${esc(i.brand)}</div><div style="color:#f3ead8">${esc(i.title)}</div></td><td align="right" style="padding:8px 0;border-bottom:1px solid #2a2219;color:#f3ead8">${formatPHP(i.price)}</td></tr>`)
     .join("");
   return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0">${rows}
-<tr><td style="padding-top:10px">Shipping (${FULFILLMENT_LABELS[o.fulfillment]})</td><td align="right" style="padding-top:10px">${o.shippingFee ? formatPHP(o.shippingFee) : "Free"}</td></tr>
+<tr><td style="padding-top:10px">Shipping (${FULFILLMENT_LABELS[o.fulfillment]})</td><td align="right" style="padding-top:10px">${o.shippingFee ? formatPHP(o.shippingFee) : o.fulfillment === "ship_metro_manila" ? "Paid to rider" : "Free"}</td></tr>
 <tr><td style="padding-top:6px;color:#f3ead8;font-weight:bold">Total</td><td align="right" style="padding-top:6px;color:#e8cf8a;font-weight:bold">${formatPHP(o.total)}</td></tr></table>`;
 }
 

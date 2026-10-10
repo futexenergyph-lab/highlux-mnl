@@ -7,7 +7,7 @@ import { PAYMENT_METHODS } from "@/lib/checkout/pricing";
 
 const money = z.coerce.number().min(0).max(1_000_000);
 const schema = z.object({
-  shipping: z.object({ metroManila: money, provincial: money, freeOver: z.union([money, z.null()]) }),
+  shipping: z.object({ metroManila: money, metroManilaMax: z.union([money, z.null()]).default(null), provincial: money, freeOver: z.union([money, z.null()]) }),
   meetup: z.object({ enabled: z.boolean(), note: z.string().trim().max(300) }),
   pickup: z.object({ enabled: z.boolean(), address: z.string().trim().max(300) }),
   holds: z.object({

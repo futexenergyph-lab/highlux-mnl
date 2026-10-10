@@ -1,3 +1,4 @@
+import { riderFeeRange } from "@/lib/checkout/pricing";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CreditCard, MessageCircle, Package, Search, ShieldCheck, ShoppingBag } from "lucide-react";
@@ -27,7 +28,7 @@ export default async function HowToOrderPage() {
     { Icon: MessageCircle, t: "Ask us anything", d: "Want more photos or a video, or have a question about condition? Tap “Inquire via Messenger” on any piece and we’ll reply quickly." },
     { Icon: ShoppingBag, t: "Add to bag & check out", d: `Each piece is one of a kind. Once you start checkout it’s reserved for you for ${s.holds.checkoutMinutes} minutes, so nobody else can buy it while you pay.` },
     { Icon: CreditCard, t: "Pay securely", d: `Pay with ${methods.join(", ").replace(/, ([^,]*)$/, " or $1")}.${s.meetup.enabled ? " Meeting up? Pay in cash or by credit card on the spot." : ""}${s.layaway.enabled ? " Layaway is available on eligible pieces." : ""}` },
-    { Icon: Package, t: "Receive it", d: `Insured delivery within Metro Manila (${formatPHP(s.shipping.metroManila)}) or nationwide (${formatPHP(s.shipping.provincial)})${s.meetup.enabled ? ", a meet-up" : ""}${s.pickup.enabled ? " or showroom pickup" : ""}. Track every step from your order page.` },
+    { Icon: Package, t: "Receive it", d: `Same-day delivery within Metro Manila (${riderFeeRange(s)}, paid to the rider), nationwide shipping (${formatPHP(s.shipping.provincial)})${s.meetup.enabled ? ", a meet-up" : ""}${s.pickup.enabled ? " or store pickup by appointment" : ""}. Track every step from your order page.` },
   ];
   return (
     <ContentPage eyebrow="Customer care" title="How to Order" crumb="How to Order" intro="Buying pre-loved luxury should feel as assured as buying at the boutique. Here’s how it works.">

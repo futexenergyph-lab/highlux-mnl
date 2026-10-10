@@ -12,7 +12,7 @@ export interface BankAccount {
 
 /** Store-wide checkout configuration. Stored in site_settings['checkout']; edited in admin (Phase 5). */
 export interface CheckoutSettings {
-  shipping: { metroManila: number; provincial: number; freeOver: number | null };
+  shipping: { metroManila: number; metroManilaMax: number | null; provincial: number; freeOver: number | null };
   meetup: { enabled: boolean; note: string };
   pickup: { enabled: boolean; address: string };
   holds: { checkoutMinutes: number; onlinePaymentMinutes: number; bankTransferHours: number; meetupHours: number };
@@ -24,12 +24,12 @@ export interface CheckoutSettings {
 }
 
 export const DEFAULT_CHECKOUT_SETTINGS: CheckoutSettings = {
-  shipping: { metroManila: 250, provincial: 450, freeOver: null },
+  shipping: { metroManila: 200, metroManilaMax: 400, provincial: 450, freeOver: null },
   meetup: {
     enabled: true,
     note: "Meet-ups in Quezon City by appointment. Cash or credit card accepted on the spot.",
   },
-  pickup: { enabled: true, address: "Pickup by appointment — Quezon City" },
+  pickup: { enabled: true, address: "By appointment — Sampaloc, Manila, Metro Manila" },
   holds: { checkoutMinutes: 15, onlinePaymentMinutes: 30, bankTransferHours: 24, meetupHours: 48 },
   layaway: {
     // Shown grayed out as "Coming soon" until switched on.

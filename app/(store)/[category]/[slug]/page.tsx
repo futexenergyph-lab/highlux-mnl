@@ -177,7 +177,7 @@ export default async function ProductPage({ params }: { params: Params }) {
 
             <section className="mt-10 space-y-2 text-sm text-cream-muted">
               <h2 className="eyebrow mb-3 text-gold">Shipping &amp; Payment</h2>
-              <p>Ships within 1–2 business days, insured and discreetly packed. Metro Manila and provincial delivery, or meet-up / store pickup by appointment.</p>
+              <p>Same-day delivery within Metro Manila by rider; provincial orders ship within 1–2 business days. Insured and discreetly packed, or meet-up / store pickup by appointment.</p>
               <p>
                 Pay via GCash, Maya{cardOnline ? ", credit/debit card" : ""} or bank transfer{cardOnline ? "" : " — credit cards accepted at meet-ups"}.{layaway && " Layaway available."}{" "}
                 <Link href="/how-to-order" className="text-gold-light underline underline-offset-4">How to order</Link>

@@ -14,6 +14,7 @@ import {
   layawayEligible,
   layawaySchedule,
   shippingFee,
+  riderFeeRange,
   type Fulfillment,
   type PaymentMethod,
   type PaymentPlan,
@@ -327,7 +328,7 @@ export function CheckoutForm({ config, account }: { config: Config; account: Acc
       </ul>
       <dl className="space-y-2 border-t border-gold/15 pt-4 text-sm">
         <div className="flex justify-between"><dt className="text-cream-muted">Subtotal</dt><dd className="text-cream">{formatPHP(subtotal)}</dd></div>
-        <div className="flex justify-between"><dt className="text-cream-muted">{FULFILLMENT_LABELS[fulfillment]}</dt><dd className="text-cream">{fee ? formatPHP(fee) : "Free"}</dd></div>
+        <div className="flex justify-between"><dt className="text-cream-muted">{FULFILLMENT_LABELS[fulfillment]}</dt><dd className="text-cream">{fee ? formatPHP(fee) : fulfillment === "ship_metro_manila" ? `${riderFeeRange(config)} to rider` : "Free"}</dd></div>
         <div className="flex justify-between border-t border-gold/15 pt-3 text-base"><dt className="text-cream">Total</dt><dd className="font-medium text-gold-light">{formatPHP(total)}</dd></div>
       </dl>
       {plan === "layaway" && (
@@ -410,7 +411,7 @@ export function CheckoutForm({ config, account }: { config: Config; account: Acc
 
           <Step n={2} title="Delivery">
             <div className="grid gap-3 sm:grid-cols-2">
-              <Choice Icon={Truck} checked={fulfillment === "ship_metro_manila"} onSelect={() => chooseFulfillment("ship_metro_manila")} title="Metro Manila delivery" detail="1–2 business days, insured" price={formatPHP(shippingFee("ship_metro_manila", subtotal, config)) } />
+              <Choice Icon={Truck} checked={fulfillment === "ship_metro_manila"} onSelect={() => chooseFulfillment("ship_metro_manila")} title="Same-day delivery — Metro Manila" detail="Delivered the same day by rider. Rider fee depends on distance and is paid to the rider on delivery." price={riderFeeRange(config)} />
               <Choice Icon={Truck} checked={fulfillment === "ship_provincial"} onSelect={() => chooseFulfillment("ship_provincial")} title="Provincial delivery" detail="2–5 business days, insured" price={formatPHP(shippingFee("ship_provincial", subtotal, config))} />
               {config.meetup.enabled && <Choice Icon={MapPin} checked={fulfillment === "meetup"} onSelect={() => chooseFulfillment("meetup")} title="Meet-up" detail={config.meetup.note} price="Free" />}
               {config.pickup.enabled && <Choice Icon={Store} checked={fulfillment === "pickup"} onSelect={() => chooseFulfillment("pickup")} title="Store pickup" detail={config.pickup.address} price="Free" />}

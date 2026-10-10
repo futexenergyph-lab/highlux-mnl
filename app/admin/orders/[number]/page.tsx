@@ -73,7 +73,7 @@ export default async function AdminOrderPage({ params }: { params: { number: str
             </ul>
             <dl className="mt-4 space-y-1.5 border-t border-gold/10 pt-4 text-sm">
               <div className="flex justify-between"><dt className="text-cream-muted">Subtotal</dt><dd>{formatPHP(order.subtotal)}</dd></div>
-              <div className="flex justify-between"><dt className="text-cream-muted">Shipping</dt><dd>{order.shippingFee ? formatPHP(order.shippingFee) : "Free"}</dd></div>
+              <div className="flex justify-between"><dt className="text-cream-muted">Shipping</dt><dd>{order.shippingFee ? formatPHP(order.shippingFee) : order.fulfillment === "ship_metro_manila" ? "Paid to rider" : "Free"}</dd></div>
               <div className="flex justify-between font-medium"><dt>Total</dt><dd className="text-gold-light">{formatPHP(order.total)}</dd></div>
               <div className="flex justify-between"><dt className="text-cream-muted">Paid</dt><dd>{formatPHP(order.amountPaid)}</dd></div>
               <div className="flex justify-between"><dt className="text-cream-muted">Balance</dt><dd className={balance ? "text-gold-light" : ""}>{formatPHP(balance)}</dd></div>

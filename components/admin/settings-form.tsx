@@ -63,8 +63,9 @@ export function SettingsForm({ settings, paymongo, canEdit }: { settings: Checko
       </Card>
 
       <Card title="Shipping & fulfilment">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Num label="Metro Manila (₱)" value={s.shipping.metroManila} onChange={(v) => set("shipping", { metroManila: v ?? 0 })} />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Num label="Same-day Metro Manila rider fee from (₱)" value={s.shipping.metroManila} onChange={(v) => set("shipping", { metroManila: v ?? 0 })} />
+          <Num label="Same-day rider fee up to (₱, paid to rider)" value={s.shipping.metroManilaMax ?? null} onChange={(v) => set("shipping", { metroManilaMax: v })} />
           <Num label="Provincial (₱)" value={s.shipping.provincial} onChange={(v) => set("shipping", { provincial: v ?? 0 })} />
           <Num label="Free shipping over (₱, blank = never)" value={s.shipping.freeOver} onChange={(v) => set("shipping", { freeOver: v })} />
         </div>
