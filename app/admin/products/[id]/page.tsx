@@ -6,13 +6,14 @@ import { Plus } from "lucide-react";
 import { PageHeader, btnGold } from "@/components/admin/ui";
 import { ProductForm } from "@/components/admin/product-form";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
+import { customTypes } from "@/lib/catalog";
 
 export const metadata = { title: "Edit product" };
 
 export default async function EditProductPage({ params, searchParams }: { params: { id: string }; searchParams: { created?: string } }) {
   await requireStaff(`/admin/products/${params.id}`);
   const repo = await getAdminRepo();
-  const [product, brands, orders] = await Promise.all([repo.getProduct(params.id), repo.listBrandNames(), repo.listOrders()]);
+  const [product, brands, orders, products] = await Promise.all([repo.getProduct(params.id), repo.listBrandNames(), repo.listOrders(), repo.listProducts()]);
   if (!product) notFound();
   const holder = orders.find((o) => ["pending_payment", "layaway"].includes(o.status) && o.items.some((i) => i.productId === product.id));
   return (
@@ -34,7 +35,7 @@ export default async function EditProductPage({ params, searchParams }: { params
           </div>
         </div>
       )}
-      <ProductForm product={product} brands={brands} lockedByOrder={!!holder} />
+      <ProductForm product={product} brands={brands} customTypes={customTypes(products)} lockedByOrder={!!holder} />
     </>
   );
 }

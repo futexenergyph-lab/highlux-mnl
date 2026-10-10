@@ -72,7 +72,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 const OTHER_TYPE = "__other__";
 
-export function ProductForm({ product, brands: existingBrands, lockedByOrder }: { product?: Product; brands: string[]; lockedByOrder?: boolean }) {
+export function ProductForm({ product, brands: existingBrands, customTypes = {}, lockedByOrder }: { product?: Product; brands: string[]; customTypes?: Partial<Record<CategorySlug, string[]>>; lockedByOrder?: boolean }) {
   const brands = React.useMemo(() => brandOptions(existingBrands), [existingBrands]);
   const router = useRouter();
   const [brandName, setBrand] = React.useState(product?.brand ?? "");
@@ -83,7 +83,8 @@ export function ProductForm({ product, brands: existingBrands, lockedByOrder }: 
   const [slugTouched, setSlugTouched] = React.useState(!!product);
   const [category, setCategory] = React.useState<CategorySlug>(product?.category ?? "bags");
   const [subCategory, setSub] = React.useState(product?.subCategory ?? "");
-  const [typeOther, setTypeOther] = React.useState(() => !!product?.subCategory && !CATEGORIES.find((c) => c.slug === product.category)?.subCategories.some((s) => s.slug === product.subCategory));
+  // Saved custom types are listed like the built-in ones, so "Others" is only for a brand-new type.
+  const [typeOther, setTypeOther] = React.useState(false);
   const [price, setPrice] = React.useState(product?.price?.toString() ?? "");
   const [compareAt, setCompareAt] = React.useState(product?.compareAtPrice?.toString() ?? "");
   const [condition, setCondition] = React.useState<ConditionGrade>(product?.condition ?? "excellent");
@@ -115,6 +116,13 @@ export function ProductForm({ product, brands: existingBrands, lockedByOrder }: 
   }, [title, slugTouched]);
 
   const cat = CATEGORIES.find((c) => c.slug === category)!;
+  // A typed "Others" type that matches an existing one (any case) reuses it instead of making a near-duplicate.
+  const typedType = (v: string) => {
+    if (!typeOther) return v;
+    const t = v.trim().replace(/\s+/g, " ");
+    const lc = t.toLowerCase();
+    return cat.subCategories.find((s) => s.name.toLowerCase() === lc || s.slug === lc)?.slug ?? (customTypes[category] ?? []).find((c) => c.toLowerCase() === lc) ?? t;
+  };
   const fe = (f: string) => (error?.field === f ? error.msg : undefined);
 
   const submit = async () => {
@@ -125,7 +133,7 @@ export function ProductForm({ product, brands: existingBrands, lockedByOrder }: 
     if (color) allSpecs.color = color;
     const payload: ProductPayload = {
       id: product?.id,
-      brandName, model, title, slug, category, subCategory,
+      brandName, model, title, slug, category, subCategory: typedType(subCategory),
       price: Number(price), compareAtPrice: compareAt === "" ? null : Number(compareAt), condition, conditionNotes, inclusions,
       authenticityMethod: authMethod, authenticityCertificateUrl: certUrl, specs: allSpecs,
       color, description, videoUrl, status, featured,
@@ -183,6 +191,7 @@ export function ProductForm({ product, brands: existingBrands, lockedByOrder }: 
             >
               <option value="">Choose…</option>
               {cat.subCategories.map((s) => <option key={s.slug} value={s.slug}>{s.name}</option>)}
+              {(customTypes[category] ?? []).map((t) => <option key={t} value={t}>{t}</option>)}
               <option value={OTHER_TYPE}>Others</option>
             </select>
             {typeOther && <input value={subCategory} onChange={(e) => setSub(e.target.value)} required maxLength={40} autoFocus className={cn(inputCls, "mt-2")} placeholder="Type it, e.g. Bucket Bags" />}

@@ -68,6 +68,19 @@ export function productType(cat: CategoryDef, value: string) {
   return cat.subCategories.find((s) => s.slug === value) ?? (value ? { name: value, slug: value } : undefined);
 }
 
+/** Types typed in via "Others" on existing products, per category (shown in the admin Type list). */
+export function customTypes(products: { category: CategorySlug; subCategory: string }[]) {
+  const out: Partial<Record<CategorySlug, string[]>> = {};
+  for (const p of products) {
+    const cat = CATEGORIES.find((c) => c.slug === p.category);
+    if (!cat || !p.subCategory || cat.subCategories.some((s) => s.slug === p.subCategory)) continue;
+    const list = (out[p.category] ??= []);
+    if (!list.some((t) => t.toLowerCase() === p.subCategory.toLowerCase())) list.push(p.subCategory);
+  }
+  for (const list of Object.values(out)) list!.sort((a, b) => a.localeCompare(b));
+  return out;
+}
+
 export const BRANDS: Brand[] = [
   { name: "Hermès", slug: "hermes", categories: ["bags", "jewelry", "accessories"] },
   { name: "Chanel", slug: "chanel", categories: ["bags", "jewelry", "accessories"] },
