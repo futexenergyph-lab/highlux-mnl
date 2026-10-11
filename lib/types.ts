@@ -13,6 +13,17 @@ export const CONDITION_LABELS: Record<ConditionGrade, string> = {
   well_used: "Well-used",
 };
 
+/** What each condition grade means — shown on product pages and when choosing a grade in admin. */
+export const CONDITION_DESCRIPTIONS: Record<ConditionGrade, string> = {
+  brand_new: "Unused, with store tags or protective plastic intact.",
+  pristine: "Looks unused. No visible signs of wear on close inspection.",
+  excellent: "Lightly used. Minimal wear visible only on close inspection.",
+  very_good: "Gently used. Light visible wear such as minor scratches or rubbing.",
+  good: "Used with visible wear. Fully functional; priced accordingly.",
+  fair: "Noticeable wear such as scuffs, corner rubbing or creasing. Fully functional; priced accordingly.",
+  well_used: "Heavy signs of use — a loved piece with character. Details in the condition notes.",
+};
+
 export const INCLUSION_OPTIONS = [
   "box",
   "dust_bag",

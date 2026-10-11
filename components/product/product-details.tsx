@@ -1,18 +1,9 @@
 import { Check, Minus, ShieldCheck } from "lucide-react";
-import { CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type ConditionGrade, type Product } from "@/lib/types";
+import { CONDITION_DESCRIPTIONS, CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type ConditionGrade, type Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const GRADES: ConditionGrade[] = ["well_used", "fair", "good", "very_good", "excellent", "pristine", "brand_new"];
 
-const GRADE_COPY: Record<ConditionGrade, string> = {
-  brand_new: "Unused, with store tags or protective plastic intact.",
-  pristine: "Looks unused. No visible signs of wear on close inspection.",
-  excellent: "Lightly used. Minimal wear visible only on close inspection.",
-  very_good: "Gently used. Light visible wear such as minor scratches or rubbing.",
-  good: "Used with visible wear. Fully functional; priced accordingly.",
-  fair: "Noticeable wear such as scuffs, corner rubbing or creasing. Fully functional; priced accordingly.",
-  well_used: "Heavy signs of use — a loved piece with character. Details in the condition notes.",
-};
 
 export function ConditionMeter({ grade }: { grade: ConditionGrade }) {
   const level = GRADES.indexOf(grade);
@@ -32,7 +23,7 @@ export function ConditionMeter({ grade }: { grade: ConditionGrade }) {
           <span key={g} className="text-center">{CONDITION_LABELS[g]}</span>
         ))}
       </div>
-      <p className="mt-3 text-sm leading-relaxed text-cream-muted">{GRADE_COPY[grade]}</p>
+      <p className="mt-3 text-sm leading-relaxed text-cream-muted">{CONDITION_DESCRIPTIONS[grade]}</p>
     </div>
   );
 }

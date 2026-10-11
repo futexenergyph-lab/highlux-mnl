@@ -7,7 +7,7 @@ import { CATEGORIES } from "@/lib/catalog";
 import { brandOptions } from "@/lib/brand-options";
 import { BrandCombobox } from "./brand-combobox";
 import { parseListing } from "@/lib/listing-parser";
-import { CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type CategorySlug, type ConditionGrade, type Inclusion, type Product, type ProductImage, type ProductStatus } from "@/lib/types";
+import { CONDITION_DESCRIPTIONS, CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type CategorySlug, type ConditionGrade, type Inclusion, type Product, type ProductImage, type ProductStatus } from "@/lib/types";
 import { uploadFile } from "@/lib/client/upload";
 import { cn, slugify } from "@/lib/utils";
 import { PhotoManager } from "./photo-manager";
@@ -287,6 +287,9 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
             </label>
           ))}
         </div>
+        <p className="mt-3 border-l-2 border-gold/60 bg-gold/[0.04] px-3 py-2 text-sm text-cream-muted" aria-live="polite">
+          <span className="text-gold-light">{CONDITION_LABELS[condition]}:</span> {CONDITION_DESCRIPTIONS[condition]}
+        </p>
         <Field label="Condition notes" className="mt-4">
           <textarea value={conditionNotes} onChange={(e) => setConditionNotes(e.target.value)} rows={2} className={cn(inputCls, "h-auto py-2")} placeholder="Light patina on handles. Corners intact…" />
         </Field>
