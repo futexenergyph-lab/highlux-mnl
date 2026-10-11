@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { Download, Search } from "lucide-react";
+import { Download, Plus, Search } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { purchaseRows } from "@/lib/admin/purchases";
 import { formatPHP } from "@/lib/utils";
-import { PageHeader, btnOutline, fmtDate, inputCls } from "@/components/admin/ui";
+import { PageHeader, btnGold, btnOutline, fmtDate, inputCls } from "@/components/admin/ui";
 
 export const metadata = { title: "Purchase records" };
 
 const manilaDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
 
-export default async function PurchasesPage({ searchParams }: { searchParams: { from?: string; to?: string; q?: string; range?: string } }) {
+export default async function PurchasesPage({ searchParams }: { searchParams: { from?: string; to?: string; q?: string; range?: string; saved?: string } }) {
   await requireStaff("/admin/purchases");
   const orders = await (await getAdminRepo()).listOrders();
 
@@ -43,8 +43,14 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
       <PageHeader
         title="Purchase records"
         description="Every piece bought and fully paid for — who bought it, when, for how much and how it was paid."
-        actions={<a href={exportHref} className={btnOutline}><Download className="h-4 w-4" /> Download spreadsheet</a>}
+        actions={
+          <>
+            <Link href="/admin/purchases/new" className={btnGold}><Plus className="h-4 w-4" /> Manual purchase</Link>
+            <a href={exportHref} className={btnOutline}><Download className="h-4 w-4" /> Download spreadsheet</a>
+          </>
+        }
       />
+      {searchParams.saved && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Purchase saved as order <Link href={`/admin/orders/${searchParams.saved}`} className="text-gold-light underline">{searchParams.saved}</Link>. The item is now marked sold.</p>}
 
       <div className="mb-4 flex flex-wrap gap-2">
         {Object.entries(presets).map(([key, p]) => (

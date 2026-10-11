@@ -78,6 +78,8 @@ export interface OrderRepo {
   uploadProof(orderId: string, file: { name: string; type: string; bytes: ArrayBuffer }): Promise<string>;
   expireHolds(): Promise<number>;
   setAttribution(orderId: string, attribution: import("./types").OrderAttribution): Promise<void>;
+  /** Manual (offline) sales: set the agreed price on a fresh single-item order before it is paid. */
+  setAgreedPrice(orderId: string, amount: number): Promise<void>;
   /** A customer's orders, newest first. */
   listOrdersForUser(userId: string): Promise<OrderDetail[]>;
   /** Attach earlier guest orders placed with this (verified) email to the account. Returns how many. */

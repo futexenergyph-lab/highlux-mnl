@@ -98,6 +98,13 @@ export class SupabaseOrderRepo implements OrderRepo {
     }));
   }
 
+  async setAgreedPrice(orderId: string, amount: number) {
+    const o = await this.db.from("orders").update({ subtotal: amount, shipping_fee: 0, total: amount }).eq("id", orderId).eq("status", "pending_payment");
+    if (o.error) throw o.error;
+    const i = await this.db.from("order_items").update({ price: amount }).eq("order_id", orderId);
+    if (i.error) throw i.error;
+  }
+
   async placeOrder(a: PlaceOrderArgs): Promise<Order> {
     const { data, error } = await this.db.rpc("place_order", {
       p_session: a.sessionId,

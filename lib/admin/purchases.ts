@@ -1,6 +1,15 @@
 import { FULFILLMENT_LABELS, PAYMENT_LABELS } from "@/lib/checkout/pricing";
 import { ORDER_STATUS_LABELS, type OrderDetail } from "@/lib/orders/types";
 
+/** Payment modes for sales recorded by hand in admin (Purchase Records → Manual purchase). */
+export const MANUAL_MODES = ["cash", "bank_transfer", "card"] as const;
+export type ManualMode = (typeof MANUAL_MODES)[number];
+export const MANUAL_MODE_LABELS: Record<ManualMode, string> = { cash: "Cash", bank_transfer: "Bank Transfer", card: "Credit Card" };
+const MANUAL_PREFIX = "Manual purchase — paid by ";
+export const manualNote = (mode: ManualMode) => MANUAL_PREFIX + MANUAL_MODE_LABELS[mode];
+/** The mode written on a manual sale's order notes, or null for web orders. */
+export const manualMode = (notes: string | null | undefined) => (notes?.startsWith(MANUAL_PREFIX) ? notes.slice(MANUAL_PREFIX.length) : null);
+
 /** Orders that count as a completed purchase (fully paid, whatever their delivery stage). */
 export const PURCHASED = ["paid", "packed", "shipped", "delivered"] as const;
 
@@ -19,6 +28,7 @@ export interface PurchaseRow {
   delivery: string;
   address: string;
   status: string;
+  manual: boolean;
 }
 
 /** One row per item sold, newest first. Dates are compared as Manila calendar days (YYYY-MM-DD). */
@@ -45,10 +55,11 @@ export function purchaseRows(orders: OrderDetail[], opts: { from?: string; to?: 
         price: i.price,
         shippingFee: idx === 0 ? o.shippingFee : 0,
         orderTotal: o.total,
-        payment: (methods.length ? methods : [PAYMENT_LABELS[o.paymentMethod]]).join(" + "),
-        delivery: FULFILLMENT_LABELS[o.fulfillment],
+        payment: manualMode(o.notes) ?? (methods.length ? methods : [PAYMENT_LABELS[o.paymentMethod]]).join(" + "),
+        delivery: manualMode(o.notes) ? "Manual sale" : FULFILLMENT_LABELS[o.fulfillment],
         address: a ? [a.line1, a.barangay, a.city, a.province, a.zip].filter(Boolean).join(", ") : "",
         status: ORDER_STATUS_LABELS[o.status],
+        manual: !!manualMode(o.notes),
       }),
     );
   }

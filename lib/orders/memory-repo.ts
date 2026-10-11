@@ -82,6 +82,13 @@ export class MemoryOrderRepo implements OrderRepo {
     });
   }
 
+  async setAgreedPrice(orderId: string, amount: number) {
+    const o = this.s.orders.find((x) => x.id === orderId && x.status === "pending_payment");
+    if (!o) return;
+    Object.assign(o, { subtotal: amount, shippingFee: 0, total: amount });
+    for (const i of this.s.items.get(orderId) ?? []) i.price = amount;
+  }
+
   async placeOrder(a: PlaceOrderArgs): Promise<Order> {
     if (!a.productIds.length) throw new OrderError("EMPTY_ORDER");
     const products = a.productIds.map((id) => this.product(id));
