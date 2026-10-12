@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, Plus, Search } from "lucide-react";
+import { Download, Pencil, Plus, Search } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { purchaseRows } from "@/lib/admin/purchases";
@@ -10,7 +10,7 @@ export const metadata = { title: "Purchase records" };
 
 const manilaDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
 
-export default async function PurchasesPage({ searchParams }: { searchParams: { from?: string; to?: string; q?: string; range?: string; saved?: string } }) {
+export default async function PurchasesPage({ searchParams }: { searchParams: { from?: string; to?: string; q?: string; range?: string; saved?: string; updated?: string; capital?: string } }) {
   await requireStaff("/admin/purchases");
   const orders = await (await getAdminRepo()).listOrders();
 
@@ -32,6 +32,10 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
   const orderCount = new Set(rows.map((r) => r.orderNumber)).size;
   const sales = rows.reduce((s, r) => s + r.price, 0);
   const shipping = rows.reduce((s, r) => s + r.shippingFee, 0);
+  const withCapital = rows.filter((r) => r.capital != null);
+  const profit = withCapital.reduce((s, r) => s + (r.profit ?? 0), 0);
+  const capitalTotal = withCapital.reduce((s, r) => s + (r.capital ?? 0), 0);
+  const missingCapital = orderCount - new Set(withCapital.map((r) => r.orderNumber)).size;
   const qs = (extra: Record<string, string | undefined>) => {
     const p = new URLSearchParams(Object.entries({ q: q || undefined, ...extra }).filter(([, v]) => v) as [string, string][]);
     return p.toString() ? `?${p}` : "";
@@ -50,6 +54,8 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
           </>
         }
       />
+      {searchParams.updated && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Changes to <Link href={`/admin/orders/${searchParams.updated}`} className="text-gold-light underline">{searchParams.updated}</Link> saved.</p>}
+      {searchParams.capital === "missing" && <p role="alert" className="mb-5 border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">The sale was saved, but capital couldn&rsquo;t be stored yet — run the one-time capital SQL in Supabase, then add it with ✎.</p>}
       {searchParams.saved && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Purchase saved as order <Link href={`/admin/orders/${searchParams.saved}`} className="text-gold-light underline">{searchParams.saved}</Link>. The item is now marked sold.</p>}
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -71,9 +77,11 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
         <button className={`${btnOutline} col-span-2 self-end sm:col-span-1`}>Apply</button>
       </form>
 
-      <dl className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <dl className="mb-2 grid grid-cols-2 gap-3 lg:grid-cols-6">
         {[
           ["Sales (items)", formatPHP(sales)],
+          ["Capital", formatPHP(capitalTotal)],
+          ["Net profit", formatPHP(profit)],
           ["Pieces sold", String(itemsSold)],
           ["Orders", String(orderCount)],
           ["Shipping collected", formatPHP(shipping)],
@@ -85,6 +93,10 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
         ))}
       </dl>
 
+      <p className="mb-6 text-xs text-cream-dim">
+        Net profit = selling price − capital{missingCapital > 0 ? ` · ${missingCapital} sale${missingCapital === 1 ? "" : "s"} without capital yet (tap ✎ to add)` : ""}.
+      </p>
+
       {rows.length === 0 ? (
         <p className="border border-gold/15 p-10 text-center text-sm text-cream-muted">No purchases in this period yet. Orders appear here once they are fully paid.</p>
       ) : (
@@ -93,7 +105,8 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
           <ul className="divide-y divide-gold/10 border border-gold/15 bg-ink lg:hidden">
             {rows.map((r, i) => (
               <li key={r.orderNumber + i}>
-                <Link href={`/admin/orders/${r.orderNumber}`} className="block p-4 hover:bg-cream/[0.02]">
+                <div className="relative">
+                <Link href={`/admin/orders/${r.orderNumber}`} className="block p-4 pr-14 hover:bg-cream/[0.02]">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-[0.65rem] uppercase tracking-[0.16em] text-gold">{r.brand}</span>
                     <span className="shrink-0 text-xs text-cream-dim">{fmtDate(r.date)}</span>
@@ -104,7 +117,10 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
                     <span className="shrink-0 text-sm tabular-nums text-gold-light">{formatPHP(r.price)}</span>
                   </div>
                   <p className="mt-1 text-xs text-cream-dim">{r.payment} · {r.delivery} · {r.status}</p>
+                  {r.capital != null && <p className="mt-1 text-xs tabular-nums text-cream-muted">Capital {formatPHP(r.capital)} · <span className={(r.profit ?? 0) >= 0 ? "text-emerald-300" : "text-red-300"}>Profit {formatPHP(r.profit ?? 0)}</span></p>}
                 </Link>
+                <Link href={`/admin/purchases/${r.orderNumber}/edit`} aria-label={`Edit ${r.orderNumber}`} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center border border-gold/40 text-gold-light hover:border-gold"><Pencil className="h-4 w-4" /></Link>
+                </div>
               </li>
             ))}
           </ul>
@@ -114,7 +130,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
             <table className="w-full text-sm">
               <thead className="text-left text-[0.65rem] uppercase tracking-[0.14em] text-gold">
                 <tr className="border-b border-gold/15">
-                  {["Date paid", "Order", "Customer", "Item", "Price", "Payment", "Delivery", "Status"].map((h) => <th key={h} className="whitespace-nowrap p-3 font-normal">{h}</th>)}
+                  {["Date paid", "Order", "Customer", "Item", "Price", "Capital", "Net profit", "Payment", "Delivery", "Status", ""].map((h) => <th key={h} className="whitespace-nowrap p-3 font-normal">{h}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gold/10">
@@ -125,9 +141,12 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
                     <td className="p-3"><span className="block text-cream">{r.customer}</span><span className="block text-xs text-cream-dim">{r.phone}</span></td>
                     <td className="p-3"><span className="block text-[0.65rem] uppercase tracking-wider text-gold">{r.brand}</span><span className="text-cream">{r.item}</span></td>
                     <td className="whitespace-nowrap p-3 tabular-nums text-cream">{formatPHP(r.price)}</td>
+                    <td className="whitespace-nowrap p-3 tabular-nums text-cream-muted">{r.capital != null ? formatPHP(r.capital) : "—"}</td>
+                    <td className={`whitespace-nowrap p-3 tabular-nums ${r.profit == null ? "text-cream-dim" : r.profit >= 0 ? "text-emerald-300" : "text-red-300"}`}>{r.profit != null ? formatPHP(r.profit) : "—"}</td>
                     <td className="p-3 text-cream-muted">{r.payment}</td>
                     <td className="p-3 text-cream-muted">{r.delivery}</td>
                     <td className="whitespace-nowrap p-3 text-cream-muted">{r.status}</td>
+                    <td className="p-3"><Link href={`/admin/purchases/${r.orderNumber}/edit`} aria-label={`Edit ${r.orderNumber}`} className="flex h-8 w-8 items-center justify-center border border-gold/40 text-gold-light hover:border-gold"><Pencil className="h-3.5 w-3.5" /></Link></td>
                   </tr>
                 ))}
               </tbody>

@@ -29,6 +29,9 @@ export interface PurchaseRow {
   address: string;
   status: string;
   manual: boolean;
+  /** Capital and net profit sit on the order's first row (like shipping); null when capital isn't entered. */
+  capital: number | null;
+  profit: number | null;
 }
 
 /** One row per item sold, newest first. Dates are compared as Manila calendar days (YYYY-MM-DD). */
@@ -43,6 +46,8 @@ export function purchaseRows(orders: OrderDetail[], opts: { from?: string; to?: 
     if (opts.to && day(date) > opts.to) continue;
     const methods = [...new Set(o.payments.filter((p) => p.status === "paid").map((p) => PAYMENT_LABELS[p.method]))];
     const a = o.shippingAddress;
+    const itemsTotal = o.items.reduce((s, i) => s + i.price, 0);
+    const capital = o.capital ?? null;
     o.items.forEach((i, idx) =>
       rows.push({
         date,
@@ -60,6 +65,8 @@ export function purchaseRows(orders: OrderDetail[], opts: { from?: string; to?: 
         address: a ? [a.line1, a.barangay, a.city, a.province, a.zip].filter(Boolean).join(", ") : "",
         status: ORDER_STATUS_LABELS[o.status],
         manual: !!manualMode(o.notes),
+        capital: idx === 0 ? capital : null,
+        profit: idx === 0 && capital != null ? itemsTotal - capital : null,
       }),
     );
   }
@@ -68,13 +75,13 @@ export function purchaseRows(orders: OrderDetail[], opts: { from?: string; to?: 
 }
 
 export function purchasesCsv(rows: PurchaseRow[]) {
-  const head = ["Date paid", "Order no.", "Customer", "Phone", "Email", "Brand", "Item", "Item price", "Shipping fee", "Order total", "Payment", "Delivery", "Address", "Status"];
+  const head = ["Date paid", "Order no.", "Customer", "Phone", "Email", "Brand", "Item", "Item price", "Capital", "Net profit", "Shipping fee", "Order total", "Payment", "Delivery", "Address", "Status"];
   const cell = (v: string | number) => {
     const s = String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = rows.map((r) =>
-    [new Date(r.date).toLocaleString("en-PH", { timeZone: "Asia/Manila" }), r.orderNumber, r.customer, r.phone, r.email, r.brand, r.item, r.price, r.shippingFee, r.orderTotal, r.payment, r.delivery, r.address, r.status].map(cell).join(","),
+    [new Date(r.date).toLocaleString("en-PH", { timeZone: "Asia/Manila" }), r.orderNumber, r.customer, r.phone, r.email, r.brand, r.item, r.price, r.capital ?? "", r.profit ?? "", r.shippingFee, r.orderTotal, r.payment, r.delivery, r.address, r.status].map(cell).join(","),
   );
   return "﻿" + [head.join(","), ...lines].join("\r\n");
 }

@@ -8,7 +8,7 @@ import type { OrderDetail } from "@/lib/orders/types";
 import type { PaymentMethod } from "@/lib/checkout/pricing";
 import type { Product, ProductStatus } from "@/lib/types";
 import { slugify } from "@/lib/utils";
-import { AdminError, type AdminRepo } from "./repo";
+import { AdminError, type AdminRepo, type PurchasePatch } from "./repo";
 import type { Consignment, ConsignmentInput, ConsignmentStatus, CustomerRow, ProductInput, SalesData } from "./types";
 
 const g = globalThis as unknown as { __highluxConsignments?: Consignment[] };
@@ -87,6 +87,22 @@ export class MemoryAdminRepo implements AdminRepo {
   async listOrders(): Promise<OrderDetail[]> {
     const sorted = [...this.s.orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return Promise.all(sorted.map((o) => this.orders.getOrder(o.orderNumber).then((d) => d!)));
+  }
+
+  async updatePurchase(orderId: string, p: PurchasePatch) {
+    const o = this.s.orders.find((x) => x.id === orderId);
+    if (!o) throw new AdminError("NOT_FOUND");
+    if (p.fullName !== undefined) o.fullName = p.fullName;
+    if (p.phone !== undefined) o.phone = p.phone;
+    if (p.address !== undefined) o.shippingAddress = p.address ? { line1: p.address, barangay: "", city: "", province: "", zip: "" } : null;
+    if (p.notes !== undefined) o.notes = p.notes;
+    if (p.capital !== undefined) o.capital = p.capital;
+    if (p.payment) {
+      const { method, amount, proofPath } = p.payment;
+      Object.assign(o, { paymentMethod: method, subtotal: amount, shippingFee: 0, total: amount, amountPaid: amount });
+      for (const i of this.s.items.get(orderId) ?? []) i.price = amount;
+      for (const pay of this.s.payments.filter((x) => x.orderId === orderId && x.status === "paid")) Object.assign(pay, { method, amount, ...(proofPath ? { proofPath } : {}) });
+    }
   }
 
   async markPaymentReviewed(paymentId: string) {

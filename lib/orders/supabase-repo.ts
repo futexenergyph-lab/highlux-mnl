@@ -36,6 +36,7 @@ export function mapOrder(r: any): Order {
     deliveredAt: r.delivered_at,
     cancelledAt: r.cancelled_at ?? null,
     adminNotes: r.admin_notes ?? null,
+    capital: r.capital == null ? null : num(r.capital),
     attribution: r.attribution ?? null,
   };
 }

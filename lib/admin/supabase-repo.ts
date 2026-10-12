@@ -6,7 +6,7 @@ import type { OrderDetail } from "@/lib/orders/types";
 import type { PaymentMethod } from "@/lib/checkout/pricing";
 import type { Product, ProductStatus } from "@/lib/types";
 import { slugify } from "@/lib/utils";
-import { AdminError, type AdminRepo } from "./repo";
+import { AdminError, type AdminRepo, type PurchasePatch } from "./repo";
 import type { Consignment, ConsignmentInput, ConsignmentStatus, CustomerRow, ProductInput, SalesData } from "./types";
 
 const num = (v: any) => (v == null ? 0 : Number(v));
@@ -176,6 +176,33 @@ export class SupabaseAdminRepo implements AdminRepo {
     const { error } = await this.db.rpc("cancel_order", { p_order_id: orderId });
     if (error?.message.includes("ORDER_NOT_CANCELLABLE")) throw new AdminError("NOT_ALLOWED", "Paid orders can't be cancelled here — refund first.");
     this.check(error);
+  }
+
+  async updatePurchase(orderId: string, p: PurchasePatch) {
+    const patch: Record<string, unknown> = {};
+    if (p.fullName !== undefined) patch.full_name = p.fullName;
+    if (p.phone !== undefined) patch.phone = p.phone;
+    if (p.address !== undefined) patch.shipping_address = p.address ? { line1: p.address, barangay: "", city: "", province: "", zip: "" } : null;
+    if (p.notes !== undefined) patch.notes = p.notes;
+    if (p.payment) Object.assign(patch, { payment_method: p.payment.method, subtotal: p.payment.amount, shipping_fee: 0, total: p.payment.amount, amount_paid: p.payment.amount });
+    if (Object.keys(patch).length) {
+      const { error } = await this.db.from("orders").update(patch).eq("id", orderId);
+      this.check(error);
+    }
+    if (p.capital !== undefined) {
+      const { error } = await this.db.from("orders").update({ capital: p.capital }).eq("id", orderId);
+      // 42703 = column missing: the capital migration hasn't been run in Supabase yet.
+      if (error?.code === "42703") throw new AdminError("NOT_ALLOWED", "Capital needs a one-time database update — run supabase/migrations/20261012000007_capital.sql in Supabase.");
+      this.check(error);
+    }
+    if (p.payment) {
+      const items = await this.db.from("order_items").update({ price: p.payment.amount }).eq("order_id", orderId);
+      this.check(items.error);
+      const pay: Record<string, unknown> = { method: p.payment.method, amount: p.payment.amount };
+      if (p.payment.proofPath) pay.proof_path = p.payment.proofPath;
+      const { error } = await this.db.from("payments").update(pay).eq("order_id", orderId).eq("status", "paid");
+      this.check(error);
+    }
   }
 
   async setOrderNotes(orderId: string, notes: string | null) {

@@ -5,6 +5,15 @@ import type { PaymentMethod } from "@/lib/checkout/pricing";
 import type { Product, ProductStatus } from "@/lib/types";
 import type { Consignment, ConsignmentInput, ConsignmentStatus, CustomerRow, ProductInput, SalesData } from "./types";
 
+export interface PurchasePatch {
+  fullName?: string;
+  phone?: string;
+  address?: string | null;
+  notes?: string | null;
+  capital?: number | null;
+  payment?: { method: PaymentMethod; amount: number; proofPath?: string | null };
+}
+
 export class AdminError extends Error {
   constructor(public code: "SLUG_TAKEN" | "HAS_ORDERS" | "NOT_FOUND" | "NOT_ALLOWED", message?: string) {
     super(message ?? code);
@@ -33,6 +42,11 @@ export interface AdminRepo {
   setFulfillment(orderId: string, status: Extract<OrderStatus, "packed" | "shipped" | "delivered">, courier?: string | null, tracking?: string | null): Promise<void>;
   cancelOrder(orderId: string): Promise<void>;
   setOrderNotes(orderId: string, notes: string | null): Promise<void>;
+  /**
+   * Edit a purchase record. Contact fields and capital work on any order; payment fields
+   * (mode, amount, proof) are only passed for manual sales, whose single payment they rewrite.
+   */
+  updatePurchase(orderId: string, p: PurchasePatch): Promise<void>;
   // Consignments
   createConsignment(c: ConsignmentInput): Promise<string>;
   listConsignments(): Promise<Consignment[]>;

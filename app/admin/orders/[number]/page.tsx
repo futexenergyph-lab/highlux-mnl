@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ExternalLink, FileText, MessageCircle } from "lucide-react";
+import { AlertTriangle, ExternalLink, FileText, MessageCircle, Pencil } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getOrderRepo } from "@/lib/orders/repo";
 import { signedUrl } from "@/lib/media";
 import { FULFILLMENT_LABELS, PAYMENT_LABELS, isShipping } from "@/lib/checkout/pricing";
 import { orderUrl } from "@/lib/email";
+import { PURCHASED, manualMode } from "@/lib/admin/purchases";
 import { formatPHP } from "@/lib/utils";
 import { Badge, Card, PageHeader, fmtDate, fmtDateTime } from "@/components/admin/ui";
 import { OrderBadges, effectiveOrderStatus } from "@/components/admin/order-status";
@@ -25,14 +26,25 @@ export default async function AdminOrderPage({ params }: { params: { number: str
   );
   const pending = proofs.find((p) => p.status === "pending" && p.proofPath);
   const phone = order.phone.replace(/^0/, "63").replace(/^\+/, "");
+  const manual = manualMode(order.notes);
+  const purchased = (PURCHASED as readonly string[]).includes(order.status);
 
   return (
     <>
       <Link href="/admin/orders" className="text-xs uppercase tracking-wider text-cream-muted hover:text-gold-light">← Orders</Link>
       <PageHeader
         title={order.orderNumber}
-        description={`Placed ${fmtDateTime(order.createdAt)} · ${PAYMENT_LABELS[order.paymentMethod]}${order.paymentPlan === "layaway" ? " · Layaway" : ""} · ${FULFILLMENT_LABELS[order.fulfillment]}`}
-        actions={<OrderBadges order={order} />}
+        description={manual ? `Recorded ${fmtDateTime(order.createdAt)} · Manual sale · ${manual}` : `Placed ${fmtDateTime(order.createdAt)} · ${PAYMENT_LABELS[order.paymentMethod]}${order.paymentPlan === "layaway" ? " · Layaway" : ""} · ${FULFILLMENT_LABELS[order.fulfillment]}`}
+        actions={
+          <>
+            <OrderBadges order={order} />
+            {purchased && (
+              <Link href={`/admin/purchases/${order.orderNumber}/edit`} aria-label="Edit purchase record" title="Edit purchase record" className="flex h-9 w-9 items-center justify-center border border-gold/50 text-gold-light hover:border-gold">
+                <Pencil className="h-4 w-4" />
+              </Link>
+            )}
+          </>
+        }
       />
 
       {order.needsReview && (
@@ -77,6 +89,12 @@ export default async function AdminOrderPage({ params }: { params: { number: str
               <div className="flex justify-between font-medium"><dt>Total</dt><dd className="text-gold-light">{formatPHP(order.total)}</dd></div>
               <div className="flex justify-between"><dt className="text-cream-muted">Paid</dt><dd>{formatPHP(order.amountPaid)}</dd></div>
               <div className="flex justify-between"><dt className="text-cream-muted">Balance</dt><dd className={balance ? "text-gold-light" : ""}>{formatPHP(balance)}</dd></div>
+              {order.capital != null && (
+                <>
+                  <div className="flex justify-between border-t border-gold/10 pt-2"><dt className="text-cream-muted">Capital</dt><dd>{formatPHP(order.capital)}</dd></div>
+                  <div className="flex justify-between"><dt className="text-cream-muted">Net profit</dt><dd className={order.subtotal - order.capital >= 0 ? "text-emerald-300" : "text-red-300"}>{formatPHP(order.subtotal - order.capital)}</dd></div>
+                </>
+              )}
             </dl>
           </Card>
 
@@ -88,7 +106,7 @@ export default async function AdminOrderPage({ params }: { params: { number: str
                 {proofs.map((p) => (
                   <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-cream">{formatPHP(p.amount)}</span>
-                    <span className="text-cream-muted">{PAYMENT_LABELS[p.method]}{p.provider === "paymongo" ? " (PayMongo)" : p.provider === "manual" && !p.proofPath ? " (recorded by staff)" : ""}</span>
+                    <span className="text-cream-muted">{manual ?? PAYMENT_LABELS[p.method]}{p.provider === "paymongo" ? " (PayMongo)" : p.provider === "manual" && !p.proofPath ? " (recorded by staff)" : ""}</span>
                     <Badge tone={p.status === "paid" ? "green" : p.status === "pending" ? "gold" : p.status === "rejected" ? "red" : "muted"}>{p.status === "pending" && !p.proofPath ? "awaiting payment" : p.status}</Badge>
                     <span className="text-xs text-cream-dim">{fmtDateTime(p.paidAt ?? p.createdAt)}</span>
                     {p.referenceNo && <span className="text-xs text-cream-dim">Ref {p.referenceNo}</span>}

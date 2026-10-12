@@ -82,6 +82,8 @@ export interface Order {
   shippedAt: string | null;
   deliveredAt: string | null;
   cancelledAt?: string | null;
+  /** Staff-only: what the piece(s) cost HIGHLUX, for net profit. Null until entered. */
+  capital?: number | null;
   /** Staff-only notes; never rendered on customer pages. */
   adminNotes?: string | null;
   /** Ad-attribution data captured at checkout (server-side Meta events only). */

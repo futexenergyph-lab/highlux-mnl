@@ -12,7 +12,7 @@ export default async function ManualPurchasePage() {
   const items = products
     .filter((p) => p.status === "available")
     .sort((a, b) => a.title.localeCompare(b.title))
-    .map((p) => ({ id: p.id, label: p.title, price: p.price }));
+    .map((p) => ({ id: p.id, label: p.title, price: p.price, image: p.images[0]?.url ?? null }));
   return (
     <>
       <PageHeader title="Manual purchase" description="Record a sale made outside the website — meet-up, walk-in or chat." />
