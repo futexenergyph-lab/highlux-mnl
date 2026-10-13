@@ -10,6 +10,8 @@ export interface ParsedListing {
   price?: number;
   category?: CategorySlug;
   subCategory?: string;
+  /** e.g. "5.5 but fits size 7 to women" from a line like "Size 5.5 but fits size 7 to women". */
+  size?: string;
 }
 
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -38,6 +40,15 @@ const INCLUSIONS: [RegExp, Inclusion][] = [
   [/\breceipt\b/, "receipt"],
   [/\bstrap\b/, "strap"],
   [/\bbox\b/, "box"],
+];
+
+// Shoe types recognisable from the title line (checked before bag types).
+const SHOE_TYPES: [RegExp, string][] = [
+  [/\b(sneakers?|trainers?|tennis shoes?|runners?)\b/, "sneakers"],
+  [/\b(heels?|pumps?|stilettos?|slingbacks?)\b/, "heels-pumps"],
+  [/\b(loafers?|flats?|ballerinas?|moccasins?|espadrilles?|mules?)\b/, "flats-loafers"],
+  [/\b(sandals?|slides?|slippers?|flip ?flops?)\b/, "sandals-slides"],
+  [/\b(boots?|booties)\b/, "boots"],
 ];
 
 // Bag types recognisable from the title line.
@@ -104,7 +115,15 @@ export function parseListing(text: string, brands: string[]): ParsedListing {
 
   const titleNorm = norm(lines[0]);
   if (/\bwatch\b/.test(titleNorm)) out.category = "watches";
-  for (const [re, slug] of TYPES) {
+  const shoe = SHOE_TYPES.find(([re]) => re.test(titleNorm));
+  if (shoe || /\bshoes?\b/.test(titleNorm)) {
+    out.category = "shoes";
+    if (shoe) out.subCategory = shoe[1];
+  }
+  // "Size 5.5 but fits size 7 to women" / "Size: EU 38" — any line after the title that starts with "size".
+  const sizeLine = lines.slice(1).find((l) => /^size\b/i.test(l.replace(/^[^\p{L}\p{N}]+/u, "")));
+  if (sizeLine) out.size = sizeLine.replace(/^[^\p{L}\p{N}]+/u, "").replace(/^size\s*[:\-]?\s*/i, "").trim() || undefined;
+  if (out.category !== "shoes") for (const [re, slug] of TYPES) {
     if (re.test(titleNorm)) { out.category = "bags"; out.subCategory = slug; break; }
   }
   if (!out.category && /\bbag\b/.test(titleNorm)) out.category = "bags";

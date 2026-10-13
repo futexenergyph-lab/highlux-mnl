@@ -143,6 +143,7 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
       setTypeOther(false);
       setSub(r.subCategory);
     }
+    if (r.size && free("shoe_size")) setSpecs((s) => ({ ...s, shoe_size: r.size! }));
   };
 
   const cat = CATEGORIES.find((c) => c.slug === category)!;
@@ -237,6 +238,11 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
             </select>
             {typeOther && <input value={subCategory} onChange={(e) => setSub(e.target.value)} required maxLength={40} autoFocus className={cn(inputCls, "mt-2")} placeholder="Type it, e.g. Bucket Bags" />}
           </Field>
+          {category === "shoes" && (
+            <Field label="Shoe size">
+              <input value={specs.shoe_size ?? ""} onChange={(e) => { touch("shoe_size"); setSpecs({ ...specs, shoe_size: e.target.value }); }} className={inputCls} placeholder="e.g. EU 38 / US 7.5 — fits size 7" />
+            </Field>
+          )}
           <Field label="Brand" error={fe("brandName")}>
             <BrandCombobox value={brandName} onChange={(v) => { touch("brand"); setBrand(v); }} brands={brands} />
           </Field>
@@ -351,7 +357,7 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
 
       <Section title="Specifications">
         <div className="grid gap-4 sm:grid-cols-2">
-          {SPEC_FIELDS[category].map((f) => (
+          {SPEC_FIELDS[category].filter((f) => f.key !== "shoe_size").map((f) => (
             <Field key={f.key} label={f.label}>
               <input value={specs[f.key] ?? ""} onChange={(e) => setSpecs({ ...specs, [f.key]: e.target.value })} placeholder={f.placeholder} className={inputCls} />
             </Field>
