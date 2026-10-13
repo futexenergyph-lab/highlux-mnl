@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, Search } from "lucide-react";
+import { Eye, Plus, Search } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
+import { productViewCounts } from "@/lib/product-views";
 import { matchesQuery } from "@/lib/filters";
 import { CATEGORIES } from "@/lib/catalog";
 import { CONDITION_LABELS } from "@/lib/types";
@@ -16,7 +17,7 @@ const TONE = { available: "green", reserved: "gold", sold: "muted", hidden: "red
 
 export default async function ProductsPage({ searchParams }: { searchParams: { status?: string; q?: string; category?: string } }) {
   await requireStaff("/admin/products");
-  const all = await (await getAdminRepo()).listProducts();
+  const [all, views] = await Promise.all([(async () => (await getAdminRepo()).listProducts())(), productViewCounts()]);
   const status = searchParams.status ?? "all";
   const q = searchParams.q?.trim() ?? "";
   const list = all.filter(
@@ -55,6 +56,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
                 <span className="block text-[0.6rem] uppercase tracking-[0.16em] text-gold">{p.brand}{p.featured && " · ★ Featured"}</span>
                 <span className="block truncate text-sm text-cream hover:text-gold-light">{p.title}</span>
                 <span className="block text-xs text-cream-dim">{CONDITION_LABELS[p.condition]} · {p.images.length} photo{p.images.length === 1 ? "" : "s"} · added {fmtDate(p.createdAt)}</span>
+                <span className="mt-0.5 flex items-center gap-1 text-xs tabular-nums text-gold-light/80"><Eye className="h-3.5 w-3.5" /> {(views.get(p.id) ?? 0).toLocaleString("en-PH")} view{views.get(p.id) === 1 ? "" : "s"}</span>
               </Link>
               <div className="hidden text-right sm:block">
                 <p className="text-sm text-cream">{formatPHP(p.price)}</p>

@@ -8,6 +8,7 @@ import { ProductActions, StickyBuyBar, type ActionProduct } from "@/components/p
 import { AuthenticityBlock, ConditionMeter, Inclusions, SpecsTable } from "@/components/product/product-details";
 import { ProductCard } from "@/components/product/product-card";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
+import { ViewTracker } from "@/components/product/view-tracker";
 import { CATEGORIES, categoryBySlug, productHref, productType } from "@/lib/catalog";
 import { getCatalog, getProduct, getRelated } from "@/lib/data";
 import { getCheckoutSettings } from "@/lib/checkout/settings";
@@ -202,6 +203,7 @@ export default async function ProductPage({ params }: { params: Params }) {
 
       <div className="container">
         <RecentlyViewed excludeId={p.id} track={p.id} />
+        <ViewTracker productId={p.id} />
       </div>
 
       <StickyBuyBar product={action} anchorId="buy-box" />
