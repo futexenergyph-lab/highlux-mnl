@@ -11,6 +11,7 @@ const INTROS: Record<string, string> = {
   bags: "Hermès, Chanel, Louis Vuitton, Dior and more — authenticated pre-loved handbags at a fraction of retail.",
   watches: "Rolex, Audemars Piguet, Patek Philippe, Cartier and Omega — movement and serial verified.",
   jewelry: "Certified diamonds and signature pieces from Tiffany & Co., Van Cleef & Arpels, Cartier and Bulgari.",
+  shoes: "Pre-loved designer shoes — sneakers, heels, loafers and more — authenticated and ready to wear.",
   accessories: "Wallets, card holders, scarves and small leather goods from the great houses.",
 };
 

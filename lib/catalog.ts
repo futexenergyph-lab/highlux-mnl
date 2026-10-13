@@ -50,6 +50,19 @@ export const CATEGORIES: CategoryDef[] = [
     ],
   },
   {
+    slug: "shoes",
+    name: "Shoes",
+    tileTitle: "Shoes",
+    image: "/placeholders/tile-shoes.svg",
+    subCategories: [
+      { name: "Sneakers", slug: "sneakers" },
+      { name: "Heels & Pumps", slug: "heels-pumps" },
+      { name: "Flats & Loafers", slug: "flats-loafers" },
+      { name: "Sandals & Slides", slug: "sandals-slides" },
+      { name: "Boots", slug: "boots" },
+    ],
+  },
+  {
     slug: "accessories",
     name: "Accessories",
     tileTitle: "Accessories",
@@ -125,6 +138,7 @@ export const NAV: NavItem[] = [
   { label: "Bags", href: "/bags", category: "bags" },
   { label: "Watches", href: "/watches", category: "watches" },
   { label: "Jewelry", href: "/jewelry", category: "jewelry" },
+  { label: "Shoes", href: "/shoes", category: "shoes" },
   { label: "How to Order", href: "/how-to-order" },
   { label: "About Us", href: "/about" },
 ];

@@ -37,6 +37,12 @@ const SPEC_FIELDS: Record<CategorySlug, { key: string; label: string; placeholde
     { key: "size", label: "Ring size / length", placeholder: "5.5" },
     { key: "year", label: "Year" },
   ],
+  shoes: [
+    { key: "shoe_size", label: "Shoe size", placeholder: "EU 38 / US 7.5" },
+    { key: "material", label: "Material", placeholder: "Leather, canvas…" },
+    { key: "heel_height", label: "Heel height", placeholder: "10 cm (optional)" },
+    { key: "year", label: "Year" },
+  ],
   accessories: [
     { key: "measurements", label: "Measurements" },
     { key: "material", label: "Material" },

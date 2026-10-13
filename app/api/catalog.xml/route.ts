@@ -10,6 +10,7 @@ const GOOGLE_CATEGORY: Record<Product["category"], string> = {
   bags: "Apparel & Accessories > Handbags, Wallets & Cases > Handbags",
   watches: "Apparel & Accessories > Jewelry > Watches",
   jewelry: "Apparel & Accessories > Jewelry",
+  shoes: "Apparel & Accessories > Shoes",
   accessories: "Apparel & Accessories > Handbags, Wallets & Cases",
 };
 

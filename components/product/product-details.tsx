@@ -59,6 +59,8 @@ const SPEC_LABELS: Record<string, string> = {
   color: "Color",
   hardware: "Hardware",
   size: "Size",
+  shoe_size: "Shoe size",
+  heel_height: "Heel height",
   year: "Year",
   serial_code: "Serial / date code",
 };

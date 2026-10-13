@@ -60,7 +60,7 @@ export function ConsignForm() {
         <label><span className={label}>Brand</span><input name="brand" required placeholder="Chanel" className={input} /></label>
         <label><span className={label}>Category</span>
           <select name="category" required className={input} defaultValue="bags">
-            <option value="bags">Bag</option><option value="watches">Watch</option><option value="jewelry">Jewelry / diamonds</option><option value="accessories">Accessory</option><option value="other">Other</option>
+            <option value="bags">Bag</option><option value="watches">Watch</option><option value="jewelry">Jewelry / diamonds</option><option value="shoes">Shoes</option><option value="accessories">Accessory</option><option value="other">Other</option>
           </select>
         </label>
         <label className="sm:col-span-2"><span className={label}>Model / item name</span><input name="model" required placeholder="Classic Flap Medium, black caviar" className={input} /></label>

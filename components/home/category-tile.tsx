@@ -10,7 +10,7 @@ import { cn, formatPHP } from "@/lib/utils";
 const INTERVAL = 4500;
 
 /** A category tile that cross-fades through the newest pieces in that category, showing each one's title and price. */
-export function CategoryTile({ category, slides, offset }: { category: CategoryDef; slides: TileSlide[]; offset: number }) {
+export function CategoryTile({ category, slides, offset, wide }: { category: CategoryDef; slides: TileSlide[]; offset: number; wide?: boolean }) {
   const [index, setIndex] = React.useState(0);
   const [paused, setPaused] = React.useState(false);
 
@@ -38,7 +38,7 @@ export function CategoryTile({ category, slides, offset }: { category: CategoryD
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
       aria-label={current ? `${category.tileTitle}: ${current.title}, ${formatPHP(current.price)}` : `Shop ${category.tileTitle}`}
-      className="group relative block aspect-[4/5] overflow-hidden border border-gold/30 bg-ink-50 shadow-luxe transition-colors duration-500 hover:border-gold/70 sm:aspect-[16/11] lg:aspect-[4/5]"
+      className={cn("group relative block overflow-hidden border border-gold/30 bg-ink-50 shadow-luxe transition-colors duration-500 hover:border-gold/70 lg:aspect-[4/5]", wide ? "aspect-[16/9] sm:aspect-[21/9]" : "aspect-[4/5] sm:aspect-[16/11]")}
     >
       {slides.length === 0 ? (
         <Image src={category.image} alt="" fill sizes="(min-width: 1024px) 25vw, 50vw" className="object-cover transition-transform duration-1000 ease-out group-hover:scale-110" unoptimized />

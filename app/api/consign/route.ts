@@ -17,7 +17,7 @@ const schema = z.object({
   phone: phPhone,
   city: z.string().trim().max(80).optional(),
   brand: z.string().trim().min(1, "Enter the brand").max(80),
-  category: z.enum(["bags", "watches", "jewelry", "accessories", "other"]),
+  category: z.enum(["bags", "watches", "jewelry", "shoes", "accessories", "other"]),
   model: z.string().trim().min(1, "Enter the model / item name").max(160),
   condition: z.string().trim().max(40).optional(),
   inclusions: z.string().max(400).optional(),

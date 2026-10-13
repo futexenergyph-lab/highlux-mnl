@@ -56,6 +56,7 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
    - `20261010000006_more_conditions.sql`: Fair and Well-used condition grades
    - `20261012000007_capital.sql`: `orders.capital` for net profit in Admin → Purchase Records
    - `20261013000008_product_views.sql`: product page view counts shown in Admin → Products
+   - `20261014000009_shoes.sql`: the Shoes category
 4. Make yourself an admin after signing up:
    ```sql
    update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');

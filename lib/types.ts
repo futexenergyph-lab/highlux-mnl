@@ -1,4 +1,4 @@
-export type CategorySlug = "bags" | "watches" | "jewelry" | "accessories";
+export type CategorySlug = "bags" | "watches" | "jewelry" | "shoes" | "accessories";
 
 export type ConditionGrade = "brand_new" | "pristine" | "excellent" | "very_good" | "good" | "fair" | "well_used";
 export type ProductStatus = "available" | "reserved" | "sold" | "hidden";
