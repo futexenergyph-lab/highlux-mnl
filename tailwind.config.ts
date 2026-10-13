@@ -44,10 +44,12 @@ const config: Config = {
       keyframes: {
         "fade-up": { from: { opacity: "0", transform: "translateY(12px)" }, to: { opacity: "1", transform: "translateY(0)" } },
         shimmer: { from: { backgroundPosition: "200% 0" }, to: { backgroundPosition: "-200% 0" } },
+        "load-bar": { from: { transform: "scaleX(0.05)" }, to: { transform: "scaleX(0.85)" } },
       },
       animation: {
         "fade-up": "fade-up 0.8s ease-out both",
         shimmer: "shimmer 6s linear infinite",
+        "load-bar": "load-bar 1.5s cubic-bezier(0.1, 0.7, 0.3, 1) forwards",
       },
     },
   },

@@ -127,6 +127,21 @@ export class SupabaseAdminRepo implements AdminRepo {
     this.check(error);
   }
 
+  async badgeCounts() {
+    const [proofs, toFulfil, review, consignments] = await Promise.all([
+      this.db.from("payments").select("order_id").eq("status", "pending").not("proof_path", "is", null).limit(1000),
+      this.db.from("orders").select("id", { count: "exact", head: true }).in("status", ["paid", "packed"]),
+      this.db.from("orders").select("id", { count: "exact", head: true }).eq("needs_review", true),
+      this.db.from("consignments").select("id", { count: "exact", head: true }).eq("status", "new"),
+    ]);
+    return {
+      proofs: new Set((proofs.data ?? []).map((r: { order_id: string }) => r.order_id)).size,
+      toFulfil: toFulfil.count ?? 0,
+      review: review.count ?? 0,
+      consignments: consignments.count ?? 0,
+    };
+  }
+
   async listOrders(): Promise<OrderDetail[]> {
     const { data, error } = await this.db
       .from("orders")

@@ -34,6 +34,8 @@ export interface AdminRepo {
   listBrandNames(): Promise<string[]>;
   // Orders
   listOrders(): Promise<OrderDetail[]>;
+  /** Cheap counts for the admin menu badges (runs on every admin page). */
+  badgeCounts(): Promise<{ proofs: number; toFulfil: number; consignments: number; review: number }>;
   /** Stamp a pending proof as reviewed (recording it is done by the shared payment path). */
   markPaymentReviewed(paymentId: string, reviewerId: string): Promise<void>;
   rejectPayment(paymentId: string, reviewerId: string, reason: string, holdHours: number): Promise<void>;

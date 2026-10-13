@@ -84,6 +84,16 @@ export class MemoryAdminRepo implements AdminRepo {
     Object.assign(p, { status, reservedSession: null, reservedUntil: null, soldAt: status === "sold" ? new Date().toISOString() : p.soldAt });
   }
 
+  async badgeCounts() {
+    const [orders, consignments] = await Promise.all([this.listOrders(), this.listConsignments()]);
+    return {
+      proofs: orders.filter((o) => o.payments.some((p) => p.status === "pending" && p.proofPath)).length,
+      toFulfil: orders.filter((o) => o.status === "paid" || o.status === "packed").length,
+      consignments: consignments.filter((c) => c.status === "new").length,
+      review: orders.filter((o) => o.needsReview).length,
+    };
+  }
+
   async listOrders(): Promise<OrderDetail[]> {
     const sorted = [...this.s.orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return Promise.all(sorted.map((o) => this.orders.getOrder(o.orderNumber).then((d) => d!)));

@@ -26,19 +26,30 @@ interface Props {
 export function AdminShell({ user, badges, children }: Props) {
   const path = usePathname();
   const [open, setOpen] = React.useState(false);
-  React.useEffect(() => setOpen(false), [path]);
+  // The tapped item until its page arrives: the menu closes and highlights it at once instead of waiting.
+  const [pendingHref, setPendingHref] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    setOpen(false);
+    setPendingHref(null);
+  }, [path]);
   const count = (b?: "orders" | "consignments") => (b === "orders" ? badges.proofs + badges.toFulfil + badges.review : b === "consignments" ? badges.consignments : 0);
 
   const nav = (
     <nav aria-label="Admin" className="flex flex-col gap-0.5">
       {NAV.map(({ href, label, Icon, badge }) => {
-        const active = href === "/admin" ? path === href : path.startsWith(href);
+        const at = pendingHref ?? path;
+        const active = href === "/admin" ? at === href : at.startsWith(href);
         const n = count(badge);
         return (
           <Link
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+              setOpen(false);
+              if (href !== path) setPendingHref(href);
+            }}
             className={cn("flex items-center gap-3 border-l-2 px-4 py-2.5 text-sm transition-colors", active ? "border-gold bg-gold/[0.08] text-gold-light" : "border-transparent text-cream-muted hover:bg-cream/[0.03] hover:text-cream")}
           >
             <Icon className="h-4 w-4" strokeWidth={1.4} />
@@ -52,6 +63,7 @@ export function AdminShell({ user, badges, children }: Props) {
 
   return (
     <div className="min-h-screen bg-ink-200">
+      {pendingHref && <div aria-hidden className="fixed inset-x-0 top-0 z-[60] h-0.5 origin-left animate-load-bar bg-gold-gradient" />}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-gold/15 bg-ink px-4 lg:hidden">
         <button onClick={() => setOpen(true)} aria-label="Open admin menu" className="-ml-1 p-2 text-cream"><Menu className="h-5 w-5" /></button>
         <span className="font-serif tracking-[0.14em] text-gold-light">HIGHLUX · ADMIN</span>
