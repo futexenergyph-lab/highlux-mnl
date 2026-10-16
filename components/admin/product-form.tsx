@@ -12,6 +12,7 @@ import { uploadFile } from "@/lib/client/upload";
 import { cn, slugify } from "@/lib/utils";
 import { PhotoManager } from "./photo-manager";
 import { CopyLinkButton } from "./copy-link-button";
+import { DownloadPhotosButton } from "./download-photos-button";
 import { btnDanger, btnGold, btnOutline, inputCls, labelCls } from "./ui";
 import { deleteProductAction, saveProductAction, type ProductPayload } from "@/app/admin/products/actions";
 
@@ -201,6 +202,8 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
       <Section title="Photos">
         <PhotoManager images={images} onChange={setImages} defaultAlt={title || "Product photo"} error={fe("images")} />
       </Section>
+
+      {product && images.length > 0 && <DownloadPhotosButton images={images} name={product.slug} />}
 
       <Section title="Item">
         <div className="grid gap-4 sm:grid-cols-2">
