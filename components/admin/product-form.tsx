@@ -204,7 +204,11 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
 
       <Section title="Item">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={product ? "Description" : "Description (Auto fill)"} className="sm:col-span-2">
+          <div className="sm:col-span-2">
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+              <span className={cn(labelCls, "mb-0")}>{product ? "Description" : "Description (Auto fill)"}</span>
+              {product && <CopyLinkButton variant="small" label="Copy Description + Link" path={`/${product.category}/${product.slug}`} text={description} />}
+            </div>
             <textarea
               value={description}
               onChange={(e) => onDescription(e.target.value)}
@@ -213,7 +217,7 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
               placeholder={product ? "" : "Paste your caption, e.g.\nGivenchy Antigona Smooth Grained Leather Bag\n💯% Authentic | with long strap\nIn very good condition\n₱29,500 fixed"}
             />
             {!product && <span className="mt-1.5 block text-xs text-cream-dim">Fills in brand, model, type, condition, inclusions and price below — check them before saving. Fields you change by hand aren&rsquo;t overwritten.</span>}
-          </Field>
+          </div>
           <Field label="Category">
             <select value={category} onChange={(e) => { touch("category", "subCategory"); setCategory(e.target.value as CategorySlug); setSub(""); setTypeOther(false); }} className={inputCls}>
               {CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.tileTitle}</option>)}

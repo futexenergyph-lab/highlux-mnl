@@ -5,10 +5,13 @@ import { cn } from "@/lib/utils";
 import { btnOutline } from "./ui";
 
 /** Copies "See details here: <shop link>" (e.g. https://highluxmnl.com/bags/…) for pasting to customers. */
-export function CopyLinkButton({ path, variant = "button", className }: { path: string; variant?: "button" | "icon"; className?: string }) {
+/** With `text`, copies that text, a blank line, then the link line (for pasting a full caption). */
+export function CopyLinkButton({ path, variant = "button", className, text: before, label = "Copy link" }: { path: string; variant?: "button" | "icon" | "small"; className?: string; text?: string; label?: string }) {
   const [copied, setCopied] = React.useState(false);
   const copy = async () => {
-    const text = `See details here: ${window.location.origin}${path}`;
+    const link = `See details here: ${window.location.origin}${path}`;
+    const body = before?.trim();
+    const text = body ? `${body}\n\n${link}` : link;
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -25,6 +28,13 @@ export function CopyLinkButton({ path, variant = "button", className }: { path: 
     setTimeout(() => setCopied(false), 2000);
   };
   const Icon = copied ? Check : Link2;
+
+  if (variant === "small")
+    return (
+      <button type="button" onClick={copy} className={cn("inline-flex items-center gap-1.5 border border-gold/40 px-2 py-1 font-sans text-[0.6rem] uppercase tracking-wider text-gold-light transition hover:border-gold", copied && "border-gold bg-gold/10", className)}>
+        <Icon className="h-3.5 w-3.5" /> {copied ? "Copied" : label}
+      </button>
+    );
 
   if (variant === "icon")
     return (
