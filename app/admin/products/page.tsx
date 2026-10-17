@@ -20,16 +20,18 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
   const [all, views] = await Promise.all([(async () => (await getAdminRepo()).listProducts())(), productViewCounts()]);
   const status = searchParams.status ?? "all";
   const q = searchParams.q?.trim() ?? "";
+  // "curated" = featured on the homepage's Curated Picks row (and still for sale, like the homepage).
+  const inTab = (p: (typeof all)[number], s: string) => (s === "all" ? true : s === "curated" ? p.featured && p.status !== "sold" && p.status !== "hidden" : p.status === s);
   const list = all.filter(
-    (p) => (status === "all" || p.status === status) && (!searchParams.category || p.category === searchParams.category) && (!q || matchesQuery(p, q)),
+    (p) => inTab(p, status) && (!searchParams.category || p.category === searchParams.category) && (!q || matchesQuery(p, q)),
   );
-  const count = (s: string) => all.filter((p) => s === "all" || p.status === s).length;
+  const count = (s: string) => all.filter((p) => inTab(p, s)).length;
   const qs = (s: string) => `/admin/products?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}${searchParams.category ? `&category=${searchParams.category}` : ""}`;
 
   return (
     <>
       <PageHeader title="Products" description={`${all.length} pieces · each is one of a kind (quantity 1)`} actions={<Link href="/admin/products/new" className={btnGold}><Plus className="h-4 w-4" /> New product</Link>} />
-      <Tabs current={status} tabs={["all", "available", "reserved", "sold", "hidden"].map((s) => ({ key: s, label: s, href: qs(s), count: count(s) }))} />
+      <Tabs current={status} tabs={["all", "available", "curated", "reserved", "sold", "hidden"].map((s) => ({ key: s, label: s === "curated" ? "Curated Picks" : s, href: qs(s), count: count(s) }))} />
       <form className="mb-5 flex flex-col gap-2 sm:flex-row">
         <input type="hidden" name="status" value={status} />
         <div className="relative flex-1">
