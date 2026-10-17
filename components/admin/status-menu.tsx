@@ -69,6 +69,15 @@ export function StatusMenu({ product: p }: { product: MenuProduct }) {
             </Dropdown.Item>
             <Dropdown.Item
               onSelect={async () => {
+                await copyText(captionWithLink(`/${p.category}/${p.slug}`));
+                done("Link copied");
+              }}
+              className={itemCls}
+            >
+              Copy link
+            </Dropdown.Item>
+            <Dropdown.Item
+              onSelect={async () => {
                 await copyText(captionWithLink(`/${p.category}/${p.slug}`, p.description));
                 done("Copied");
               }}
