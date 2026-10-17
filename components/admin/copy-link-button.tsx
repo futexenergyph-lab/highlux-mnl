@@ -38,7 +38,7 @@ export function CopyLinkButton({ path, variant = "button", className, text: befo
 
   return (
     <button type="button" onClick={copy} className={cn(btnOutline, className)}>
-      <Icon className="h-4 w-4" /> {copied ? "Link copied" : "Copy link"}
+      <Icon className="h-4 w-4" /> {copied ? "Copied" : label}
     </button>
   );
 }

@@ -390,6 +390,7 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
           </Link>
         )}
         {product && <CopyLinkButton path={`/${product.category}/${product.slug}`} />}
+        {product && <CopyLinkButton path={`/${product.category}/${product.slug}`} text={description} label="Copy Description + Link" />}
         {product && (
           <Link href="/admin/products/new" className={btnOutline}>
             <Plus className="h-4 w-4" /> Create a new listing
