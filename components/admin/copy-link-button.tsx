@@ -3,27 +3,14 @@ import * as React from "react";
 import { Check, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { btnOutline } from "./ui";
+import { captionWithLink, copyText } from "@/lib/client/clipboard";
 
 /** Copies "See details here: <shop link>" (e.g. https://highluxmnl.com/bags/…) for pasting to customers. */
 /** With `text`, copies that text, a blank line, then the link line (for pasting a full caption). */
 export function CopyLinkButton({ path, variant = "button", className, text: before, label = "Copy link" }: { path: string; variant?: "button" | "icon" | "small"; className?: string; text?: string; label?: string }) {
   const [copied, setCopied] = React.useState(false);
   const copy = async () => {
-    const link = `See details here: ${window.location.origin}${path}`;
-    const body = before?.trim();
-    const text = body ? `${body}\n\n${link}` : link;
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      // Older browsers: fall back to a hidden textarea.
-      const ta = Object.assign(document.createElement("textarea"), { value: text });
-      ta.setAttribute("readonly", "");
-      ta.style.cssText = "position:fixed;opacity:0";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-    }
+    await copyText(captionWithLink(path, before));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

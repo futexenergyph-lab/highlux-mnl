@@ -65,7 +65,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
                 {p.compareAtPrice && <p className="text-xs text-cream-dim line-through">{formatPHP(p.compareAtPrice)}</p>}
               </div>
               <Badge tone={TONE[p.status]}>{p.status}</Badge>
-              <StatusMenu id={p.id} status={p.status} />
+              <StatusMenu product={{ id: p.id, status: p.status, category: p.category, slug: p.slug, description: p.description, images: p.images }} />
             </li>
           ))}
         </ul>

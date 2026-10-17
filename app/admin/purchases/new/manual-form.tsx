@@ -45,13 +45,14 @@ function Field({ label, error, children, hint }: { label: string; error?: string
   );
 }
 
+const item0Price = (items: ItemOption[], id?: string) => { const i = items.find((x) => x.id === id); return i ? String(i.price) : ""; };
 const money = (v: string) => v.replace(/[^\d.]/g, "");
 
-export function ManualPurchaseForm({ items = [], initial }: { items?: ItemOption[]; initial?: PurchaseInitial }) {
+export function ManualPurchaseForm({ items = [], initial, preselect }: { items?: ItemOption[]; initial?: PurchaseInitial; preselect?: string }) {
   const editing = !!initial;
   const [state, action] = useFormState<ManualState, FormData>(editing ? updatePurchaseAction : createManualPurchase, null);
-  const [item, setItem] = React.useState<ItemOption | null>(null);
-  const [amount, setAmount] = React.useState(initial ? String(initial.amount) : "");
+  const [item, setItem] = React.useState<ItemOption | null>(() => items.find((i) => i.id === preselect) ?? null);
+  const [amount, setAmount] = React.useState(initial ? String(initial.amount) : item0Price(items, preselect));
   const [capital, setCapital] = React.useState(initial?.capital != null ? String(initial.capital) : "");
   const [mode, setMode] = React.useState<string>(initial?.mode ?? "cash");
   const [fileName, setFileName] = React.useState("");
