@@ -7,6 +7,7 @@ import { demoGoogle, demoSignIn, demoSignOut, demoSignUp } from "@/lib/auth/demo
 import { createClient } from "@/lib/supabase/server";
 import { site } from "@/lib/site";
 import { isStaffAccount } from "@/lib/admin/auth";
+import { rememberNext } from "@/lib/auth/next-cookie";
 
 export type AuthState = { error?: string; message?: string } | null;
 
@@ -69,6 +70,7 @@ export async function signUpAction(_prev: AuthState, form: FormData): Promise<Au
     options: { data: { full_name: parsed.data.fullName }, emailRedirectTo: callbackUrl(next) },
   });
   if (error) return { error: friendly(error.message) };
+  rememberNext(next);
   // With "Confirm email" on (recommended), Supabase returns no session until the link is clicked.
   if (!data.session) return { message: `We sent a confirmation link to ${parsed.data.email}. Click it to activate your account.` };
   redirect(next);
@@ -80,11 +82,13 @@ export async function magicLinkAction(_prev: AuthState, form: FormData): Promise
   const mode = authMode();
   if (mode === "off") return unavailable();
   if (mode === "demo") return { message: "Demo mode: email links aren't sent. Sign in with your password instead." };
+  const next = safeNext(form.get("next") as string);
   const { error } = await createClient().auth.signInWithOtp({
     email: parsed.data.email,
-    options: { emailRedirectTo: callbackUrl(safeNext(form.get("next") as string)), shouldCreateUser: true },
+    options: { emailRedirectTo: callbackUrl(next), shouldCreateUser: true },
   });
   if (error) return { error: friendly(error.message) };
+  rememberNext(next);
   return { message: `Check ${parsed.data.email} — we sent you a secure sign-in link.` };
 }
 
