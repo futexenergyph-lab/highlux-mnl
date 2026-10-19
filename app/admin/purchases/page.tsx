@@ -12,7 +12,11 @@ const manilaDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Asia/M
 
 export default async function PurchasesPage({ searchParams }: { searchParams: { from?: string; to?: string; q?: string; range?: string; saved?: string; updated?: string; capital?: string } }) {
   await requireStaff("/admin/purchases");
-  const orders = await (await getAdminRepo()).listOrders();
+  const repo = await getAdminRepo();
+  const [orders, products] = await Promise.all([repo.listOrders(), repo.listProducts()]);
+  // Stock on hand right now (not tied to the date range above).
+  const available = products.filter((p) => p.status === "available");
+  const availableValue = available.reduce((s, p) => s + p.price, 0);
 
   // Quick ranges: this month (default), last 30 days, this year, all time; custom dates override.
   const today = manilaDay(new Date());
@@ -77,7 +81,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
         <button className={`${btnOutline} col-span-2 self-end sm:col-span-1`}>Apply</button>
       </form>
 
-      <dl className="mb-2 grid grid-cols-2 gap-3 lg:grid-cols-6">
+      <dl className="mb-2 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           ["Sales (items)", formatPHP(sales)],
           ["Capital", formatPHP(capitalTotal)],
@@ -85,6 +89,8 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
           ["Pieces sold", String(itemsSold)],
           ["Orders", String(orderCount)],
           ["Shipping collected", formatPHP(shipping)],
+          ["Available listings", String(available.length)],
+          ["Available listing value", formatPHP(availableValue)],
         ].map(([k, v]) => (
           <div key={k} className="border border-gold/15 bg-ink p-4">
             <dt className="text-[0.65rem] uppercase tracking-[0.16em] text-cream-dim">{k}</dt>
@@ -94,7 +100,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
       </dl>
 
       <p className="mb-6 text-xs text-cream-dim">
-        Net profit = selling price − capital{missingCapital > 0 ? ` · ${missingCapital} sale${missingCapital === 1 ? "" : "s"} without capital yet (tap ✎ to add)` : ""}.
+        Available listings = pieces for sale on the site right now (any date range) · value = their listed prices. Net profit = selling price − capital{missingCapital > 0 ? ` · ${missingCapital} sale${missingCapital === 1 ? "" : "s"} without capital yet (tap ✎ to add)` : ""}.
       </p>
 
       {rows.length === 0 ? (
