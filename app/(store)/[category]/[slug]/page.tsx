@@ -7,6 +7,7 @@ import { ProductGallery } from "@/components/product/gallery";
 import { ProductActions, StickyBuyBar, type ActionProduct } from "@/components/product/product-actions";
 import { AuthenticityBlock, ConditionMeter, Inclusions, SpecsTable } from "@/components/product/product-details";
 import { ProductCard } from "@/components/product/product-card";
+import { AuctionBanner } from "@/components/bidding/auction-banner";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
 import { ViewTracker } from "@/components/product/view-tracker";
 import { CATEGORIES, categoryBySlug, productHref, productType } from "@/lib/catalog";
@@ -137,6 +138,7 @@ export default async function ProductPage({ params }: { params: Params }) {
 
             <div className="gold-divider my-6" />
 
+            {p.status !== "sold" && <AuctionBanner productId={p.id} />}
             <div id="buy-box">
               <ProductActions product={action} />
             </div>

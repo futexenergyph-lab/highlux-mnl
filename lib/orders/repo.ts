@@ -68,6 +68,7 @@ export interface OrderRepo {
   getCheckoutProducts(ids: string[]): Promise<CheckoutProduct[]>;
   placeOrder(args: PlaceOrderArgs): Promise<Order>;
   getOrder(orderNumber: string): Promise<OrderDetail | null>;
+  getOrderById(id: string): Promise<{ orderNumber: string; accessToken: string } | null>;
   findOrderNumber(orderNumber: string, email: string): Promise<{ orderNumber: string; accessToken: string } | null>;
   createPayment(p: NewPayment): Promise<Payment>;
   updatePayment(id: string, patch: { providerRef?: string; checkoutUrl?: string; status?: PaymentStatus }): Promise<void>;

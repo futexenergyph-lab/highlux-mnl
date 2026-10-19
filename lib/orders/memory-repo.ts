@@ -132,6 +132,11 @@ export class MemoryOrderRepo implements OrderRepo {
     return { ...order };
   }
 
+  async getOrderById(id: string) {
+    const o = this.s.orders.find((x) => x.id === id);
+    return o ? { orderNumber: o.orderNumber, accessToken: o.accessToken } : null;
+  }
+
   async getOrder(orderNumber: string): Promise<OrderDetail | null> {
     const o = this.s.orders.find((x) => x.orderNumber === orderNumber);
     if (!o) return null;

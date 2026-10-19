@@ -139,6 +139,7 @@ export const NAV: NavItem[] = [
   { label: "Watches", href: "/watches", category: "watches" },
   { label: "Jewelry", href: "/jewelry", category: "jewelry" },
   { label: "Shoes", href: "/shoes", category: "shoes" },
+  { label: "Bidding", href: "/bidding" },
   { label: "How to Order", href: "/how-to-order" },
   { label: "About Us", href: "/about" },
 ];

@@ -1,0 +1,54 @@
+export type AuctionStatus = "scheduled" | "live" | "ended" | "cancelled";
+
+export interface BidContact { email: string; fullName: string; phone: string }
+
+export interface AuctionBid {
+  id: string;
+  userId: string;
+  bidderName: string; // already masked, e.g. "J•••a"
+  amount: number;
+  /** Never sent to the browser except for the winner's own order. */
+  contact: BidContact;
+  createdAt: string;
+}
+
+export interface Auction {
+  id: string;
+  productId: string;
+  startingBid: number;
+  minIncrement: number;
+  reservePrice: number | null;
+  startsAt: string;
+  endsAt: string;
+  /** Stored status; "scheduled"/"live" are derived from the clock for display. */
+  status: "live" | "ended" | "cancelled";
+  winnerBidId: string | null;
+  orderId: string | null;
+  createdAt: string;
+  bids: AuctionBid[]; // newest first
+}
+
+export function auctionPhase(a: Pick<Auction, "status" | "startsAt" | "endsAt">, now = Date.now()): AuctionStatus {
+  if (a.status !== "live") return a.status;
+  if (now < Date.parse(a.startsAt)) return "scheduled";
+  if (now >= Date.parse(a.endsAt)) return "ended";
+  return "live";
+}
+
+export const topBid = (a: Pick<Auction, "bids">) => a.bids.reduce<AuctionBid | null>((m, b) => (!m || b.amount > m.amount ? b : m), null);
+export const nextMinBid = (a: Pick<Auction, "bids" | "startingBid" | "minIncrement">) => {
+  const t = topBid(a);
+  return t ? t.amount + a.minIncrement : a.startingBid;
+};
+
+/** "Jeffrey Talla" → "J•••••a" so bidders stay anonymous to each other. */
+export function maskName(name: string | null | undefined, email: string) {
+  const base = (name?.trim() || email.split("@")[0] || "Bidder").replace(/\s+/g, "");
+  return base.length <= 2 ? `${base[0]}•` : `${base[0]}${"•".repeat(Math.min(5, base.length - 2))}${base[base.length - 1]}`;
+}
+
+export class BidError extends Error {
+  constructor(public code: "CLOSED" | "TOO_LOW" | "NOT_FOUND", public minimum?: number) {
+    super(code);
+  }
+}

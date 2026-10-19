@@ -141,6 +141,11 @@ export class SupabaseOrderRepo implements OrderRepo {
     };
   }
 
+  async getOrderById(id: string) {
+    const { data } = await this.db.from("orders").select("order_number, access_token").eq("id", id).maybeSingle();
+    return data ? { orderNumber: data.order_number as string, accessToken: data.access_token as string } : null;
+  }
+
   async getOrder(orderNumber: string): Promise<OrderDetail | null> {
     const { data, error } = await this.db
       .from("orders")
