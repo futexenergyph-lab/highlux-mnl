@@ -91,9 +91,17 @@ export async function cancelOrder(orderId: string) {
 
 const manilaDay = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date(iso));
 
-export async function salesSummary(days: number | null) {
-  const since = days ? new Date(Date.now() - days * 86_400_000) : null;
-  const data = await (await getAdminRepo()).salesData(since?.toISOString() ?? null);
+/** Either the last N days (null = all time) or a custom Manila date range (YYYY-MM-DD, inclusive). */
+export type SalesRange = number | null | { from: string; to: string };
+
+export async function salesSummary(range: SalesRange) {
+  const custom = range && typeof range === "object" ? range : null;
+  const days = custom ? null : (range as number | null);
+  const since = custom ? new Date(`${custom.from}T00:00:00+08:00`) : days ? new Date(Date.now() - days * 86_400_000) : null;
+  const until = custom ? new Date(`${custom.to}T23:59:59.999+08:00`) : null;
+  const raw = await (await getAdminRepo()).salesData(since?.toISOString() ?? null);
+  const inRange = (iso: string) => !until || new Date(iso) <= until;
+  const data = { ...raw, payments: raw.payments.filter((p) => inRange(p.paidAt)), soldItems: raw.soldItems.filter((i) => inRange(i.paidAt)) };
   const revenue = data.payments.reduce((s, p) => s + p.amount, 0);
   const itemsSold = data.soldItems.length;
   const salesValue = data.soldItems.reduce((s, i) => s + i.price, 0);
@@ -108,11 +116,13 @@ export async function salesSummary(days: number | null) {
   const topBrands = [...brands.entries()].map(([brand, v]) => ({ brand, ...v })).sort((a, b) => b.revenue - a.revenue).slice(0, 6);
 
   // Daily cash received (Manila days), zero-filled for the chart.
-  const span = days ?? 30;
+  // A custom range shows its own days (up to the last 92 of them).
+  const end = until ? until.getTime() : Date.now();
+  const span = custom ? Math.min(92, Math.max(1, Math.round((until!.getTime() - since!.getTime()) / 86_400_000))) : days ?? 30;
   const byDay = new Map<string, number>();
   for (const p of data.payments) byDay.set(manilaDay(p.paidAt), (byDay.get(manilaDay(p.paidAt)) ?? 0) + p.amount);
   const daily = Array.from({ length: span }, (_, i) => {
-    const d = manilaDay(new Date(Date.now() - (span - 1 - i) * 86_400_000).toISOString());
+    const d = manilaDay(new Date(end - (span - 1 - i) * 86_400_000).toISOString());
     return { day: d, amount: byDay.get(d) ?? 0 };
   });
 

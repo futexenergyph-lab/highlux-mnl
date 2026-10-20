@@ -6,7 +6,7 @@ import { salesSummary } from "@/lib/admin/service";
 import { PAYMENT_LABELS, type PaymentMethod } from "@/lib/checkout/pricing";
 import { hasPendingProof } from "@/lib/orders/types";
 import { formatPHP } from "@/lib/utils";
-import { Card, PageHeader } from "@/components/admin/ui";
+import { Card, PageHeader, inputCls } from "@/components/admin/ui";
 import { RevenueChart } from "@/components/admin/revenue-chart";
 import { cn } from "@/lib/utils";
 
@@ -19,11 +19,23 @@ const RANGES = [
   { key: "all", label: "All time", days: null },
 ];
 
-export default async function Dashboard({ searchParams }: { searchParams: { range?: string } }) {
+const isDate = (s?: string) => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
+const fmtDay = (d: string) => new Date(`${d}T12:00:00+08:00`).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+
+export default async function Dashboard({ searchParams }: { searchParams: { range?: string; from?: string; to?: string } }) {
   const staff = await requireStaff("/admin");
-  const range = RANGES.find((r) => r.key === searchParams.range) ?? RANGES[1];
+  // Custom dates (either one is enough) override the quick ranges.
+  let custom: { from: string; to: string } | null = null;
+  if (isDate(searchParams.from) || isDate(searchParams.to)) {
+    const to = isDate(searchParams.to) ? searchParams.to! : today();
+    const from = isDate(searchParams.from) ? searchParams.from! : to;
+    custom = from <= to ? { from, to } : { from: to, to: from };
+  }
+  const range = custom ? null : RANGES.find((r) => r.key === searchParams.range) ?? RANGES[1];
   const repo = await getAdminRepo();
-  const [sales, orders, consignments] = await Promise.all([salesSummary(range.days), repo.listOrders(), repo.listConsignments()]);
+  const [sales, orders, consignments] = await Promise.all([salesSummary(custom ?? range!.days), repo.listOrders(), repo.listConsignments()]);
+  const periodLabel = custom ? (custom.from === custom.to ? fmtDay(custom.from) : `${fmtDay(custom.from)} – ${fmtDay(custom.to)}`) : null;
 
   const proofs = orders.filter(hasPendingProof);
   const toPack = orders.filter((o) => o.status === "paid");
@@ -54,12 +66,26 @@ export default async function Dashboard({ searchParams }: { searchParams: { rang
         title={`Good day, ${(staff.fullName ?? "").split(" ")[0] || "team"}.`}
         description="Sales, what needs attention, and inventory at a glance."
         actions={
-          <div className="flex border border-gold/25" role="group" aria-label="Date range">
-            {RANGES.map((r) => (
-              <Link key={r.key} href={`/admin?range=${r.key}`} className={cn("px-3 py-2 text-xs uppercase tracking-wider", r.key === range.key ? "bg-gold text-ink" : "text-cream-muted hover:text-cream")}>
-                {r.label}
-              </Link>
-            ))}
+          <div className="flex w-full flex-col gap-3 sm:w-auto">
+            <div className="flex border border-gold/25" role="group" aria-label="Date range">
+              {RANGES.map((r) => (
+                <Link key={r.key} href={`/admin?range=${r.key}`} className={cn("flex-1 px-3 py-2 text-center text-xs uppercase tracking-wider sm:flex-none", r.key === range?.key ? "bg-gold text-ink" : "text-cream-muted hover:text-cream")}>
+                  {r.label}
+                </Link>
+              ))}
+            </div>
+            <form action="/admin" className="grid grid-cols-[1fr_1fr_auto] items-end gap-2" aria-label="Custom dates">
+              <label className="block min-w-0">
+                <span className="mb-1 block text-[0.6rem] uppercase tracking-wider text-cream-dim">From</span>
+                <input type="date" name="from" defaultValue={custom?.from ?? ""} max={today()} className={cn(inputCls, custom && "border-gold")} />
+              </label>
+              <label className="block min-w-0">
+                <span className="mb-1 block text-[0.6rem] uppercase tracking-wider text-cream-dim">To</span>
+                <input type="date" name="to" defaultValue={custom?.to ?? ""} max={today()} className={cn(inputCls, custom && "border-gold")} />
+              </label>
+              <button className={cn("h-10 px-4 text-xs uppercase tracking-wider", custom ? "bg-gold text-ink" : "border border-gold/40 text-cream hover:border-gold")}>Apply</button>
+            </form>
+            {custom && <p className="text-xs text-gold-light">Showing {periodLabel} · <Link href="/admin" className="text-cream-muted underline underline-offset-2">clear</Link></p>}
           </div>
         }
       />
@@ -92,8 +118,8 @@ export default async function Dashboard({ searchParams }: { searchParams: { rang
       </ul>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
-        <Card title={`Revenue received per day · ${range.days ? `last ${range.days} days` : "last 30 days shown"}`}>
-          {sales.revenue === 0 && range.days ? <p className="mb-2 text-xs text-cream-dim">No payments in this period yet.</p> : null}
+        <Card title={`Revenue received per day · ${custom ? (sales.daily.length < 92 ? periodLabel : `last 92 days to ${fmtDay(custom.to)}`) : range!.days ? `last ${range!.days} days` : "last 30 days shown"}`}>
+          {sales.revenue === 0 && (custom || range!.days) ? <p className="mb-2 text-xs text-cream-dim">No payments in this period yet.</p> : null}
           <RevenueChart data={sales.daily} />
         </Card>
 
