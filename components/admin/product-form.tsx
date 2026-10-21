@@ -9,7 +9,7 @@ import { BrandCombobox } from "./brand-combobox";
 import { parseListing } from "@/lib/listing-parser";
 import { CONDITION_DESCRIPTIONS, CONDITION_LABELS, INCLUSION_LABELS, INCLUSION_OPTIONS, type CategorySlug, type ConditionGrade, type Inclusion, type Product, type ProductImage, type ProductStatus } from "@/lib/types";
 import { uploadFile } from "@/lib/client/upload";
-import { cn, slugify } from "@/lib/utils";
+import { cn, formatPHP, slugify } from "@/lib/utils";
 import { PhotoManager } from "./photo-manager";
 import { CopyLinkButton } from "./copy-link-button";
 import { DownloadPhotosButton } from "./download-photos-button";
@@ -80,7 +80,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 const OTHER_TYPE = "__other__";
 
-export function ProductForm({ product, brands: existingBrands, customTypes = {}, lockedByOrder }: { product?: Product; brands: string[]; customTypes?: Partial<Record<CategorySlug, string[]>>; lockedByOrder?: boolean }) {
+export function ProductForm({ product, capital: initialCapital, brands: existingBrands, customTypes = {}, lockedByOrder }: { product?: Product; capital?: number | null; brands: string[]; customTypes?: Partial<Record<CategorySlug, string[]>>; lockedByOrder?: boolean }) {
   const brands = React.useMemo(() => brandOptions(existingBrands), [existingBrands]);
   const router = useRouter();
   const [brandName, setBrand] = React.useState(product?.brand ?? "");
@@ -95,6 +95,8 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
   const [typeOther, setTypeOther] = React.useState(false);
   const [price, setPrice] = React.useState(product?.price?.toString() ?? "");
   const [compareAt, setCompareAt] = React.useState(product?.compareAtPrice?.toString() ?? "");
+  const [capital, setCapital] = React.useState(initialCapital?.toString() ?? "");
+  const [warning, setWarning] = React.useState<string | null>(null);
   const [condition, setCondition] = React.useState<ConditionGrade>(product?.condition ?? "excellent");
   const [conditionNotes, setConditionNotes] = React.useState(product?.conditionNotes ?? "");
   const [inclusions, setInclusions] = React.useState<Inclusion[]>(product?.inclusions ?? []);
@@ -166,7 +168,7 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
     const payload: ProductPayload = {
       id: product?.id,
       brandName, model, title, slug, category, subCategory: typedType(subCategory),
-      price: Number(price), compareAtPrice: compareAt === "" ? null : Number(compareAt), condition, conditionNotes, inclusions,
+      price: Number(price), compareAtPrice: compareAt === "" ? null : Number(compareAt), capital: capital === "" ? null : Number(capital), condition, conditionNotes, inclusions,
       authenticityMethod: authMethod, authenticityCertificateUrl: certUrl, specs: allSpecs,
       color, description, videoUrl, status, featured,
       images: images.map((im, i) => ({ ...im, alt: im.alt.trim() || `${title}${i ? ` — photo ${i + 1}` : ""}` })),
@@ -178,7 +180,8 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
       return;
     }
     setSaved(true);
-    if (!product) router.replace(`/admin/products/${res.id}?created=1`);
+    setWarning(res.warning ?? null);
+    if (!product) router.replace(`/admin/products/${res.id}?created=1${res.warning ? "&capital=missing" : ""}`);
     else router.refresh();
   };
 
@@ -282,6 +285,15 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
           <Field label="“Was” price (₱, optional)" error={fe("compareAtPrice")}>
             <input inputMode="numeric" value={compareAt} onChange={(e) => setCompareAt(e.target.value.replace(/[^\d.]/g, ""))} className={inputCls} placeholder="Shows a Price Drop badge" />
           </Field>
+          <label className="block">
+            <span className="mb-1 block text-[0.7rem] font-bold uppercase tracking-[0.14em] text-cream">Capital (₱)</span>
+            <input inputMode="numeric" value={capital} onChange={(e) => setCapital(e.target.value.replace(/[^\d.]/g, ""))} className={inputCls} placeholder="What this piece cost you" />
+            <span className="mt-1 block text-xs text-cream-dim">
+              Only staff see this — never shown to customers. Filled in automatically when you mark it sold.
+              {price && capital && <span className={cn("ml-1 tabular-nums", Number(price) - Number(capital) >= 0 ? "text-emerald-300" : "text-red-300")}>Profit at this price: {formatPHP(Number(price) - Number(capital))}</span>}
+            </span>
+            {fe("capital") && <span className="mt-1 block text-xs text-red-300">{fe("capital")}</span>}
+          </label>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Status">
           {STATUSES.map((s) => (
@@ -398,6 +410,7 @@ export function ProductForm({ product, brands: existingBrands, customTypes = {},
         )}
         {error && <p className="text-sm text-red-300" role="alert">{error.msg}</p>}
         {saved && !error && <p className="text-sm text-gold-light" role="status">Saved — the shop is updated.</p>}
+        {warning && <p className="text-sm text-red-300" role="alert">{warning}</p>}
         {product && !lockedByOrder && (
           <button type="button" onClick={remove} className={cn(btnDanger, "ml-auto")}>
             <Trash2 className="h-4 w-4" /> Delete

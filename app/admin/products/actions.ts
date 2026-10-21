@@ -21,6 +21,7 @@ const schema = z
     subCategory: z.string().trim().min(1, "Choose a type").max(40, "Type is too long"),
     price: z.coerce.number().positive("Price must be more than 0").max(100_000_000),
     compareAtPrice: z.union([z.coerce.number().positive(), z.literal("").transform(() => null), z.null()]),
+    capital: z.union([z.coerce.number().min(0, "Capital can't be negative").max(100_000_000), z.literal("").transform(() => null), z.null()]).optional(),
     condition: z.enum(Object.keys(CONDITION_LABELS) as [ConditionGrade, ...ConditionGrade[]]),
     conditionNotes: optText(2000),
     inclusions: z.array(z.enum(INCLUSION_OPTIONS)).max(INCLUSION_OPTIONS.length),
@@ -44,7 +45,7 @@ const schema = z
   });
 
 export type ProductPayload = z.input<typeof schema>;
-export type SaveResult = { ok: true; id: string; url: string } | { ok: false; error: string; field?: string };
+export type SaveResult = { ok: true; id: string; url: string; warning?: string } | { ok: false; error: string; field?: string };
 
 export async function saveProductAction(payload: ProductPayload): Promise<SaveResult> {
   await assertStaff();
@@ -54,8 +55,9 @@ export async function saveProductAction(payload: ProductPayload): Promise<SaveRe
     return { ok: false, error: i.message, field: String(i.path[0] ?? "") };
   }
   try {
-    const p = await saveProduct(parsed.data);
-    return { ok: true, id: p.id, url: `/${p.category}/${p.slug}` };
+    const { capital, ...input } = parsed.data;
+    const p = await saveProduct(input, capital);
+    return { ok: true, id: p.id, url: `/${p.category}/${p.slug}`, warning: p.capitalError };
   } catch (e) {
     if (e instanceof AdminError) return { ok: false, error: e.message, field: e.code === "SLUG_TAKEN" ? "slug" : undefined };
     console.error("[admin] save product failed", e);

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/admin/auth";
 import { getOrderRepo } from "@/lib/orders/repo";
+import { withListingCapital } from "@/lib/admin/service";
 import { PURCHASED, manualMode, MANUAL_MODES, MANUAL_MODE_LABELS } from "@/lib/admin/purchases";
 import { PageHeader } from "@/components/admin/ui";
 import { ManualPurchaseForm } from "../../new/manual-form";
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
 
 export default async function EditPurchasePage({ params }: { params: { number: string } }) {
   await requireStaff(`/admin/purchases/${params.number}/edit`);
-  const order = await (await getOrderRepo()).getOrder(decodeURIComponent(params.number));
+  const found = await (await getOrderRepo()).getOrder(decodeURIComponent(params.number));
+  const order = found && (await withListingCapital([found]))[0];
   if (!order || !(PURCHASED as readonly string[]).includes(order.status)) notFound();
   const label = manualMode(order.notes);
   const mode = label ? (MANUAL_MODES.find((m) => MANUAL_MODE_LABELS[m] === label) ?? "cash") : null;

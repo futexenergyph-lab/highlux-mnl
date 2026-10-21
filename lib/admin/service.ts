@@ -21,12 +21,31 @@ export function refreshStorefront(products: { category: CategorySlug; slug: stri
   for (const p of products) revalidatePath(productHref(p));
 }
 
-export async function saveProduct(input: ProductInput) {
+/** Saves a product; `capital` (staff-only) goes to its own table. Returns capitalError if only that part failed. */
+export async function saveProduct(input: ProductInput, capital?: number | null) {
   const repo = await getAdminRepo();
   const before = input.id ? await repo.getProduct(input.id) : null;
   const saved = await repo.saveProduct(input);
   refreshStorefront([saved, ...(before && before.slug !== saved.slug ? [before] : [])]);
-  return saved;
+  let capitalError: string | undefined;
+  if (capital !== undefined) {
+    const current = (await repo.productCosts()).get(saved.id) ?? null;
+    if (current !== capital) await repo.setProductCost(saved.id, capital).catch((e) => (capitalError = e instanceof AdminError ? e.message : "Capital couldn't be saved."));
+  }
+  return { ...saved, capitalError };
+}
+
+/**
+ * Orders without their own capital borrow it from their pieces' capital (entered on the
+ * listing), when every piece has one. The order's own capital (✎ on Purchase Records) wins.
+ */
+export async function withListingCapital<T extends { capital?: number | null; items: { productId: string }[] }>(orders: T[]): Promise<T[]> {
+  const costs = await (await getAdminRepo()).productCosts();
+  if (!costs.size) return orders;
+  return orders.map((o) => {
+    if (o.capital != null || !o.items.length || !o.items.every((i) => costs.has(i.productId))) return o;
+    return { ...o, capital: o.items.reduce((s, i) => s + costs.get(i.productId)!, 0) };
+  });
 }
 
 // ─── Orders ──────────────────────────────────────────────────────────────

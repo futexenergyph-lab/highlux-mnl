@@ -32,6 +32,9 @@ export interface AdminRepo {
   deleteProduct(id: string): Promise<void>;
   setProductStatus(id: string, status: ProductStatus): Promise<void>;
   listBrandNames(): Promise<string[]>;
+  /** Capital (what a piece cost) by product id — staff only, never on the storefront. */
+  productCosts(): Promise<Map<string, number>>;
+  setProductCost(productId: string, capital: number | null): Promise<void>;
   // Orders
   listOrders(): Promise<OrderDetail[]>;
   /** Cheap counts for the admin menu badges (runs on every admin page). */

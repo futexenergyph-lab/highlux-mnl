@@ -1,5 +1,6 @@
 import { assertStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
+import { withListingCapital } from "@/lib/admin/service";
 import { purchaseRows, purchasesCsv } from "@/lib/admin/purchases";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export async function GET(req: Request) {
     return new Response("Forbidden", { status: 403 });
   }
   const sp = new URL(req.url).searchParams;
-  const orders = await (await getAdminRepo()).listOrders();
+  const orders = await withListingCapital(await (await getAdminRepo()).listOrders());
   const rows = purchaseRows(orders, { from: sp.get("from") ?? undefined, to: sp.get("to") ?? undefined, q: sp.get("q") ?? undefined });
   const stamp = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
   return new Response(purchasesCsv(rows), {

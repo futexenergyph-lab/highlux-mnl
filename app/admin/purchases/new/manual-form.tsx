@@ -53,7 +53,10 @@ export function ManualPurchaseForm({ items = [], initial, preselect }: { items?:
   const [state, action] = useFormState<ManualState, FormData>(editing ? updatePurchaseAction : createManualPurchase, null);
   const [item, setItem] = React.useState<ItemOption | null>(() => items.find((i) => i.id === preselect) ?? null);
   const [amount, setAmount] = React.useState(initial ? String(initial.amount) : item0Price(items, preselect));
-  const [capital, setCapital] = React.useState(initial?.capital != null ? String(initial.capital) : "");
+  const [capital, setCapital] = React.useState(() => {
+    const c = initial ? initial.capital : items.find((i) => i.id === preselect)?.capital;
+    return c != null ? String(c) : "";
+  });
   const [mode, setMode] = React.useState<string>(initial?.mode ?? "cash");
   const [fileName, setFileName] = React.useState("");
   const err = (f: string) => (state?.field === f ? state.error : undefined);
@@ -106,8 +109,13 @@ export function ManualPurchaseForm({ items = [], initial, preselect }: { items?:
             items={items}
             value={item?.id ?? ""}
             onChange={(i) => {
+              // Capital comes from the listing; a value typed for the previous item is replaced only by another listing's capital.
+              if (i) {
+                setAmount(String(i.price));
+                if (i.capital != null) setCapital(String(i.capital));
+                else if (item?.capital != null && capital === String(item.capital)) setCapital("");
+              }
               setItem(i);
-              if (i) setAmount(String(i.price));
             }}
           />
         )}
@@ -135,6 +143,7 @@ export function ManualPurchaseForm({ items = [], initial, preselect }: { items?:
         }
       >
         <input name="capital" inputMode="decimal" value={capital} onChange={(e) => setCapital(money(e.target.value))} className={inputCls} placeholder="e.g. 12000 (optional — add it later if you don't know yet)" />
+        {item?.capital != null && capital === String(item.capital) && <span className="mt-1 block text-xs text-cream-dim">From the listing&rsquo;s capital.</span>}
       </Field>
 
       {paymentEditable && (

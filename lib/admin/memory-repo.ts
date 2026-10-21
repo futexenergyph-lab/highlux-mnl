@@ -11,8 +11,9 @@ import { slugify } from "@/lib/utils";
 import { AdminError, type AdminRepo, type PurchasePatch } from "./repo";
 import type { Consignment, ConsignmentInput, ConsignmentStatus, CustomerRow, ProductInput, SalesData } from "./types";
 
-const g = globalThis as unknown as { __highluxConsignments?: Consignment[] };
+const g = globalThis as unknown as { __highluxConsignments?: Consignment[]; __highluxCosts?: Map<string, number> };
 const consignments = (): Consignment[] => (g.__highluxConsignments ??= []);
+const costs = () => (g.__highluxCosts ??= new Map());
 
 const strip = ({ reservedSession: _a, reservedUntil: _b, soldAt: _c, ...p }: ReturnType<typeof memoryStore>["products"][number]): Product => p;
 
@@ -30,6 +31,13 @@ export class MemoryAdminRepo implements AdminRepo {
   }
   async listBrandNames() {
     return [...new Set(this.s.products.map((p) => p.brand))].sort();
+  }
+  async productCosts() {
+    return new Map(costs());
+  }
+  async setProductCost(productId: string, capital: number | null) {
+    if (capital == null) costs().delete(productId);
+    else costs().set(productId, capital);
   }
 
   async saveProduct(p: ProductInput) {

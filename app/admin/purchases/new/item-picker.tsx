@@ -4,7 +4,7 @@ import Image from "next/image";
 import { cn, formatPHP } from "@/lib/utils";
 import { inputCls } from "@/components/admin/ui";
 
-export interface ItemOption { id: string; label: string; price: number; image: string | null }
+export interface ItemOption { id: string; label: string; price: number; image: string | null; capital?: number | null }
 
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 

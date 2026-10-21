@@ -3,6 +3,7 @@ import { Download, Pencil, Plus, Search } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { purchaseRows } from "@/lib/admin/purchases";
+import { withListingCapital } from "@/lib/admin/service";
 import { formatPHP } from "@/lib/utils";
 import { PageHeader, btnGold, btnOutline, fmtDate, inputCls } from "@/components/admin/ui";
 
@@ -13,7 +14,7 @@ const manilaDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Asia/M
 export default async function PurchasesPage({ searchParams }: { searchParams: { from?: string; to?: string; q?: string; range?: string; saved?: string; updated?: string; capital?: string } }) {
   await requireStaff("/admin/purchases");
   const repo = await getAdminRepo();
-  const [orders, products] = await Promise.all([repo.listOrders(), repo.listProducts()]);
+  const [orders, products] = await Promise.all([repo.listOrders().then(withListingCapital), repo.listProducts()]);
   // Stock on hand right now (not tied to the date range above).
   const available = products.filter((p) => p.status === "available");
   const availableValue = available.reduce((s, p) => s + p.price, 0);

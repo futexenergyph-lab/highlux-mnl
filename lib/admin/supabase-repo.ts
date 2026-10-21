@@ -56,6 +56,23 @@ export class SupabaseAdminRepo implements AdminRepo {
     return (data ?? []).map((b) => b.name as string);
   }
 
+  async productCosts() {
+    const { data, error } = await this.db.from("product_costs").select("product_id, capital").limit(10000);
+    // Before the product-capital SQL is run there's no table — treat it as "no capital entered yet".
+    if (error) return new Map<string, number>();
+    return new Map((data ?? []).map((r: any) => [r.product_id as string, num(r.capital)]));
+  }
+
+  async setProductCost(productId: string, capital: number | null) {
+    const { error } =
+      capital == null
+        ? await this.db.from("product_costs").delete().eq("product_id", productId)
+        : await this.db.from("product_costs").upsert({ product_id: productId, capital, updated_at: new Date().toISOString() });
+    if (error?.code === "42P01" || error?.code === "PGRST205")
+      throw new AdminError("NOT_ALLOWED", "Capital needs a one-time database update — run supabase/migrations/20261021000011_product_capital.sql in Supabase.");
+    this.check(error);
+  }
+
   async saveProduct(p: ProductInput): Promise<Product> {
     // Brand: reuse by slug, or create.
     const brandSlug = slugify(p.brandName);

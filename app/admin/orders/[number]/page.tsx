@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AlertTriangle, ExternalLink, FileText, MessageCircle, Pencil } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getOrderRepo } from "@/lib/orders/repo";
+import { withListingCapital } from "@/lib/admin/service";
 import { signedUrl } from "@/lib/media";
 import { FULFILLMENT_LABELS, PAYMENT_LABELS, isShipping } from "@/lib/checkout/pricing";
 import { orderUrl } from "@/lib/email";
@@ -17,7 +18,8 @@ export const metadata = { title: "Order" };
 
 export default async function AdminOrderPage({ params }: { params: { number: string } }) {
   await requireStaff(`/admin/orders/${params.number}`);
-  const order = await (await getOrderRepo()).getOrder(params.number);
+  const found = await (await getOrderRepo()).getOrder(params.number);
+  const order = found && (await withListingCapital([found]))[0];
   if (!order) notFound();
   const status = effectiveOrderStatus(order);
   const balance = Math.max(0, order.total - order.amountPaid);
