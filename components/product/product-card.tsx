@@ -48,13 +48,13 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         )}
       </div>
       <div className="mt-4 space-y-1 text-center">
-        <p className="eyebrow text-gold">{product.brand}</p>
+        <p className="eyebrow font-bold text-gold">{product.brand}</p>
         <h3 className="line-clamp-2 min-h-[2.6em] font-serif text-[1.05rem] leading-snug text-cream transition-colors group-hover:text-gold-light">
           {product.model}
         </h3>
         <p className="font-sans text-[0.68rem] uppercase tracking-[0.14em] text-cream-dim">{CONDITION_LABELS[product.condition]} condition</p>
         <p className="pt-1 font-sans text-sm tracking-wide">
-          <span className={cn(sold ? "text-cream-dim line-through" : "text-cream")}>{formatPHP(product.price)}</span>
+          <span className={cn("font-bold", sold ? "text-cream-dim line-through" : "text-cream")}>{formatPHP(product.price)}</span>
           {product.compareAtPrice && !sold && (
             <span className="ml-2 text-xs text-cream-dim line-through">{formatPHP(product.compareAtPrice)}</span>
           )}

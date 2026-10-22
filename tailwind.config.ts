@@ -33,7 +33,6 @@ const config: Config = {
         serif: ["var(--font-serif)", "Georgia", "serif"],
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         script: ["var(--font-script)", "cursive"],
-        display: ["var(--font-display)", "var(--font-serif)", "Georgia", "serif"],
       },
       letterSpacing: { luxe: "0.2em", wider2: "0.14em" },
       backgroundImage: {

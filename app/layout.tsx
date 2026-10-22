@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Cinzel, Great_Vibes, Montserrat, Playfair_Display } from "next/font/google";
+import { Great_Vibes, Montserrat, Playfair_Display } from "next/font/google";
 import { site } from "@/lib/site";
 import "./globals.css";
 
 const serif = Playfair_Display({ subsets: ["latin"], weight: ["400", "500", "600", "700"], style: ["normal", "italic"], variable: "--font-serif", display: "swap" });
 const sans = Montserrat({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-sans", display: "swap" });
-const display = Cinzel({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display", display: "swap" });
 const script = Great_Vibes({ subsets: ["latin"], weight: "400", variable: "--font-script", display: "swap" });
 
 export const metadata: Metadata = {
@@ -19,7 +18,7 @@ export const viewport: Viewport = { themeColor: "#ffffff", width: "device-width"
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-PH" className={`${serif.variable} ${sans.variable} ${script.variable} ${display.variable}`}>
+    <html lang="en-PH" className={`${serif.variable} ${sans.variable} ${script.variable}`}>
       <body className="min-h-screen">{children}</body>
     </html>
   );

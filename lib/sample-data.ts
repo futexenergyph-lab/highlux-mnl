@@ -180,7 +180,7 @@ export const SAMPLE_REVIEWS: Review[] = [
 ];
 
 export const DEFAULT_HOME_CONTENT: HomeContent = {
-  heroImageUrl: "/hero/highlux-showroom.jpg",
+  heroImageUrl: "/hero/highlux-showroom-hd.jpg",
   heroEyebrow: "Authentic Luxury, Timeless Investment.",
   heroHeadline: "Pre-Loved Luxury Bags",
   heroSubline: "Bags | Watches | Diamonds | Jewelry",

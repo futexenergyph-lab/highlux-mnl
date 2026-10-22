@@ -1,3 +1,4 @@
+import { TrustBar } from "@/components/home/trust-bar";
 import { Hero } from "@/components/home/hero";
 import { CategoryTiles } from "@/components/home/category-tiles";
 import { SectionHeading } from "@/components/home/section-heading";
@@ -42,6 +43,10 @@ export default async function HomePage() {
         ]}
       />
       <Hero content={content} />
+      {/* Large screens show the promises inside the banner artwork. */}
+      <div className="lg:hidden">
+        <TrustBar />
+      </div>
       <CategoryTiles slides={slides} />
 
  {featured.length > 0 && (

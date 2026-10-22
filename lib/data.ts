@@ -153,7 +153,7 @@ export const getReviews = cache(async (): Promise<Review[]> => {
 });
 
 /** Earlier built-in banners (the seed illustration and the dark boutique photo); treated as "not set" so the current one shows. */
-const LEGACY_HEROES = ["/placeholders/hero.svg", "/hero/highlux-boutique.jpg"];
+const LEGACY_HEROES = ["/placeholders/hero.svg", "/hero/highlux-boutique.jpg", "/hero/highlux-showroom.jpg"];
 
 export const getHomeContent = cache(async (): Promise<HomeContent> => {
   let saved: Partial<HomeContent>;
