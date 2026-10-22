@@ -111,7 +111,8 @@ export class SupabaseAdminRepo implements AdminRepo {
     };
     let id = p.id;
     if (id) {
-      const { error } = await this.db.from("products").update(row).eq("id", id);
+      // Saving an edit moves the piece back to the top of the lists, like a new listing.
+      const { error } = await this.db.from("products").update({ ...row, created_at: new Date().toISOString() }).eq("id", id);
       this.check(error);
     } else {
       const { data, error } = await this.db.from("products").insert(row).select("id").single();

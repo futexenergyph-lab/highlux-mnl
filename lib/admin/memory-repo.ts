@@ -66,7 +66,8 @@ export class MemoryAdminRepo implements AdminRepo {
       videoUrl: p.videoUrl,
       status: p.status,
       featured: p.featured,
-      createdAt: existing?.createdAt ?? new Date().toISOString(),
+      // Saving an edit moves the piece back to the top, like a new listing.
+      createdAt: new Date().toISOString(),
     };
     const keepHold = p.status === "reserved" && existing;
     const held = {
