@@ -4,6 +4,7 @@ import { productHref } from "@/lib/catalog";
 import { CONDITION_LABELS, type Product } from "@/lib/types";
 import { cn, formatPHP } from "@/lib/utils";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
+import { AuthenticityBadge } from "./authenticity-badge";
 
 export function StatusBadge({ status }: { status: Product["status"] }) {
   if (status === "available" || status === "hidden") return null;
@@ -39,8 +40,9 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         )}
         <WishlistButton
           productId={product.id}
-          className="absolute bottom-3 right-3 z-10 h-9 w-9 rounded-full bg-ink/70 backdrop-blur hover:bg-ink"
+          className="absolute bottom-8 right-3 z-10 h-9 w-9 sm:bottom-9 rounded-full bg-ink/70 backdrop-blur hover:bg-ink"
         />
+        <AuthenticityBadge className="absolute bottom-0 left-1/2 z-[1] w-max -translate-x-1/2 bg-white px-2 py-1 sm:px-2.5" />
         {product.compareAtPrice && !sold && (
           <span className="absolute right-3 top-3 bg-[#141210] px-2 py-1 font-sans text-[0.6rem] font-bold uppercase tracking-[0.14em] text-[#e8cf8a]">
             Price drop

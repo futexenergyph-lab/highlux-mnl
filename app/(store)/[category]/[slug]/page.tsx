@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CreditCard, Truck, Wallet } from "lucide-react";
 import { Breadcrumbs } from "@/components/shop/breadcrumbs";
 import { ProductGallery } from "@/components/product/gallery";
+import { AuthenticityBadge } from "@/components/product/authenticity-badge";
 import { ProductActions, StickyBuyBar, type ActionProduct } from "@/components/product/product-actions";
 import { AuthenticityBlock, ConditionMeter, Inclusions, SpecsTable } from "@/components/product/product-details";
 import { ProductCard } from "@/components/product/product-card";
@@ -118,6 +119,9 @@ export default async function ProductPage({ params }: { params: Params }) {
           <ProductGallery images={p.images} videoUrl={p.videoUrl} title={p.title} sold={p.status === "sold"} />
 
           <div className="lg:pt-2">
+            <div className="-mt-3 mb-3 flex justify-end lg:mt-0">
+              <AuthenticityBadge size="md" />
+            </div>
             <Link href={`/shop?brand=${p.brandSlug}`} className="eyebrow text-gold hover:text-gold-light">
               {p.brand}
             </Link>
