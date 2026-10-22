@@ -1,5 +1,4 @@
 import { Hero } from "@/components/home/hero";
-import { TrustBar } from "@/components/home/trust-bar";
 import { CategoryTiles } from "@/components/home/category-tiles";
 import { SectionHeading } from "@/components/home/section-heading";
 import { NewArrivalsCarousel } from "@/components/home/new-arrivals";
@@ -43,9 +42,6 @@ export default async function HomePage() {
         ]}
       />
       <Hero content={content} />
-      <div className="lg:hidden">
-        <TrustBar />
-      </div>
       <CategoryTiles slides={slides} />
 
  {featured.length > 0 && (

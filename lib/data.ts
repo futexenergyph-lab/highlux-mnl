@@ -152,8 +152,8 @@ export const getReviews = cache(async (): Promise<Review[]> => {
   return data ?? [];
 });
 
-/** The starter illustration stored by the seed; treated as "not set" so the boutique photo shows instead. */
-const LEGACY_HERO = "/placeholders/hero.svg";
+/** Earlier built-in banners (the seed illustration and the dark boutique photo); treated as "not set" so the current one shows. */
+const LEGACY_HEROES = ["/placeholders/hero.svg", "/hero/highlux-boutique.jpg"];
 
 export const getHomeContent = cache(async (): Promise<HomeContent> => {
   let saved: Partial<HomeContent>;
@@ -163,6 +163,6 @@ export const getHomeContent = cache(async (): Promise<HomeContent> => {
     saved = (data?.value as Partial<HomeContent>) ?? {};
   }
   const content = { ...DEFAULT_HOME_CONTENT, ...saved };
-  if (!content.heroImageUrl || content.heroImageUrl === LEGACY_HERO) content.heroImageUrl = DEFAULT_HOME_CONTENT.heroImageUrl;
+  if (!content.heroImageUrl || LEGACY_HEROES.includes(content.heroImageUrl)) content.heroImageUrl = DEFAULT_HOME_CONTENT.heroImageUrl;
   return content;
 });
