@@ -1,5 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- next/og renders plain <img>, not next/image */
 import "server-only";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { getProduct } from "@/lib/data";
 import { CREAM, GOLD, GOLD_LIGHT, INK, OG_SIZE, ogFonts, ogImageSrc } from "@/lib/og";
@@ -14,6 +16,7 @@ export async function renderProductCard(category: string, slug: string) {
   const fonts = await ogFonts();
   const photo = await ogImageSrc(p?.images[0]?.url);
   const sold = p?.status === "sold";
+  const seal = `data:image/png;base64,${(await readFile(join(process.cwd(), "public/brand/authenticity-seal.png"))).toString("base64")}`;
 
   return new ImageResponse(
     (
@@ -27,6 +30,10 @@ export async function renderProductCard(category: string, slug: string) {
             <div style={{ fontSize: 22, letterSpacing: 6, color: GOLD, textTransform: "uppercase" }}>{p?.brand ?? site.name}</div>
             <div style={{ marginTop: 18, fontFamily: "Playfair", fontSize: p && p.title.length > 40 ? 46 : 54, lineHeight: 1.15, color: CREAM }}>{p?.model ?? "Pre-loved luxury"}</div>
             {p && <div style={{ marginTop: 18, fontSize: 22, color: "#c9bfa9" }}>{`${CONDITION_LABELS[p.condition]} condition · 100% authentic`}</div>}
+            <div style={{ marginTop: 22, display: "flex", alignItems: "center" }}>
+              <img src={seal} width={40} height={40} alt="" />
+              <div style={{ marginLeft: 12, fontSize: 22, color: CREAM }}>Authenticity Guarantee</div>
+            </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {p && (
@@ -37,8 +44,8 @@ export async function renderProductCard(category: string, slug: string) {
             )}
             <div style={{ marginTop: 28, height: 1, background: `linear-gradient(90deg, ${GOLD}, transparent)` }} />
             <div style={{ marginTop: 22, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <div style={{ fontFamily: "Playfair", fontSize: 28, letterSpacing: 3, color: GOLD_LIGHT, whiteSpace: "nowrap" }}>{site.name}</div>
-              <div style={{ fontSize: 14, letterSpacing: 3, color: "#8f8676", whiteSpace: "nowrap" }}>NATIONWIDE SHIPPING</div>
+              <div style={{ fontFamily: "Playfair", fontSize: 26, letterSpacing: 2, color: GOLD_LIGHT, whiteSpace: "nowrap" }}>{site.name}</div>
+              <div style={{ marginLeft: 20, fontSize: 13, letterSpacing: 2, color: "#8f8676", whiteSpace: "nowrap" }}>NATIONWIDE SHIPPING</div>
             </div>
           </div>
         </div>
