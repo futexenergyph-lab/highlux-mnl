@@ -2,7 +2,7 @@ import { ChevronDown } from "lucide-react";
 
 export function AnnouncementBar() {
   return (
-    <div className="bg-gradient-to-r from-[#e9dcc0] via-[#f3ead8] to-[#e9dcc0] text-ink">
+    <div className="bg-[#141210] text-[#e8cf8a]">
       <div className="container relative flex h-8 items-center justify-center sm:h-9">
         <p className="truncate text-center font-sans text-[0.55rem] font-medium uppercase tracking-[0.1em] sm:text-[0.68rem] sm:tracking-[0.18em]">
           <span>100% Authentic</span>

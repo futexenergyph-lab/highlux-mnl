@@ -57,7 +57,7 @@ export function SearchOverlay({ trigger }: { trigger: React.ReactNode }) {
     <Dialog.Root open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0" />
         <Dialog.Content className="fixed inset-x-0 top-0 z-50 max-h-[100dvh] overflow-y-auto border-b border-gold/25 bg-ink/95 pb-10 pt-6 data-[state=open]:animate-in data-[state=open]:slide-in-from-top">
           <Dialog.Title className="sr-only">Search</Dialog.Title>
           <div className="container max-w-3xl">

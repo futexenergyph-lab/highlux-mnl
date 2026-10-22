@@ -177,7 +177,7 @@ function Lightbox({ open, onOpenChange, slides, start, onIndex }: { open: boolea
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[60] bg-black" />
+        <Dialog.Overlay className="fixed inset-0 z-[60] bg-ink" />
         <Dialog.Content className="fixed inset-0 z-[60] flex flex-col focus:outline-none">
           <Dialog.Title className="sr-only">Photo viewer</Dialog.Title>
           <div className="flex items-center justify-between px-4 py-3 text-cream">

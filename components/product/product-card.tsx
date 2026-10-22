@@ -42,7 +42,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           className="absolute bottom-3 right-3 z-10 h-9 w-9 rounded-full bg-ink/70 backdrop-blur hover:bg-ink"
         />
         {product.compareAtPrice && !sold && (
-          <span className="absolute right-3 top-3 bg-gold-gradient px-2 py-1 font-sans text-[0.6rem] font-bold uppercase tracking-[0.14em] text-ink">
+          <span className="absolute right-3 top-3 bg-[#141210] px-2 py-1 font-sans text-[0.6rem] font-bold uppercase tracking-[0.14em] text-[#e8cf8a]">
             Price drop
           </span>
         )}

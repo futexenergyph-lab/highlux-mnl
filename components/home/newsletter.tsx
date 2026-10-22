@@ -15,7 +15,7 @@ function Submit() {
 export function Newsletter() {
   const [state, action] = useFormState<NewsletterState, FormData>(subscribeNewsletter, null);
   return (
-    <section className="relative overflow-hidden border-y border-gold/20 bg-[radial-gradient(ellipse_at_center,#2a2015_0%,#0d0b09_70%)] py-16 lg:py-20">
+    <section className="relative overflow-hidden border-y border-gold/20 bg-[radial-gradient(ellipse_at_center,#f3ecdc_0%,#faf9f6_70%)] py-16 lg:py-20">
       <div className="container max-w-2xl text-center">
         <p className="eyebrow text-gold">The Inner Circle</p>
         <h2 className="mt-3 font-serif text-3xl text-cream sm:text-4xl">Be first to know.</h2>

@@ -38,8 +38,8 @@ export function RevenueChart({ data }: { data: { day: string; amount: number }[]
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block max-w-full" role="img" aria-label="Daily revenue chart" onMouseLeave={() => setHover(null)}>
         {ticks.map((t) => (
           <g key={t}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#f3ead8" strokeOpacity={t === 0 ? 0.25 : 0.08} />
-            <text x={PAD.l - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill="#8f8676">{short(t)}</text>
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke="#141210" strokeOpacity={t === 0 ? 0.25 : 0.08} />
+            <text x={PAD.l - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill="#787369">{short(t)}</text>
           </g>
         ))}
         {data.map((d, i) => {
@@ -53,12 +53,12 @@ export function RevenueChart({ data }: { data: { day: string; amount: number }[]
               {h > 0 && (
                 <path
                   d={`M${x},${PAD.t + ih} v${-(h - r)} q0,${-r} ${r},${-r} h${bw - 2 * r} q${r},0 ${r},${r} v${h - r} z`}
-                  fill="#c9a24a"
+                  fill="#b08d3e"
                   opacity={hover === null || hover === i ? 1 : 0.45}
                   pointerEvents="none"
                 />
               )}
-              {i % every === 0 && <text x={PAD.l + i * step + step / 2} y={H - 8} textAnchor="middle" fontSize="11" fill="#8f8676">{label(d.day)}</text>}
+              {i % every === 0 && <text x={PAD.l + i * step + step / 2} y={H - 8} textAnchor="middle" fontSize="11" fill="#787369">{label(d.day)}</text>}
             </g>
           );
         })}

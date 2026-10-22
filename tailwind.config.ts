@@ -8,9 +8,13 @@ const config: Config = {
     extend: {
       colors: {
         // Brand palette
-        ink: { DEFAULT: "#0d0b09", 50: "#1a1611", 100: "#15120e", 200: "#100d0a" },
-        gold: { DEFAULT: "#c9a24a", light: "#e8cf8a", dark: "#9c7a2e", muted: "#8a7442" },
-        cream: { DEFAULT: "#f3ead8", muted: "#c9bfa9", dim: "#8f8676" },
+        ink: { DEFAULT: "rgb(var(--ink) / <alpha-value>)", 50: "rgb(var(--ink-50) / <alpha-value>)", 100: "rgb(var(--ink-100) / <alpha-value>)", 200: "rgb(var(--ink-200) / <alpha-value>)" },
+        gold: { DEFAULT: "rgb(var(--gold) / <alpha-value>)", light: "rgb(var(--gold-light) / <alpha-value>)", dark: "rgb(var(--gold-dark) / <alpha-value>)", muted: "rgb(var(--gold-muted) / <alpha-value>)" },
+        cream: { DEFAULT: "rgb(var(--cream) / <alpha-value>)", muted: "rgb(var(--cream-muted) / <alpha-value>)", dim: "rgb(var(--cream-dim) / <alpha-value>)" },
+        // Status colours tuned for the light theme (the light Tailwind shades vanish on white).
+        red: { 200: "#991b1b", 300: "#b91c1c", 400: "#dc2626", 500: "#ef4444", 600: "#dc2626" },
+        emerald: { 200: "#065f46", 300: "#047857", 400: "#059669", 500: "#10b981" },
+        sky: { 300: "#0369a1", 400: "#0284c7" },
         // shadcn tokens
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -37,7 +41,7 @@ const config: Config = {
         "gold-line": "linear-gradient(90deg, transparent, #c9a24a 20%, #e8cf8a 50%, #c9a24a 80%, transparent)",
       },
       boxShadow: {
-        luxe: "0 10px 40px -10px rgba(0,0,0,0.7)",
+        luxe: "0 12px 40px -14px rgba(20,18,16,0.25)",
         "gold-glow": "0 0 0 1px rgba(201,162,74,0.35), 0 8px 30px -8px rgba(201,162,74,0.35)",
       },
       borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 2px)", sm: "calc(var(--radius) - 4px)" },

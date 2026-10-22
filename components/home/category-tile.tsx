@@ -56,31 +56,32 @@ export function CategoryTile({ category, slides, offset, wide }: { category: Cat
           />
         ))
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/25 to-ink/40" />
+      {/* Tiles sit on photos, so they keep light text on a dark wash in the light theme too. */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/35" />
 
-      <h3 className="absolute inset-x-0 top-0 px-3 pt-3 text-center font-serif text-base uppercase tracking-[0.06em] text-cream drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] sm:pt-4 sm:text-2xl">
+      <h3 className="absolute inset-x-0 top-0 px-3 pt-3 text-center font-serif text-base uppercase tracking-[0.06em] text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] sm:pt-4 sm:text-2xl">
         {category.tileTitle}
       </h3>
 
       <div className="absolute inset-x-0 bottom-0 px-3 pb-3 sm:px-4 sm:pb-4">
         {current ? (
           <div key={current.slug} className="animate-in fade-in duration-700">
-            <p className="truncate text-[0.58rem] uppercase tracking-[0.2em] text-gold-light sm:text-[0.65rem]">{current.brand}</p>
-            <p className="line-clamp-2 font-serif text-sm leading-snug text-cream sm:text-base">{current.title}</p>
-            <p className="mt-1 flex items-center gap-2 text-sm text-gold-light">
+            <p className="truncate text-[0.58rem] uppercase tracking-[0.2em] text-[#e8cf8a] sm:text-[0.65rem]">{current.brand}</p>
+            <p className="line-clamp-2 font-serif text-sm leading-snug text-white sm:text-base">{current.title}</p>
+            <p className="mt-1 flex items-center gap-2 text-sm text-[#e8cf8a]">
               {formatPHP(current.price)}
-              {current.reserved && <span className="border border-cream/40 px-1.5 py-px text-[0.5rem] uppercase tracking-wider text-cream/80">Reserved</span>}
+              {current.reserved && <span className="border border-white/40 px-1.5 py-px text-[0.5rem] uppercase tracking-wider text-white/80">Reserved</span>}
             </p>
           </div>
         ) : (
-          <span className="flex items-center justify-center gap-2 font-sans text-[0.62rem] uppercase tracking-[0.22em] text-cream/90 group-hover:text-gold-light sm:text-xs">
+          <span className="flex items-center justify-center gap-2 font-sans text-[0.62rem] uppercase tracking-[0.22em] text-white/90 group-hover:text-[#e8cf8a] sm:text-xs">
             Shop now <ArrowRight className="h-3.5 w-3.5" />
           </span>
         )}
         {slides.length > 1 && (
           <div className="mt-2.5 flex gap-1" aria-hidden>
             {slides.map((s, i) => (
-              <span key={s.slug} className={cn("h-0.5 flex-1 transition-colors duration-500", i === index ? "bg-gold" : "bg-cream/25")} />
+              <span key={s.slug} className={cn("h-0.5 flex-1 transition-colors duration-500", i === index ? "bg-gold" : "bg-white/30")} />
             ))}
           </div>
         )}
