@@ -21,6 +21,8 @@ export interface PurchaseRow {
   email: string;
   brand: string;
   item: string;
+  /** The piece's photo as it was sold (or the listing's current cover when the order has none). */
+  image: string | null;
   price: number;
   shippingFee: number; // on the order's first row only, so sums stay correct
   orderTotal: number;
@@ -35,7 +37,7 @@ export interface PurchaseRow {
 }
 
 /** One row per item sold, newest first. Dates are compared as Manila calendar days (YYYY-MM-DD). */
-export function purchaseRows(orders: OrderDetail[], opts: { from?: string; to?: string; q?: string } = {}): PurchaseRow[] {
+export function purchaseRows(orders: OrderDetail[], opts: { from?: string; to?: string; q?: string; covers?: Map<string, string> } = {}): PurchaseRow[] {
   const day = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
   const q = opts.q?.trim().toLowerCase() ?? "";
   const rows: PurchaseRow[] = [];
@@ -57,6 +59,7 @@ export function purchaseRows(orders: OrderDetail[], opts: { from?: string; to?: 
         email: o.email,
         brand: i.brand,
         item: i.title,
+        image: i.imageUrl ?? opts.covers?.get(i.productId) ?? null,
         price: i.price,
         shippingFee: idx === 0 ? o.shippingFee : 0,
         orderTotal: o.total,

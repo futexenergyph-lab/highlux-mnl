@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Download, Pencil, Plus, Search } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
@@ -31,7 +32,8 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
   const from = range === "custom" ? searchParams.from : presets[range]?.from;
   const to = range === "custom" ? searchParams.to : undefined;
   const q = searchParams.q?.trim() ?? "";
-  const rows = purchaseRows(orders, { from, to, q });
+  const covers = new Map(products.filter((p) => p.images[0]).map((p) => [p.id, p.images[0].url]));
+  const rows = purchaseRows(orders, { from, to, q, covers });
 
   const itemsSold = rows.length;
   const orderCount = new Set(rows.map((r) => r.orderNumber)).size;
@@ -113,7 +115,13 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
             {rows.map((r, i) => (
               <li key={r.orderNumber + i}>
                 <div className="relative">
-                <Link href={`/admin/orders/${r.orderNumber}`} className="block p-4 pr-14 hover:bg-cream/[0.02]">
+                <Link href={`/admin/orders/${r.orderNumber}`} className="block hover:bg-cream/[0.02]">
+                  {r.image && (
+                    <span className="relative block aspect-[16/9] w-full overflow-hidden bg-ink-50">
+                      <Image src={r.image} alt={r.item} fill sizes="100vw" unoptimized={r.image.endsWith(".svg")} className="object-cover" />
+                    </span>
+                  )}
+                  <div className={`p-4 ${r.image ? "" : "pr-14"}`}>
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-[0.65rem] uppercase tracking-[0.16em] text-gold">{r.brand}</span>
                     <span className="shrink-0 text-xs text-cream-dim">{fmtDate(r.date)}</span>
@@ -125,8 +133,9 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
                   </div>
                   <p className="mt-1 text-xs text-cream-dim">{r.payment} · {r.delivery} · {r.status}</p>
                   {r.capital != null && <p className="mt-1 text-xs tabular-nums text-cream-muted">Capital {formatPHP(r.capital)} · <span className={(r.profit ?? 0) >= 0 ? "text-emerald-300" : "text-red-300"}>Profit {formatPHP(r.profit ?? 0)}</span></p>}
+                  </div>
                 </Link>
-                <Link href={`/admin/purchases/${r.orderNumber}/edit`} aria-label={`Edit ${r.orderNumber}`} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center border border-gold/40 text-gold-light hover:border-gold"><Pencil className="h-4 w-4" /></Link>
+                <Link href={`/admin/purchases/${r.orderNumber}/edit`} aria-label={`Edit ${r.orderNumber}`} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center border border-gold/40 bg-ink/90 text-gold-light hover:border-gold"><Pencil className="h-4 w-4" /></Link>
                 </div>
               </li>
             ))}
@@ -146,7 +155,16 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
                     <td className="whitespace-nowrap p-3 text-cream-muted">{fmtDate(r.date)}</td>
                     <td className="whitespace-nowrap p-3"><Link href={`/admin/orders/${r.orderNumber}`} className="text-gold-light underline-offset-4 hover:underline">{r.orderNumber}</Link></td>
                     <td className="p-3"><span className="block text-cream">{r.customer}</span><span className="block text-xs text-cream-dim">{r.phone}</span></td>
-                    <td className="p-3"><span className="block text-[0.65rem] uppercase tracking-wider text-gold">{r.brand}</span><span className="text-cream">{r.item}</span></td>
+                    <td className="p-3">
+                      <div className="flex items-start gap-3">
+                        {r.image && (
+                          <span className="relative h-16 w-16 shrink-0 overflow-hidden border border-gold/15 bg-ink-50">
+                            <Image src={r.image} alt="" fill sizes="64px" unoptimized={r.image.endsWith(".svg")} className="object-cover" />
+                          </span>
+                        )}
+                        <span><span className="block text-[0.65rem] uppercase tracking-wider text-gold">{r.brand}</span><span className="text-cream">{r.item}</span></span>
+                      </div>
+                    </td>
                     <td className="whitespace-nowrap p-3 tabular-nums text-cream">{formatPHP(r.price)}</td>
                     <td className="whitespace-nowrap p-3 tabular-nums text-cream-muted">{r.capital != null ? formatPHP(r.capital) : "—"}</td>
                     <td className={`whitespace-nowrap p-3 tabular-nums ${r.profit == null ? "text-cream-dim" : r.profit >= 0 ? "text-emerald-300" : "text-red-300"}`}>{r.profit != null ? formatPHP(r.profit) : "—"}</td>
