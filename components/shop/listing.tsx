@@ -36,14 +36,14 @@ export function Listing({
         {intro && <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-cream-muted">{intro}</p>}
       </header>
 
-      <div className="grid gap-10 pt-8 lg:grid-cols-[260px_1fr]">
+      <div className="grid grid-cols-1 gap-10 pt-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="hidden lg:block" aria-label="Filters">
           <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2">
             <FilterPanel filters={filters} facets={facets} />
           </div>
         </aside>
 
-        <section aria-label="Products">
+        <section aria-label="Products" className="min-w-0">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p className="whitespace-nowrap font-sans text-xs uppercase tracking-wider2 text-cream-dim">
               {total} {total === 1 ? "piece" : "pieces"}
@@ -78,15 +78,21 @@ export function Listing({
           )}
 
           {pageCount > 1 && (
-            <nav aria-label="Pagination" className="mt-14 flex items-center justify-center gap-1">
+            <nav aria-label="Pagination" className="mt-14 flex flex-wrap items-center justify-center gap-1">
               <PageLink basePath={basePath} filters={filters} page={page - 1} disabled={page <= 1} label="Previous">
                 <ChevronLeft className="h-4 w-4" />
               </PageLink>
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
-                <PageLink key={n} basePath={basePath} filters={filters} page={n} current={n === page}>
-                  {n}
-                </PageLink>
-              ))}
+              {pageWindow(page, pageCount).map((n, i) =>
+                n === null ? (
+                  <span key={`gap-${i}`} className="px-1 text-sm text-cream-dim" aria-hidden>
+                    …
+                  </span>
+                ) : (
+                  <PageLink key={n} basePath={basePath} filters={filters} page={n} current={n === page}>
+                    {n}
+                  </PageLink>
+                ),
+              )}
               <PageLink basePath={basePath} filters={filters} page={page + 1} disabled={page >= pageCount} label="Next">
                 <ChevronRight className="h-4 w-4" />
               </PageLink>
@@ -96,6 +102,20 @@ export function Listing({
       </div>
     </div>
   );
+}
+
+/** First, last and the pages next to the current one, with "…" for the gaps, so the row fits a phone. */
+function pageWindow(page: number, count: number): (number | null)[] {
+  const keep = new Set([1, count, page - 1, page, page + 1].filter((n) => n >= 1 && n <= count));
+  const out: (number | null)[] = [];
+  let prev = 0;
+  for (const n of [...keep].sort((a, b) => a - b)) {
+    if (n - prev === 2) out.push(n - 1);
+    else if (n - prev > 2) out.push(null);
+    out.push(n);
+    prev = n;
+  }
+  return out;
 }
 
 function PageLink({

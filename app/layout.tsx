@@ -19,7 +19,7 @@ export const viewport: Viewport = { themeColor: "#ffffff", width: "device-width"
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-PH" className={`${serif.variable} ${sans.variable} ${script.variable}`}>
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen overflow-x-clip">{children}</body>
     </html>
   );
 }
