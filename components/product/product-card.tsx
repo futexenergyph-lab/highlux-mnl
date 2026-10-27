@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { productHref } from "@/lib/catalog";
 import { CONDITION_LABELS, type Product } from "@/lib/types";
 import { cn, formatPHP } from "@/lib/utils";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
 import { AuthenticityBadge } from "./authenticity-badge";
+import { CardSlideshow } from "./card-slideshow";
 
 export function StatusBadge({ status }: { status: Product["status"] }) {
   if (status === "available" || status === "hidden") return null;
@@ -27,17 +27,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
     <Link href={productHref(product)} className="group block">
       <div className="relative aspect-square overflow-hidden border border-gold/15 bg-ink-50 transition-colors duration-500 group-hover:border-gold/50">
         <StatusBadge status={product.status} />
-        {img && (
-          <Image
-            src={img.url}
-            alt={img.alt || product.title}
-            fill
-            priority={priority}
-            sizes="(min-width: 1280px) 20vw, (min-width: 768px) 30vw, 70vw"
-            className={cn("object-cover transition-transform duration-700 ease-out group-hover:scale-105", sold && "opacity-60 grayscale-[40%]")}
-            unoptimized={img.url.endsWith(".svg")}
-          />
-        )}
+        {img && <CardSlideshow images={product.images} title={product.title} priority={priority} sold={sold} />}
         <WishlistButton
           productId={product.id}
           className="absolute bottom-8 right-3 z-10 h-9 w-9 sm:bottom-9 rounded-full bg-ink/70 backdrop-blur hover:bg-ink"
