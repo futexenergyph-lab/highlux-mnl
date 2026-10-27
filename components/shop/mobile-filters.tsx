@@ -12,7 +12,7 @@ export function MobileFilters({ filters, facets, total }: { filters: Filters; fa
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <button className="flex h-10 items-center justify-center gap-2 border border-gold/30 px-4 font-sans text-xs uppercase tracking-wider2 text-cream lg:hidden">
+        <button className="flex h-10 items-center justify-center gap-2 border border-gold/30 px-3 font-sans text-xs uppercase tracking-[0.08em] sm:px-4 sm:tracking-wider2 text-cream lg:hidden">
           <SlidersHorizontal className="h-4 w-4 text-gold" strokeWidth={1.25} /> Filter
           {active > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1 text-[0.6rem] font-bold text-ink">{active}</span>}
         </button>

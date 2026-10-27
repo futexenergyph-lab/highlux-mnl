@@ -39,16 +39,16 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           </span>
         )}
       </div>
-      <div className="mt-4 space-y-1 text-center">
-        <p className="eyebrow font-bold text-gold">{product.brand}</p>
-        <h3 className="line-clamp-2 min-h-[2.6em] font-serif text-[1.05rem] leading-snug text-cream transition-colors group-hover:text-gold-light">
+      <div className="mt-2.5 space-y-0.5 text-center sm:mt-4 sm:space-y-1">
+        <p className="eyebrow truncate font-bold text-gold max-sm:text-[0.62rem] max-sm:tracking-[0.14em]">{product.brand}</p>
+        <h3 className="line-clamp-2 min-h-[2.5em] font-serif text-[0.92rem] leading-tight text-cream sm:min-h-[2.6em] sm:text-[1.05rem] sm:leading-snug transition-colors group-hover:text-gold-light">
           {product.model}
         </h3>
-        <p className="font-sans text-[0.68rem] uppercase tracking-[0.14em] text-cream-dim">{CONDITION_LABELS[product.condition]} condition</p>
-        <p className="pt-1 font-sans text-sm tracking-wide">
+        <p className="truncate font-sans text-[0.56rem] uppercase tracking-[0.06em] text-cream-dim sm:text-[0.68rem] sm:tracking-[0.14em]">{CONDITION_LABELS[product.condition]} condition</p>
+        <p className="font-sans text-sm sm:pt-1 sm:tracking-wide">
           <span className={cn("font-bold", sold ? "text-cream-dim line-through" : "text-cream")}>{formatPHP(product.price)}</span>
           {product.compareAtPrice && !sold && (
-            <span className="ml-2 text-xs text-cream-dim line-through">{formatPHP(product.compareAtPrice)}</span>
+            <span className="ml-1.5 text-[0.7rem] text-cream-dim line-through sm:ml-2 sm:text-xs">{formatPHP(product.compareAtPrice)}</span>
           )}
         </p>
       </div>

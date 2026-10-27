@@ -12,7 +12,7 @@ export function SortSelect({ filters }: { filters: Filters }) {
       <select
         value={filters.sort}
         onChange={(e) => router.push(`${pathname}${filtersToQuery({ ...filters, sort: e.target.value as SortKey, page: 1 })}`, { scroll: false })}
-        className="h-10 w-full min-w-0 appearance-none border border-gold/30 bg-ink pl-3 pr-9 font-sans text-xs uppercase tracking-wider2 text-cream focus:border-gold focus:outline-none"
+        className="h-10 w-full min-w-0 appearance-none border border-gold/30 bg-ink pl-3 pr-8 font-sans text-xs uppercase tracking-[0.08em] sm:pr-9 sm:tracking-wider2 text-cream focus:border-gold focus:outline-none"
       >
         {Object.entries(SORTS).map(([k, v]) => (
           <option key={k} value={k}>
