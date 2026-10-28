@@ -76,4 +76,14 @@ export class MemoryAuctionRepo implements AuctionRepo {
     const e = events().find((x) => x.id === id);
     if (e) e.kind = kind;
   }
+  async updateEvent(id: string, e: { title: string; startsAt: string; endsAt: string }) {
+    const ev = events().find((x) => x.id === id);
+    if (ev) Object.assign(ev, e);
+    for (const a of store()) if (a.eventId === id && a.status === "live") Object.assign(a, { startsAt: e.startsAt, endsAt: e.endsAt });
+  }
+  async deleteEvent(id: string) {
+    const i = events().findIndex((x) => x.id === id);
+    if (i >= 0) events().splice(i, 1);
+    for (const a of store()) if (a.eventId === id) a.eventId = null;
+  }
 }

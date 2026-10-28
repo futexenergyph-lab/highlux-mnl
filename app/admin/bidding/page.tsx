@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { getAuctionRepo } from "@/lib/auctions/repo";
 import { settleDueAuctions } from "@/lib/auctions/service";
+import { EventMenu } from "./event-menu";
 import { auctionPhase, eventPhase, lotNumber, topBid } from "@/lib/auctions/types";
 import { formatPHP } from "@/lib/utils";
 import { Badge, PageHeader, Tabs, btnGold, btnOutline, fmtDateTime } from "@/components/admin/ui";
@@ -45,10 +46,11 @@ export default async function BiddingPage({ searchParams }: { searchParams: { ta
           <ul className="grid gap-2 sm:grid-cols-2">
             {events.slice(0, 8).map((e) => {
               const ph = eventPhase(e);
-              const n = (auctions ?? []).filter((a) => a.eventId === e.id).length;
+              const lots = (auctions ?? []).filter((a) => a.eventId === e.id && a.status !== "cancelled");
+              const n = lots.length;
               return (
-                <li key={e.id}>
-                  <Link href={`/admin/bidding/events/${e.id}`} className="flex items-center gap-3 border border-gold/20 bg-ink p-3 hover:border-gold">
+                <li key={e.id} className="flex items-center border border-gold/20 bg-ink hover:border-gold">
+                  <Link href={`/admin/bidding/events/${e.id}`} className="flex min-w-0 flex-1 items-center gap-3 p-3">
                     <CalendarClock className="h-6 w-6 shrink-0 text-gold" strokeWidth={1.2} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm text-cream">{e.title}</span>
@@ -56,6 +58,7 @@ export default async function BiddingPage({ searchParams }: { searchParams: { ta
                     </span>
                     <Badge tone={TONE[ph]}>{LABEL[ph]}</Badge>
                   </Link>
+                  <EventMenu id={e.id} title={e.title} running={lots.filter((a) => a.status === "live").length} />
                 </li>
               );
             })}

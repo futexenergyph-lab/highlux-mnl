@@ -100,13 +100,15 @@ export async function listPublicEvents(): Promise<{ event: AuctionEvent; phase: 
 export async function loadPublicEvent(id: string) {
   const repo = await getAuctionRepo();
   const event = await repo.getEvent(id).catch(() => null);
-  if (!event || event.status === "cancelled" || event.kind === "manual") return null;
+  if (!event || event.status === "cancelled") return null;
   let list = (await repo.list()).filter((a) => a.eventId === id);
   if (await settleDueAuctions(list)) list = (await repo.list()).filter((a) => a.eventId === id);
   const catalog = await getCatalog();
+  const all = await repo.list();
   const lots = list
     .filter((a) => a.status !== "cancelled")
-    .map((a) => ({ a: toPublic(a, null), product: catalog.find((p) => p.id === a.productId) }))
-    .filter((x) => x.product);
-  return { event, phase: eventPhase(event), lots, serverNow: new Date().toISOString() };
+    .map((a) => ({ a: toPublic(a, null), product: catalog.find((p) => p.id === a.productId), itemNumber: lotNumber(all, a) }))
+    .filter((x) => x.product)
+    .sort((x, y) => (x.itemNumber ?? 0) - (y.itemNumber ?? 0));
+  return { event, manual: event.kind === "manual", phase: eventPhase(event), lots, serverNow: new Date().toISOString() };
 }

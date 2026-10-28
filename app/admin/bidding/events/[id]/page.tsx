@@ -58,7 +58,7 @@ function sharePost(eventTitle: string, itemNo: number | null, title: string, sta
   ].join("\n");
 }
 
-export default async function EventPage({ params, searchParams }: { params: { id: string }; searchParams: { created?: string; added?: string } }) {
+export default async function EventPage({ params, searchParams }: { params: { id: string }; searchParams: { created?: string; added?: string; updated?: string } }) {
   await requireStaff(`/admin/bidding/events/${params.id}`);
   const repo = await getAuctionRepo();
   const event = await repo.getEvent(params.id).catch(() => null);
@@ -84,6 +84,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
         actions={open ? <Link href={`/admin/bidding/new?event=${event.id}`} className={btnGold}><Plus className="h-4 w-4" /> Add piece</Link> : undefined}
       />
       {searchParams.created && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Event created. Now add the pieces to auction with <span className="text-gold-light">Add piece</span>.</p>}
+      {searchParams.updated && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Event updated.</p>}
       {searchParams.added && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Piece added to the event.</p>}
 
       <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -149,11 +150,11 @@ export default async function EventPage({ params, searchParams }: { params: { id
             <KindSwitch id={event.id} kind={event.kind} />
             <p className="mt-2 text-xs text-cream-dim">{manual ? "Manual: bidding happens outside the website (Viber, Facebook live…). No reserve price, no online bids." : "Website: customers bid on highluxmnl.com/bidding."}</p>
           </Card>
-          {!manual && (
-            <Card title="Share">
-              <CopyLinkButton path={`/bidding/event/${event.id}`} />
-            </Card>
-          )}
+          <Card title="Share">
+            <CopyLinkButton path={`/bidding/event/${event.id}`} label="Copy event link" />
+            <p className="mt-2 text-xs text-cream-dim">Opens a page listing every item in this event.</p>
+          </Card>
+          <Link href={`/admin/bidding/events/${event.id}/edit`} className="flex h-10 items-center justify-center border border-gold/40 text-xs uppercase tracking-wider text-cream hover:border-gold">Edit event</Link>
           {open && (
             <Card title="Cancel">
               <CancelEventButton id={event.id} lots={lots.filter((a) => a.status === "live").length} />

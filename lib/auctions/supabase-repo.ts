@@ -122,4 +122,16 @@ export class SupabaseAuctionRepo implements AuctionRepo {
     const { error } = await this.db.from("auction_events").update({ kind }).eq("id", id);
     if (error) throw error;
   }
+
+  async updateEvent(id: string, e: { title: string; startsAt: string; endsAt: string }) {
+    const { error } = await this.db.from("auction_events").update({ title: e.title, starts_at: e.startsAt, ends_at: e.endsAt }).eq("id", id);
+    if (error) throw error;
+    const lots = await this.db.from("auctions").update({ starts_at: e.startsAt, ends_at: e.endsAt }).eq("event_id", id).eq("status", "live");
+    if (lots.error) throw lots.error;
+  }
+
+  async deleteEvent(id: string) {
+    const { error } = await this.db.from("auction_events").delete().eq("id", id);
+    if (error) throw error;
+  }
 }

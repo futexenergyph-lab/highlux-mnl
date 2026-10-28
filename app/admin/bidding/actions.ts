@@ -121,3 +121,39 @@ export async function setEventKindAction(id: string, kind: "website" | "manual")
   revalidatePath("/admin/bidding");
   revalidatePath(`/admin/bidding/events/${id}`);
 }
+
+export async function updateEventAction(_prev: AuctionFormState, form: FormData): Promise<AuctionFormState> {
+  try {
+    await assertStaff();
+  } catch {
+    return { error: "You don't have access to do this." };
+  }
+  const id = String(form.get("id") ?? "");
+  const parsed = eventSchema.safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { error: parsed.error.issues[0].message, field: String(parsed.error.issues[0].path[0] ?? "") };
+  const v = parsed.data;
+  const startsAt = toIso(v.startsAt, v.tz);
+  const endsAt = toIso(v.endsAt, v.tz);
+  if (Date.parse(endsAt) <= Date.parse(startsAt) + 2 * 60_000) return { error: "The ending date and time must be after the start.", field: "endsAt" };
+  const repo = await getAuctionRepo();
+  if (!(await repo.getEvent(id))) return { error: "This event no longer exists." };
+  try {
+    await repo.updateEvent(id, { title: v.title, startsAt, endsAt });
+  } catch (e) {
+    console.error("update auction event failed", e);
+    return { error: "Couldn't save the changes. Please try again." };
+  }
+  revalidatePath("/admin/bidding");
+  revalidatePath("/bidding/[id]", "page");
+  redirect(`/admin/bidding/events/${id}?updated=1`);
+}
+
+/** Deletes an event: its running items are cancelled (back on sale) first. */
+export async function deleteEventAction(id: string) {
+  await assertStaff();
+  const repo = await getAuctionRepo();
+  for (const a of (await repo.list()).filter((x) => x.eventId === id && x.status === "live")) await cancelAuction(a.id);
+  await repo.deleteEvent(id);
+  revalidatePath("/[category]/[slug]", "page");
+  revalidatePath("/admin/bidding");
+}
