@@ -86,3 +86,17 @@ export function lotNumber(all: Pick<Auction, "id" | "eventId" | "createdAt">[], 
   const i = lots.findIndex((x) => x.id === a.id);
   return i < 0 ? null : i + 1;
 }
+
+/**
+ * A listing description without its price lines (e.g. "₱10,500 fixed", "PHP 12,000",
+ * "Price: 9,500"), for auction pages where the selling price must stay hidden.
+ */
+export function withoutPrices(description: string): string {
+  const price = /(₱|\bphp\b|\bp\s?\d{1,3}(,\d{3})+|\bprice\b|\bfixed\b|\bnego(tiable)?\b|\bsrp\b)/i;
+  return description
+    .split("\n")
+    .filter((line) => !price.test(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}

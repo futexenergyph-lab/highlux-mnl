@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/server";
 import { loadPublicAuction } from "@/lib/auctions/public";
+import { withoutPrices } from "@/lib/auctions/types";
 import { categoryBySlug } from "@/lib/catalog";
 import { formatPHP } from "@/lib/utils";
 import { ProductGallery } from "@/components/product/gallery";
@@ -32,6 +33,8 @@ export default async function AuctionPage({ params }: { params: { id: string } }
   if (!r?.product) notFound();
   const p = r.product;
   const cat = categoryBySlug(p.category);
+  // The selling price in the description stays hidden while the piece is up for bidding.
+  const description = p.description ? withoutPrices(p.description) : "";
   return (
     <div className="container py-6 lg:py-10">
       <nav className="mb-5 text-[0.7rem] uppercase tracking-[0.18em] text-cream-dim">
@@ -69,7 +72,7 @@ export default async function AuctionPage({ params }: { params: { id: string } }
           <ConditionMeter grade={p.condition} />
           {p.conditionNotes && <p className="text-sm text-cream-muted">{p.conditionNotes}</p>}
           <Inclusions items={p.inclusions} />
-          {p.description && <p className="whitespace-pre-line text-sm leading-relaxed text-cream-muted">{p.description}</p>}
+          {description && <p className="whitespace-pre-line text-sm leading-relaxed text-cream-muted">{description}</p>}
         </div>
       </div>
     </div>
