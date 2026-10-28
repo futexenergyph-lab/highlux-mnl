@@ -111,3 +111,11 @@ export async function cancelEventAction(id: string) {
   revalidatePath("/admin/bidding");
   revalidatePath(`/admin/bidding/events/${id}`);
 }
+
+/** Switch an event between website (online bidding) and manual (bidding outside the website). */
+export async function setEventKindAction(id: string, kind: "website" | "manual") {
+  await assertStaff();
+  await (await getAuctionRepo()).setEventKind(id, kind);
+  revalidatePath("/admin/bidding");
+  revalidatePath(`/admin/bidding/events/${id}`);
+}

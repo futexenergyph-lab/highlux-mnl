@@ -11,6 +11,7 @@ import { formatPHP } from "@/lib/utils";
 import { Badge, Card, PageHeader, btnGold, fmtDateTime } from "@/components/admin/ui";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { CancelEventButton } from "./cancel-event-button";
+import { KindSwitch } from "./kind-switch";
 
 export const metadata = { title: "Auction event" };
 export const dynamic = "force-dynamic";
@@ -94,6 +95,10 @@ export default async function EventPage({ params, searchParams }: { params: { id
                 ? "Bidding happens outside the website. Each piece's page shows “This item is in Manual Live Auction | Item #”. When the event ends, record the sale with ⋮ → Mark sold on the piece; unsold pieces go back on sale automatically."
                 : "Late bids can extend a single piece by 2 minutes past the event end."}
             </p>
+          </Card>
+          <Card title="Event type">
+            <KindSwitch id={event.id} kind={event.kind} />
+            <p className="mt-2 text-xs text-cream-dim">{manual ? "Manual: bidding happens outside the website (Viber, Facebook live…). No reserve price, no online bids." : "Website: customers bid on highluxmnl.com/bidding."}</p>
           </Card>
           {!manual && (
             <Card title="Share">

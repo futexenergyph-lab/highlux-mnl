@@ -72,4 +72,8 @@ export class MemoryAuctionRepo implements AuctionRepo {
     const e = events().find((x) => x.id === id);
     if (e) e.status = "cancelled";
   }
+  async setEventKind(id: string, kind: AuctionEventKind) {
+    const e = events().find((x) => x.id === id);
+    if (e) e.kind = kind;
+  }
 }

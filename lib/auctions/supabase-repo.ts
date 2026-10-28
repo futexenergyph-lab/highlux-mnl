@@ -117,4 +117,9 @@ export class SupabaseAuctionRepo implements AuctionRepo {
     const { error } = await this.db.from("auction_events").update({ status: "cancelled" }).eq("id", id);
     if (error) throw error;
   }
+
+  async setEventKind(id: string, kind: AuctionEventKind) {
+    const { error } = await this.db.from("auction_events").update({ kind }).eq("id", id);
+    if (error) throw error;
+  }
 }

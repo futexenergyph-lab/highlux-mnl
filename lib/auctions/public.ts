@@ -4,7 +4,7 @@ import { getOrderRepo } from "@/lib/orders/repo";
 import { orderUrl } from "@/lib/email";
 import { getAuctionRepo } from "./repo";
 import { settleDueAuctions } from "./service";
-import { auctionPhase, eventPhase, nextMinBid, topBid, type Auction, type AuctionEvent, type AuctionStatus } from "./types";
+import { auctionPhase, eventPhase, lotNumber, nextMinBid, topBid, type Auction, type AuctionEvent, type AuctionStatus } from "./types";
 
 /** What the browser may see about an auction: masked bidders, no contacts, plus "you" flags for the viewer. */
 export interface PublicAuction {
@@ -54,7 +54,9 @@ export function toPublic(a: Auction, userId: string | null, payUrl: string | nul
 export async function loadPublicAuction(id: string, userId: string | null) {
   const repo = await getAuctionRepo();
   let a = await repo.get(id);
-  if (!a || (a.eventId && (await manualEventIds()).has(a.eventId))) return null;
+  if (!a) return null;
+  // Lots in a manual event can be viewed (shared link) but not bid on.
+  const manual = a.eventId && (await manualEventIds()).has(a.eventId) ? { itemNumber: lotNumber(await repo.list(), a) } : null;
   if (await settleDueAuctions([a])) a = (await repo.get(id))!;
   let payUrl: string | null = null;
   if (a.orderId && userId && a.bids.find((b) => b.id === a!.winnerBidId)?.userId === userId) {
@@ -62,7 +64,7 @@ export async function loadPublicAuction(id: string, userId: string | null) {
     if (o) payUrl = orderUrl(o).replace(/^https?:\/\/[^/]+/, "");
   }
   const product = (await getCatalog()).find((p) => p.id === a!.productId) ?? null;
-  return { auction: a, product, pub: toPublic(a, userId, payUrl) };
+  return { auction: a, product, pub: toPublic(a, userId, payUrl), manual };
 }
 
 /** Ids of manual (off-website) events; their lots are never shown for online bidding. */

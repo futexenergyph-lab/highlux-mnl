@@ -12,7 +12,9 @@ export async function placeBidAction(auctionId: string, amount: number): Promise
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Please sign in to place a bid.", signIn: true };
   if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Enter your bid amount." };
-  if (!(await loadPublicAuction(auctionId, user.id))) return { ok: false, error: "This auction wasn't found." };
+  const target = await loadPublicAuction(auctionId, user.id);
+  if (!target) return { ok: false, error: "This auction wasn't found." };
+  if (target.manual) return { ok: false, error: "Bidding for this piece happens in our live auction, not on the website." };
   const profile = await (await getAccountRepo()).getProfile(user).catch(() => ({ fullName: user.fullName, phone: null }));
   const fullName = profile.fullName ?? user.fullName ?? "";
   try {

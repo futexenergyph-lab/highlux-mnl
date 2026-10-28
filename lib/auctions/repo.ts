@@ -31,6 +31,7 @@ export interface AuctionRepo {
   getEvent(id: string): Promise<AuctionEvent | null>;
   createEvent(e: { title: string; kind: AuctionEventKind; startsAt: string; endsAt: string }): Promise<AuctionEvent>;
   cancelEvent(id: string): Promise<void>;
+  setEventKind(id: string, kind: AuctionEventKind): Promise<void>;
 }
 
 export const auctionHolder = (id: string) => `auction:${id}`;

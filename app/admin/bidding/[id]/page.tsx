@@ -97,12 +97,12 @@ export default async function AuctionAdminPage({ params, searchParams }: { param
               )}
             </Card>
           )}
-          {!manual && <Card title="Share">
+          <Card title="Share">
             <div className="flex flex-wrap gap-2">
               <CopyLinkButton path={`/bidding/${a.id}`} />
-              <Link href={`/bidding/${a.id}`} target="_blank" className="inline-flex h-10 items-center border border-gold/40 px-4 text-xs uppercase tracking-wider text-cream hover:border-gold">View bidding page</Link>
+              <Link href={`/bidding/${a.id}`} target="_blank" className="inline-flex h-10 items-center border border-gold/40 px-4 text-xs uppercase tracking-wider text-cream hover:border-gold">{manual ? "View item page" : "View bidding page"}</Link>
             </div>
-          </Card>}
+          </Card>
           {(phase === "live" || phase === "scheduled") && <CancelAuctionButton id={a.id} bids={a.bids.length} />}
         </div>
       </div>
