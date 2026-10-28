@@ -47,7 +47,17 @@ export default async function AuctionPage({ params }: { params: { id: string } }
             <p className="eyebrow text-gold">{p.brand} · {r.manual ? "Manual live auction" : "Live auction"}</p>
             <h1 className="mt-2 font-serif text-3xl text-cream sm:text-4xl">{p.title}</h1>
             {r.manual ? (
-              <p className="mt-2 text-sm font-semibold text-cream">This item is in Manual Live Auction{r.manual.itemNumber != null && <> | Item #{r.manual.itemNumber}</>}</p>
+              <>
+                <p className="mt-2 text-sm font-semibold text-cream">This item is in Manual Live Auction{r.manual.itemNumber != null && <> | Item #{r.manual.itemNumber}</>}</p>
+                {r.manual.bidLink && (
+                  <a href={r.manual.bidLink} target="_blank" rel="noopener noreferrer" className="btn-gold mt-4 w-full px-8 py-3.5 text-sm sm:w-auto">
+                    Bid here!
+                  </a>
+                )}
+                <Link href={`/bidding/event/${r.manual.eventId}`} className="mt-3 block text-xs uppercase tracking-wider text-gold-light underline-offset-4 hover:underline">
+                  See all items in {r.manual.eventTitle}
+                </Link>
+              </>
             ) : (
               <p className="mt-2 text-sm text-cream-dim">Retail listing {formatPHP(p.price)}{cat ? ` · ${cat.tileTitle}` : ""}</p>
             )}
