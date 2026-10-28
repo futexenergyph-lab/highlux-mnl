@@ -12,12 +12,51 @@ import { Badge, Card, PageHeader, btnGold, fmtDateTime } from "@/components/admi
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { CancelEventButton } from "./cancel-event-button";
 import { KindSwitch } from "./kind-switch";
+import { LotMenu } from "./lot-menu";
+import { productHref } from "@/lib/catalog";
 
 export const metadata = { title: "Auction event" };
 export const dynamic = "force-dynamic";
 
 const LABEL = { scheduled: "Upcoming", live: "Live", ended: "Ended", cancelled: "Cancelled" } as const;
 const TONE = { scheduled: "gold", live: "green", ended: "muted", cancelled: "red" } as const;
+
+const when = (iso: string) => new Date(iso).toLocaleString("en-PH", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" });
+
+/** The post shared to the group chat for one item. {LINK} and {GUIDELINES} are filled in by the browser. */
+function sharePost(eventTitle: string, itemNo: number | null, title: string, startingBid: number, increment: number, startsAt: string, endsAt: string) {
+  return [
+    `Highlux ${eventTitle}`,
+    "",
+    `🏷 Item #: ${itemNo ?? ""}`,
+    title,
+    "",
+    "Click the link below to view the actual photos and complete description of the item.",
+    "",
+    "🔗 Listing Link: {LINK}",
+    "",
+    "💰 BIDDING INFORMATION",
+    "",
+    `🔴 Starting Bid: ${formatPHP(startingBid)}`,
+    "",
+    `🔵 Minimum Bid Increment: ${formatPHP(increment)}`,
+    "",
+    "📌 You may increase your bid by more than the required increment, but not less.",
+    "",
+    "🗓️ BIDDING SCHEDULE",
+    "",
+    `🟢 Starts: ${when(startsAt)}`,
+    `🔴 Ends: ${when(endsAt)}`,
+    "",
+    "📢 IMPORTANT REMINDER",
+    "",
+    "Please read the Manual Bidding Guidelines before placing your bid to understand the bidding rules and avoid any issues.",
+    "",
+    "📖 Bidding Guidelines: {GUIDELINES}",
+    "",
+    "Good luck, and happy bidding! 🍀",
+  ].join("\n");
+}
 
 export default async function EventPage({ params, searchParams }: { params: { id: string }; searchParams: { created?: string; added?: string } }) {
   await requireStaff(`/admin/bidding/events/${params.id}`);
@@ -26,7 +65,10 @@ export default async function EventPage({ params, searchParams }: { params: { id
   if (!event) notFound();
   let all = await repo.list();
   if (await settleDueAuctions(all.filter((a) => a.eventId === event.id))) all = await repo.list();
-  const lots = all.filter((a) => a.eventId === event.id).sort((x, y) => (lotNumber(all, x) ?? 0) - (lotNumber(all, y) ?? 0));
+  const inEvent = all.filter((a) => a.eventId === event.id).sort((x, y) => (lotNumber(all, x) ?? 0) - (lotNumber(all, y) ?? 0));
+  // Removed (cancelled) items drop off the list; they keep their Item # so shared posts stay right.
+  const lots = inEvent.filter((a) => a.status !== "cancelled");
+  const removed = inEvent.length - lots.length;
   const manual = event.kind === "manual";
   const products = new Map((await (await getAdminRepo()).listProducts()).map((p) => [p.id, p]));
   const phase = eventPhase(event);
@@ -44,8 +86,8 @@ export default async function EventPage({ params, searchParams }: { params: { id
       {searchParams.created && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Event created. Now add the pieces to auction with <span className="text-gold-light">Add piece</span>.</p>}
       {searchParams.added && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Piece added to the event.</p>}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <Card title={`Pieces in this event (${lots.length})`}>
+      <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <Card title={`Pieces in this event (${lots.length})`} actions={removed ? <span className="text-xs text-cream-dim">{removed} removed</span> : undefined}>
           {lots.length === 0 ? (
             <p className="text-sm text-cream-muted">No pieces yet.{open && <> Tap <span className="text-gold-light">Add piece</span> to choose from your available listings.</>}</p>
           ) : (
@@ -54,14 +96,15 @@ export default async function EventPage({ params, searchParams }: { params: { id
                 const p = products.get(a.productId);
                 const top = topBid(a);
                 const ph = auctionPhase(a);
+                const no = lotNumber(all, a);
                 return (
-                  <li key={a.id}>
-                    <Link href={`/admin/bidding/${a.id}`} className="flex items-center gap-3 p-2 hover:bg-cream/[0.02]">
+                  <li key={a.id} className="flex items-center gap-1">
+                    <Link href={`/admin/bidding/${a.id}`} className="flex min-w-0 flex-1 items-center gap-3 p-2 hover:bg-cream/[0.02]">
                       <span className="relative h-14 w-14 shrink-0 overflow-hidden border border-gold/15 bg-ink-50">
                         {p?.images[0] && <Image src={p.images[0].url} alt="" fill sizes="56px" unoptimized className="object-cover" />}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[0.65rem] font-bold uppercase tracking-wider text-gold">Item #{lotNumber(all, a)}</span>
+                        <span className="block text-[0.65rem] font-bold uppercase tracking-wider text-gold">Item #{no}</span>
                         <span className="block truncate text-sm text-cream">{p?.title ?? "Deleted piece"}</span>
                         <span className="block text-xs text-cream-dim">
                           {manual ? `Starting bid ${formatPHP(a.startingBid)}` : top ? `High bid ${formatPHP(top.amount)} · ${a.bids.length} bid${a.bids.length === 1 ? "" : "s"}` : `Starts at ${formatPHP(a.startingBid)} · no bids`}
@@ -69,6 +112,12 @@ export default async function EventPage({ params, searchParams }: { params: { id
                       </span>
                       <Badge tone={TONE[ph]}>{LABEL[ph]}</Badge>
                     </Link>
+                    <LotMenu
+                      id={a.id}
+                      path={p ? productHref(p) : `/bidding/${a.id}`}
+                      text={sharePost(event.title, no, p?.title ?? "", a.startingBid, a.minIncrement, a.startsAt, a.endsAt)}
+                      canRemove={ph === "live" || ph === "scheduled"}
+                    />
                   </li>
                 );
               })}

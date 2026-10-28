@@ -64,6 +64,8 @@ export async function createAuctionAction(_prev: AuctionFormState, form: FormDat
 export async function cancelAuctionAction(id: string) {
   await assertStaff();
   await cancelAuction(id);
+  revalidatePath("/admin/bidding/events/[id]", "page");
+  revalidatePath("/bidding/[id]", "page");
   revalidatePath("/[category]/[slug]", "page");
   revalidatePath("/admin/bidding");
   revalidatePath(`/admin/bidding/${id}`);
