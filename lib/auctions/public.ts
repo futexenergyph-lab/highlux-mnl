@@ -4,11 +4,12 @@ import { getOrderRepo } from "@/lib/orders/repo";
 import { orderUrl } from "@/lib/email";
 import { getAuctionRepo } from "./repo";
 import { settleDueAuctions } from "./service";
-import { auctionPhase, nextMinBid, topBid, type Auction, type AuctionStatus } from "./types";
+import { auctionPhase, eventPhase, nextMinBid, topBid, type Auction, type AuctionEvent, type AuctionStatus } from "./types";
 
 /** What the browser may see about an auction: masked bidders, no contacts, plus "you" flags for the viewer. */
 export interface PublicAuction {
   id: string;
+  eventId: string | null;
   phase: AuctionStatus;
   startsAt: string;
   endsAt: string;
@@ -28,6 +29,7 @@ export function toPublic(a: Auction, userId: string | null, payUrl: string | nul
   const phase = auctionPhase(a);
   return {
     id: a.id,
+    eventId: a.eventId,
     phase,
     startsAt: a.startsAt,
     endsAt: a.endsAt,
@@ -74,4 +76,27 @@ export async function listPublicAuctions() {
     .map((a) => ({ a: toPublic(a, null), product: catalog.find((p) => p.id === a.productId) }))
     .filter((x) => x.product)
     .sort((x, y) => x.a.endsAt.localeCompare(y.a.endsAt));
+}
+
+/** Running and upcoming auction events with their lots (for /bidding and /bidding/event/[id]). */
+export async function listPublicEvents(): Promise<{ event: AuctionEvent; phase: AuctionStatus }[]> {
+  const events = await (await getAuctionRepo()).listEvents().catch(() => []);
+  return events
+    .map((event) => ({ event, phase: eventPhase(event) }))
+    .filter((e) => e.phase === "live" || e.phase === "scheduled")
+    .sort((x, y) => x.event.startsAt.localeCompare(y.event.startsAt));
+}
+
+export async function loadPublicEvent(id: string) {
+  const repo = await getAuctionRepo();
+  const event = await repo.getEvent(id).catch(() => null);
+  if (!event || event.status === "cancelled") return null;
+  let list = (await repo.list()).filter((a) => a.eventId === id);
+  if (await settleDueAuctions(list)) list = (await repo.list()).filter((a) => a.eventId === id);
+  const catalog = await getCatalog();
+  const lots = list
+    .filter((a) => a.status !== "cancelled")
+    .map((a) => ({ a: toPublic(a, null), product: catalog.find((p) => p.id === a.productId) }))
+    .filter((x) => x.product);
+  return { event, phase: eventPhase(event), lots, serverNow: new Date().toISOString() };
 }

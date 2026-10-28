@@ -1,6 +1,6 @@
 import "server-only";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
-import type { Auction, AuctionBid, BidContact } from "./types";
+import type { Auction, AuctionBid, AuctionEvent, BidContact } from "./types";
 
 export interface NewAuction {
   productId: string;
@@ -9,6 +9,7 @@ export interface NewAuction {
   reservePrice: number | null;
   startsAt: string;
   endsAt: string;
+  eventId?: string | null;
 }
 
 /** Persistence for bidding. Supabase uses the auctions tables + place_bid(); memory mirrors it for demos. */
@@ -25,6 +26,11 @@ export interface AuctionRepo {
   releaseProduct(productId: string, auctionId: string): Promise<void>;
   /** Auctions whose product is this one and are still running (for the product page banner). */
   liveForProduct(productId: string): Promise<Auction | null>;
+  // Auction events
+  listEvents(): Promise<AuctionEvent[]>;
+  getEvent(id: string): Promise<AuctionEvent | null>;
+  createEvent(e: { title: string; startsAt: string; endsAt: string }): Promise<AuctionEvent>;
+  cancelEvent(id: string): Promise<void>;
 }
 
 export const auctionHolder = (id: string) => `auction:${id}`;

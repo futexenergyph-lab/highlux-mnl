@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { auctionHolder, type AuctionRepo, type NewAuction } from "./repo";
-import { BidError, type Auction, type AuctionBid, type BidContact } from "./types";
+import { BidError, type Auction, type AuctionBid, type AuctionEvent, type BidContact } from "./types";
 
 const num = (v: unknown) => (v == null ? 0 : Number(v));
 const mapBid = (b: any): AuctionBid => ({ id: b.id, userId: b.user_id, bidderName: b.bidder_name, amount: num(b.amount), createdAt: b.created_at, contact: { email: b.contact?.email ?? "", fullName: b.contact?.full_name ?? "", phone: b.contact?.phone ?? "" } });
@@ -16,10 +16,12 @@ const mapAuction = (a: any): Auction => ({
   status: a.status,
   winnerBidId: a.winner_bid_id,
   orderId: a.order_id,
+  eventId: a.event_id ?? null,
   createdAt: a.created_at,
   bids: (a.auction_bids ?? []).map(mapBid).sort((x: AuctionBid, y: AuctionBid) => y.createdAt.localeCompare(x.createdAt)),
 });
 const SELECT = "*, auction_bids(*)";
+const mapEvent = (e: any): AuctionEvent => ({ id: e.id, title: e.title, startsAt: e.starts_at, endsAt: e.ends_at, status: e.status, createdAt: e.created_at });
 
 export class SupabaseAuctionRepo implements AuctionRepo {
   private db = createAdminClient();
@@ -44,7 +46,7 @@ export class SupabaseAuctionRepo implements AuctionRepo {
   async create(a: NewAuction) {
     const { data, error } = await this.db
       .from("auctions")
-      .insert({ product_id: a.productId, starting_bid: a.startingBid, min_increment: a.minIncrement, reserve_price: a.reservePrice, starts_at: a.startsAt, ends_at: a.endsAt })
+      .insert({ product_id: a.productId, starting_bid: a.startingBid, min_increment: a.minIncrement, reserve_price: a.reservePrice, starts_at: a.startsAt, ends_at: a.endsAt, ...(a.eventId ? { event_id: a.eventId } : {}) })
       .select(SELECT)
       .single();
     if (error) throw error;
@@ -91,5 +93,28 @@ export class SupabaseAuctionRepo implements AuctionRepo {
       .eq("id", productId)
       .eq("status", "reserved")
       .eq("reserved_session", auctionHolder(auctionId));
+  }
+
+  async listEvents() {
+    const { data, error } = await this.db.from("auction_events").select("*").order("starts_at", { ascending: false }).limit(200);
+    if (error) throw error;
+    return (data ?? []).map(mapEvent);
+  }
+
+  async getEvent(id: string) {
+    const { data, error } = await this.db.from("auction_events").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    return data ? mapEvent(data) : null;
+  }
+
+  async createEvent(e: { title: string; startsAt: string; endsAt: string }) {
+    const { data, error } = await this.db.from("auction_events").insert({ title: e.title, starts_at: e.startsAt, ends_at: e.endsAt }).select("*").single();
+    if (error) throw error;
+    return mapEvent(data);
+  }
+
+  async cancelEvent(id: string) {
+    const { error } = await this.db.from("auction_events").update({ status: "cancelled" }).eq("id", id);
+    if (error) throw error;
   }
 }

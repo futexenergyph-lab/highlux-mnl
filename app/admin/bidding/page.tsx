@@ -1,13 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Gavel, Plus } from "lucide-react";
+import { CalendarClock, Gavel, Plus } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { getAuctionRepo } from "@/lib/auctions/repo";
 import { settleDueAuctions } from "@/lib/auctions/service";
-import { auctionPhase, topBid } from "@/lib/auctions/types";
+import { auctionPhase, eventPhase, topBid } from "@/lib/auctions/types";
 import { formatPHP } from "@/lib/utils";
-import { Badge, PageHeader, Tabs, btnGold, fmtDateTime } from "@/components/admin/ui";
+import { Badge, PageHeader, Tabs, btnGold, btnOutline, fmtDateTime } from "@/components/admin/ui";
 
 export const metadata = { title: "Bidding" };
 export const dynamic = "force-dynamic";
@@ -20,6 +20,7 @@ export default async function BiddingPage({ searchParams }: { searchParams: { ta
   const repo = await getAuctionRepo();
   let auctions = await repo.list().catch(() => null);
   if (auctions && (await settleDueAuctions(auctions))) auctions = await repo.list();
+  const events = await repo.listEvents().catch(() => null);
   const products = new Map((await (await getAdminRepo()).listProducts()).map((p) => [p.id, p]));
   const tab = searchParams.tab ?? "running";
   const inTab = (phase: string) => (tab === "running" ? phase === "live" || phase === "scheduled" : tab === "all" ? true : phase === tab);
@@ -30,8 +31,36 @@ export default async function BiddingPage({ searchParams }: { searchParams: { ta
       <PageHeader
         title="Bidding"
         description="Auction an available piece — customers bid against each other until the timer ends."
-        actions={<Link href="/admin/bidding/new" className={btnGold}><Plus className="h-4 w-4" /> New auction</Link>}
+        actions={
+          <>
+            <Link href="/admin/bidding/new" className={btnGold}><Plus className="h-4 w-4" /> New auction</Link>
+            <Link href="/admin/bidding/events/new" className={btnOutline}><CalendarClock className="h-4 w-4" /> Manual auction event</Link>
+          </>
+        }
       />
+      {events && events.length > 0 && (
+        <section className="mb-6">
+          <h2 className="mb-2 text-[0.7rem] uppercase tracking-[0.18em] text-gold">Auction events</h2>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {events.slice(0, 8).map((e) => {
+              const ph = eventPhase(e);
+              const n = (auctions ?? []).filter((a) => a.eventId === e.id).length;
+              return (
+                <li key={e.id}>
+                  <Link href={`/admin/bidding/events/${e.id}`} className="flex items-center gap-3 border border-gold/20 bg-ink p-3 hover:border-gold">
+                    <CalendarClock className="h-6 w-6 shrink-0 text-gold" strokeWidth={1.2} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-cream">{e.title}</span>
+                      <span className="block text-xs text-cream-dim">{fmtDateTime(e.startsAt)} – {fmtDateTime(e.endsAt)} · {n} piece{n === 1 ? "" : "s"}</span>
+                    </span>
+                    <Badge tone={TONE[ph]}>{LABEL[ph]}</Badge>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
       {auctions === null && (
         <p className="mb-5 border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">Bidding needs a one-time database update — run <code>supabase/migrations/20261019000010_auctions.sql</code> in the Supabase SQL Editor.</p>
       )}

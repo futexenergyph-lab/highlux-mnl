@@ -24,8 +24,27 @@ export interface Auction {
   status: "live" | "ended" | "cancelled";
   winnerBidId: string | null;
   orderId: string | null;
+  /** The auction event this lot belongs to, if any. */
+  eventId: string | null;
   createdAt: string;
   bids: AuctionBid[]; // newest first
+}
+
+/** A titled auction with one start/end time; its lots are auctions with this eventId. */
+export interface AuctionEvent {
+  id: string;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  status: "active" | "cancelled";
+  createdAt: string;
+}
+
+export function eventPhase(e: Pick<AuctionEvent, "status" | "startsAt" | "endsAt">, now = Date.now()): AuctionStatus {
+  if (e.status === "cancelled") return "cancelled";
+  if (now < Date.parse(e.startsAt)) return "scheduled";
+  if (now >= Date.parse(e.endsAt)) return "ended";
+  return "live";
 }
 
 export function auctionPhase(a: Pick<Auction, "status" | "startsAt" | "endsAt">, now = Date.now()): AuctionStatus {

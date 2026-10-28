@@ -2,10 +2,11 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { memoryStore } from "@/lib/orders/memory-repo";
 import { auctionHolder, type AuctionRepo, type NewAuction } from "./repo";
-import { BidError, type Auction, type AuctionBid, type BidContact } from "./types";
+import { BidError, type Auction, type AuctionBid, type AuctionEvent, type BidContact } from "./types";
 
-const g = globalThis as unknown as { __highluxAuctions?: Auction[] };
+const g = globalThis as unknown as { __highluxAuctions?: Auction[]; __highluxAuctionEvents?: AuctionEvent[] };
 const store = () => (g.__highluxAuctions ??= []);
+const events = () => (g.__highluxAuctionEvents ??= []);
 const copy = (a: Auction): Auction => ({ ...a, bids: [...a.bids].sort((x, y) => y.createdAt.localeCompare(x.createdAt)) });
 
 export class MemoryAuctionRepo implements AuctionRepo {
@@ -23,7 +24,7 @@ export class MemoryAuctionRepo implements AuctionRepo {
   async create(n: NewAuction) {
     const p = memoryStore().products.find((x) => x.id === n.productId);
     if (!p || p.status !== "available" || store().some((x) => x.productId === n.productId && x.status === "live")) throw new Error("PRODUCT_UNAVAILABLE");
-    const a: Auction = { id: randomUUID(), ...n, status: "live", winnerBidId: null, orderId: null, createdAt: new Date().toISOString(), bids: [] };
+    const a: Auction = { id: randomUUID(), ...n, eventId: n.eventId ?? null, status: "live", winnerBidId: null, orderId: null, createdAt: new Date().toISOString(), bids: [] };
     store().push(a);
     Object.assign(p, { status: "reserved", reservedSession: auctionHolder(a.id), reservedUntil: null });
     return copy(a);
@@ -55,5 +56,20 @@ export class MemoryAuctionRepo implements AuctionRepo {
   async releaseProduct(productId: string, auctionId: string) {
     const p = memoryStore().products.find((x) => x.id === productId);
     if (p && p.status === "reserved" && p.reservedSession === auctionHolder(auctionId)) Object.assign(p, { status: "available", reservedSession: null, reservedUntil: null });
+  }
+  async listEvents() {
+    return [...events()].sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+  }
+  async getEvent(id: string) {
+    return events().find((e) => e.id === id) ?? null;
+  }
+  async createEvent(e: { title: string; startsAt: string; endsAt: string }) {
+    const ev: AuctionEvent = { id: randomUUID(), ...e, status: "active", createdAt: new Date().toISOString() };
+    events().push(ev);
+    return ev;
+  }
+  async cancelEvent(id: string) {
+    const e = events().find((x) => x.id === id);
+    if (e) e.status = "cancelled";
   }
 }

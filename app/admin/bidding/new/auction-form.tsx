@@ -12,11 +12,11 @@ const pad = (n: number) => String(n).padStart(2, "0");
 const local = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const money = (v: string) => v.replace(/[^\d.]/g, "");
 
-function Submit() {
+function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className={btnGold}>
-      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gavel className="h-4 w-4" />} Start auction
+      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gavel className="h-4 w-4" />} {label}
     </button>
   );
 }
@@ -39,7 +39,7 @@ const DURATIONS = [
   ["7 days", 168],
 ] as const;
 
-export function AuctionForm({ items, preselect }: { items: ItemOption[]; preselect?: string }) {
+export function AuctionForm({ items, preselect, event }: { items: ItemOption[]; preselect?: string; event?: { id: string; title: string; when: string } }) {
   const [state, action] = useFormState<AuctionFormState, FormData>(createAuctionAction, null);
   const [item, setItem] = React.useState<ItemOption | null>(() => items.find((i) => i.id === preselect) ?? null);
   const [starting, setStarting] = React.useState("");
@@ -55,6 +55,7 @@ export function AuctionForm({ items, preselect }: { items: ItemOption[]; presele
   return (
     <form action={action} className="max-w-2xl space-y-5 border border-gold/15 bg-ink p-5">
       <input type="hidden" name="tz" value={tz} />
+      {event && <input type="hidden" name="eventId" value={event.id} />}
       {state?.error && !state.field && <p role="alert" className="border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">{state.error}</p>}
 
       <Field label="Piece to auction (available inventory)" error={err("productId")} hint={item && <>Listed at {formatPHP(item.price)} — it&rsquo;s held (not buyable) while the auction runs.</>}>
@@ -73,6 +74,12 @@ export function AuctionForm({ items, preselect }: { items: ItemOption[]; presele
         </Field>
       </div>
 
+      {event ? (
+        <p className="border border-gold/25 bg-gold/[0.04] p-3 text-sm text-cream">
+          <span className="block text-[0.65rem] uppercase tracking-wider text-gold">Auction event</span>
+          {event.title} · {event.when}
+        </p>
+      ) : (
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Starts" hint="Leave blank to start now.">
           <input name="startsAt" type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className={inputCls} />
@@ -86,13 +93,14 @@ export function AuctionForm({ items, preselect }: { items: ItemOption[]; presele
           </span>
         </Field>
       </div>
+      )}
 
       <p className={cn("border-l-2 border-gold/60 bg-gold/[0.04] px-3 py-2 text-xs leading-relaxed text-cream-muted")}>
         Bids in the last 2 minutes extend the end by 2 minutes. When it ends, the highest bidder (if the reserve is met) gets an order to pay at their winning price; otherwise the piece goes back on sale.
       </p>
       <div className="flex flex-wrap gap-3">
-        <Submit />
-        <Link href="/admin/bidding" className={btnOutline}>Cancel</Link>
+        <Submit label={event ? "Add to event" : "Start auction"} />
+        <Link href={event ? `/admin/bidding/events/${event.id}` : "/admin/bidding"} className={btnOutline}>Cancel</Link>
       </div>
     </form>
   );
