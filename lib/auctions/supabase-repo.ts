@@ -21,7 +21,7 @@ const mapAuction = (a: any): Auction => ({
   bids: (a.auction_bids ?? []).map(mapBid).sort((x: AuctionBid, y: AuctionBid) => y.createdAt.localeCompare(x.createdAt)),
 });
 const SELECT = "*, auction_bids(*)";
-const mapEvent = (e: any): AuctionEvent => ({ id: e.id, title: e.title, kind: e.kind ?? "website", startsAt: e.starts_at, endsAt: e.ends_at, status: e.status, createdAt: e.created_at });
+const mapEvent = (e: any): AuctionEvent => ({ id: e.id, title: e.title, kind: e.kind ?? "website", bidLink: e.bid_link ?? null, startsAt: e.starts_at, endsAt: e.ends_at, status: e.status, createdAt: e.created_at });
 
 export class SupabaseAuctionRepo implements AuctionRepo {
   private db = createAdminClient();
@@ -107,8 +107,8 @@ export class SupabaseAuctionRepo implements AuctionRepo {
     return data ? mapEvent(data) : null;
   }
 
-  async createEvent(e: { title: string; kind: AuctionEventKind; startsAt: string; endsAt: string }) {
-    const { data, error } = await this.db.from("auction_events").insert({ title: e.title, kind: e.kind, starts_at: e.startsAt, ends_at: e.endsAt }).select("*").single();
+  async createEvent(e: { title: string; kind: AuctionEventKind; bidLink: string | null; startsAt: string; endsAt: string }) {
+    const { data, error } = await this.db.from("auction_events").insert({ title: e.title, kind: e.kind, starts_at: e.startsAt, ends_at: e.endsAt, ...(e.bidLink ? { bid_link: e.bidLink } : {}) }).select("*").single();
     if (error) throw error;
     return mapEvent(data);
   }
@@ -123,8 +123,10 @@ export class SupabaseAuctionRepo implements AuctionRepo {
     if (error) throw error;
   }
 
-  async updateEvent(id: string, e: { title: string; startsAt: string; endsAt: string }) {
-    const { error } = await this.db.from("auction_events").update({ title: e.title, starts_at: e.startsAt, ends_at: e.endsAt }).eq("id", id);
+  async updateEvent(id: string, e: { title: string; bidLink: string | null; startsAt: string; endsAt: string }) {
+    const { error } = await this.db.from("auction_events").update({ title: e.title, starts_at: e.startsAt, ends_at: e.endsAt, bid_link: e.bidLink }).eq("id", id);
+    if (error?.code === "42703" || error?.code === "PGRST204")
+      throw new Error("BID_LINK_SQL");
     if (error) throw error;
     const lots = await this.db.from("auctions").update({ starts_at: e.startsAt, ends_at: e.endsAt }).eq("event_id", id).eq("status", "live");
     if (lots.error) throw lots.error;

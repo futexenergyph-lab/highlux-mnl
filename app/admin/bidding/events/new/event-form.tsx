@@ -26,7 +26,7 @@ const DURATIONS = [
   ["7 days", 168],
 ] as const;
 
-export function EventForm({ kind, event }: { kind: "website" | "manual"; event?: { id: string; title: string; startsAt: string; endsAt: string } }) {
+export function EventForm({ kind, event }: { kind: "website" | "manual"; event?: { id: string; title: string; bidLink: string | null; startsAt: string; endsAt: string } }) {
   const [state, action] = useFormState<AuctionFormState, FormData>(event ? updateEventAction : createEventAction, null);
   const [startsAt, setStartsAt] = React.useState("");
   const [endsAt, setEndsAt] = React.useState("");
@@ -61,15 +61,15 @@ export function EventForm({ kind, event }: { kind: "website" | "manual"; event?:
         {err("title") && <span className="mt-1 block text-xs text-red-300">{err("title")}</span>}
       </label>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <label className="block min-w-0">
           <span className={labelCls}>Starting date and time</span>
-          <input name="startsAt" type="datetime-local" required value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className={inputCls} />
+          <input name="startsAt" type="datetime-local" required value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className={`${inputCls} min-w-0 max-w-full appearance-none`} />
           {err("startsAt") && <span className="mt-1 block text-xs text-red-300">{err("startsAt")}</span>}
         </label>
-        <label className="block">
+        <label className="block min-w-0">
           <span className={labelCls}>Ending date and time</span>
-          <input name="endsAt" type="datetime-local" required value={endsAt} min={startsAt} onChange={(e) => setEndsAt(e.target.value)} className={inputCls} />
+          <input name="endsAt" type="datetime-local" required value={endsAt} min={startsAt} onChange={(e) => setEndsAt(e.target.value)} className={`${inputCls} min-w-0 max-w-full appearance-none`} />
           <span className="mt-2 flex flex-wrap gap-1.5">
             {DURATIONS.map(([l, h]) => (
               <button key={l} type="button" onClick={() => setDuration(h)} className="border border-gold/25 px-2 py-1 text-[0.65rem] uppercase tracking-wider text-cream-muted hover:border-gold hover:text-gold-light">{l}</button>
@@ -78,6 +78,13 @@ export function EventForm({ kind, event }: { kind: "website" | "manual"; event?:
           {err("endsAt") && <span className="mt-1 block text-xs text-red-300">{err("endsAt")}</span>}
         </label>
       </div>
+
+      <label className="block">
+        <span className={labelCls}>Link bidding location</span>
+        <input name="bidLink" type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={event?.bidLink ?? ""} className={inputCls} placeholder="https://invite.viber.com/… (Viber group, Facebook live, etc.)" />
+        <span className="mt-1 block text-xs text-cream-dim">Shown as a &ldquo;Bid here!&rdquo; button on the event page. Optional.</span>
+        {err("bidLink") && <span className="mt-1 block text-xs text-red-300">{err("bidLink")}</span>}
+      </label>
 
       <p className="border-l-2 border-gold/60 bg-gold/[0.04] px-3 py-2 text-xs leading-relaxed text-cream-muted">
         {event ? "Changing the times also moves every item still in this event to the new start and end." : "After creating the event, add the pieces to auction. Every piece in the event opens and closes at these times."}

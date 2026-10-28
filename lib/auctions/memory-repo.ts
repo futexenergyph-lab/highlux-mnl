@@ -63,7 +63,7 @@ export class MemoryAuctionRepo implements AuctionRepo {
   async getEvent(id: string) {
     return events().find((e) => e.id === id) ?? null;
   }
-  async createEvent(e: { title: string; kind: AuctionEventKind; startsAt: string; endsAt: string }) {
+  async createEvent(e: { title: string; kind: AuctionEventKind; bidLink: string | null; startsAt: string; endsAt: string }) {
     const ev: AuctionEvent = { id: randomUUID(), ...e, status: "active", createdAt: new Date().toISOString() };
     events().push(ev);
     return ev;
@@ -76,7 +76,7 @@ export class MemoryAuctionRepo implements AuctionRepo {
     const e = events().find((x) => x.id === id);
     if (e) e.kind = kind;
   }
-  async updateEvent(id: string, e: { title: string; startsAt: string; endsAt: string }) {
+  async updateEvent(id: string, e: { title: string; bidLink: string | null; startsAt: string; endsAt: string }) {
     const ev = events().find((x) => x.id === id);
     if (ev) Object.assign(ev, e);
     for (const a of store()) if (a.eventId === id && a.status === "live") Object.assign(a, { startsAt: e.startsAt, endsAt: e.endsAt });

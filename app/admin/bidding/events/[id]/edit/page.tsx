@@ -14,7 +14,7 @@ export default async function EditEventPage({ params }: { params: { id: string }
   return (
     <>
       <PageHeader title="Edit auction event" description={event.title} />
-      <EventForm kind={event.kind} event={{ id: event.id, title: event.title, startsAt: event.startsAt, endsAt: event.endsAt }} />
+      <EventForm kind={event.kind} event={{ id: event.id, title: event.title, bidLink: event.bidLink, startsAt: event.startsAt, endsAt: event.endsAt }} />
     </>
   );
 }

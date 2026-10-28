@@ -74,6 +74,13 @@ export async function cancelAuctionAction(id: string) {
 const eventSchema = z.object({
   title: z.string().trim().min(3, "Enter the auction event title").max(120),
   kind: z.enum(["website", "manual"]).default("manual"),
+  bidLink: z
+    .string()
+    .trim()
+    .max(500)
+    .default("")
+    .transform((v) => (v && !/^https?:\/\//i.test(v) ? `https://${v}` : v) || null)
+    .refine((v) => !v || /^https?:\/\/[^\s.]+\.[^\s]+$/i.test(v), "Enter a valid link, e.g. https://invite.viber.com/…"),
   startsAt: z.string().trim().min(1, "Choose the starting date and time"),
   endsAt: z.string().trim().min(1, "Choose the ending date and time"),
   tz: z.coerce.number().default(-480),
@@ -94,10 +101,10 @@ export async function createEventAction(_prev: AuctionFormState, form: FormData)
   if (Date.parse(endsAt) <= Date.now()) return { error: "The ending date and time is already past.", field: "endsAt" };
   let id: string;
   try {
-    id = (await (await getAuctionRepo()).createEvent({ title: v.title, kind: v.kind, startsAt, endsAt })).id;
+    id = (await (await getAuctionRepo()).createEvent({ title: v.title, kind: v.kind, bidLink: v.bidLink, startsAt, endsAt })).id;
   } catch (e) {
     console.error("create auction event failed", e);
-    return { error: "Couldn't create the event. Make sure the auction events SQL was run in Supabase." };
+    return { error: v.bidLink ? "Couldn't create the event. Make sure the bidding link SQL was run in Supabase." : "Couldn't create the event. Make sure the auction events SQL was run in Supabase." };
   }
   revalidatePath("/admin/bidding");
   redirect(`/admin/bidding/events/${id}?created=1`);
@@ -138,13 +145,15 @@ export async function updateEventAction(_prev: AuctionFormState, form: FormData)
   const repo = await getAuctionRepo();
   if (!(await repo.getEvent(id))) return { error: "This event no longer exists." };
   try {
-    await repo.updateEvent(id, { title: v.title, startsAt, endsAt });
+    await repo.updateEvent(id, { title: v.title, bidLink: v.bidLink, startsAt, endsAt });
   } catch (e) {
+    if ((e as Error).message === "BID_LINK_SQL") return { error: "The bidding link needs a one-time database update — run the bidding link SQL in Supabase.", field: "bidLink" };
     console.error("update auction event failed", e);
     return { error: "Couldn't save the changes. Please try again." };
   }
   revalidatePath("/admin/bidding");
   revalidatePath("/bidding/[id]", "page");
+  revalidatePath("/bidding/event/[id]", "page");
   redirect(`/admin/bidding/events/${id}?updated=1`);
 }
 

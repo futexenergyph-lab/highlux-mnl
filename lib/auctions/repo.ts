@@ -29,11 +29,11 @@ export interface AuctionRepo {
   // Auction events
   listEvents(): Promise<AuctionEvent[]>;
   getEvent(id: string): Promise<AuctionEvent | null>;
-  createEvent(e: { title: string; kind: AuctionEventKind; startsAt: string; endsAt: string }): Promise<AuctionEvent>;
+  createEvent(e: { title: string; kind: AuctionEventKind; bidLink: string | null; startsAt: string; endsAt: string }): Promise<AuctionEvent>;
   cancelEvent(id: string): Promise<void>;
   setEventKind(id: string, kind: AuctionEventKind): Promise<void>;
   /** Renames/reschedules an event; its running lots move to the new times. */
-  updateEvent(id: string, e: { title: string; startsAt: string; endsAt: string }): Promise<void>;
+  updateEvent(id: string, e: { title: string; bidLink: string | null; startsAt: string; endsAt: string }): Promise<void>;
   /** Removes the event record; its lots stay (unlinked) so past bids and orders are kept. */
   deleteEvent(id: string): Promise<void>;
 }

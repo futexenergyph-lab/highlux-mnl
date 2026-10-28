@@ -31,6 +31,11 @@ export default async function EventPage({ params }: { params: { id: string } }) 
       <Link href="/bidding" className="text-xs uppercase tracking-wider text-cream-muted hover:text-gold-light">← All auctions</Link>
       <p className="eyebrow mt-4 text-gold">{manual ? "Manual live auction" : phase === "scheduled" ? "Upcoming auction event" : phase === "live" ? "Live auction event" : "Auction event"}</p>
       <h1 className="mt-2 font-serif text-3xl text-cream sm:text-4xl">{event.title}</h1>
+      {event.bidLink && (
+        <a href={event.bidLink} target="_blank" rel="noopener noreferrer" className="btn-gold mt-4 w-full px-8 py-3.5 text-sm sm:w-auto">
+          Bid here!
+        </a>
+      )}
       <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-cream-muted">
         <CalendarClock className="h-4 w-4 text-gold" strokeWidth={1.3} />
         {when(event.startsAt)} – {when(event.endsAt)}
@@ -70,6 +75,14 @@ export default async function EventPage({ params }: { params: { id: string } }) 
             <li key={a.id} className="min-w-0"><LotCard a={a} p={product!} /></li>
           ))}
         </ul>
+      )}
+      {event.bidLink && lots.length > 0 && (
+        <div className="mt-10 border-t border-gold/20 pt-8 text-center">
+          <p className="text-sm text-cream-muted">Ready to bid? Join the live auction.</p>
+          <a href={event.bidLink} target="_blank" rel="noopener noreferrer" className="btn-gold mt-4 w-full px-10 py-4 text-sm sm:w-auto">
+            Bid here!
+          </a>
+        </div>
       )}
     </div>
   );

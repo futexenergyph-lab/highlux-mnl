@@ -39,6 +39,8 @@ export interface AuctionEvent {
   title: string;
   /** "website" or "manual" — which button the event was made with. */
   kind: AuctionEventKind;
+  /** Where bidding happens (e.g. a Viber group link); shown as "Bid here!" on the event page. */
+  bidLink: string | null;
   startsAt: string;
   endsAt: string;
   status: "active" | "cancelled";
