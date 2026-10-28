@@ -6,7 +6,7 @@ import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { getAuctionRepo } from "@/lib/auctions/repo";
 import { settleDueAuctions } from "@/lib/auctions/service";
-import { auctionPhase, eventPhase, topBid } from "@/lib/auctions/types";
+import { EVENT_KIND_LABEL, auctionPhase, eventPhase, topBid } from "@/lib/auctions/types";
 import { formatPHP } from "@/lib/utils";
 import { Badge, Card, PageHeader, btnGold, fmtDateTime } from "@/components/admin/ui";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
@@ -35,7 +35,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
       <Link href="/admin/bidding" className="mb-4 inline-flex items-center gap-1 text-xs uppercase tracking-wider text-cream-muted hover:text-gold-light"><ArrowLeft className="h-3.5 w-3.5" /> Bidding</Link>
       <PageHeader
         title={event.title}
-        description={`${fmtDateTime(event.startsAt)} – ${fmtDateTime(event.endsAt)}`}
+        description={`${EVENT_KIND_LABEL[event.kind]} · ${fmtDateTime(event.startsAt)} – ${fmtDateTime(event.endsAt)}`}
         actions={open ? <Link href={`/admin/bidding/new?event=${event.id}`} className={btnGold}><Plus className="h-4 w-4" /> Add piece</Link> : undefined}
       />
       {searchParams.created && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Event created. Now add the pieces to auction with <span className="text-gold-light">Add piece</span>.</p>}

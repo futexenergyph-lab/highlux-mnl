@@ -26,7 +26,7 @@ const DURATIONS = [
   ["7 days", 168],
 ] as const;
 
-export function EventForm() {
+export function EventForm({ kind }: { kind: "website" | "manual" }) {
   const [state, action] = useFormState<AuctionFormState, FormData>(createEventAction, null);
   const [startsAt, setStartsAt] = React.useState("");
   const [endsAt, setEndsAt] = React.useState("");
@@ -46,6 +46,7 @@ export function EventForm() {
   return (
     <form action={action} className="max-w-2xl space-y-5 border border-gold/15 bg-ink p-5">
       <input type="hidden" name="tz" value={tz} />
+      <input type="hidden" name="kind" value={kind} />
       {state?.error && !state.field && <p role="alert" className="border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">{state.error}</p>}
 
       <label className="block">

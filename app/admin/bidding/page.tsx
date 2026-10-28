@@ -33,8 +33,8 @@ export default async function BiddingPage({ searchParams }: { searchParams: { ta
         description="Auction an available piece — customers bid against each other until the timer ends."
         actions={
           <>
-            <Link href="/admin/bidding/new" className={btnGold}><Plus className="h-4 w-4" /> New auction</Link>
-            <Link href="/admin/bidding/events/new" className={btnOutline}><CalendarClock className="h-4 w-4" /> Manual auction event</Link>
+            <Link href="/admin/bidding/events/new?kind=website" className={btnGold}><Plus className="h-4 w-4" /> Website auction event</Link>
+            <Link href="/admin/bidding/events/new?kind=manual" className={btnOutline}><CalendarClock className="h-4 w-4" /> Manual auction event</Link>
           </>
         }
       />
@@ -51,7 +51,7 @@ export default async function BiddingPage({ searchParams }: { searchParams: { ta
                     <CalendarClock className="h-6 w-6 shrink-0 text-gold" strokeWidth={1.2} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm text-cream">{e.title}</span>
-                      <span className="block text-xs text-cream-dim">{fmtDateTime(e.startsAt)} – {fmtDateTime(e.endsAt)} · {n} piece{n === 1 ? "" : "s"}</span>
+                      <span className="block text-xs text-cream-dim">{e.kind === "website" ? "Website" : "Manual"} · {fmtDateTime(e.startsAt)} – {fmtDateTime(e.endsAt)} · {n} piece{n === 1 ? "" : "s"}</span>
                     </span>
                     <Badge tone={TONE[ph]}>{LABEL[ph]}</Badge>
                   </Link>
@@ -76,7 +76,7 @@ export default async function BiddingPage({ searchParams }: { searchParams: { ta
       {rows.length === 0 ? (
         <div className="border border-gold/15 p-10 text-center text-sm text-cream-muted">
           <Gavel className="mx-auto mb-3 h-8 w-8 text-gold/60" strokeWidth={1.2} />
-          No auctions here yet. Tap <span className="text-gold-light">New auction</span> to put a piece up for bidding.
+          No auctions here yet. Tap <span className="text-gold-light">Website auction event</span> or <span className="text-gold-light">Manual auction event</span>, then add the pieces to auction.
         </div>
       ) : (
         <ul className="divide-y divide-gold/10 border border-gold/15 bg-ink">

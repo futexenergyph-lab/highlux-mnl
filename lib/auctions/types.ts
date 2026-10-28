@@ -30,10 +30,15 @@ export interface Auction {
   bids: AuctionBid[]; // newest first
 }
 
+export type AuctionEventKind = "website" | "manual";
+export const EVENT_KIND_LABEL: Record<AuctionEventKind, string> = { website: "Website auction event", manual: "Manual auction event" };
+
 /** A titled auction with one start/end time; its lots are auctions with this eventId. */
 export interface AuctionEvent {
   id: string;
   title: string;
+  /** "website" or "manual" — which button the event was made with. */
+  kind: AuctionEventKind;
   startsAt: string;
   endsAt: string;
   status: "active" | "cancelled";

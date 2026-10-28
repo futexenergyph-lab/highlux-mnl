@@ -1,6 +1,6 @@
 import "server-only";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
-import type { Auction, AuctionBid, AuctionEvent, BidContact } from "./types";
+import type { Auction, AuctionBid, AuctionEvent, AuctionEventKind, BidContact } from "./types";
 
 export interface NewAuction {
   productId: string;
@@ -29,7 +29,7 @@ export interface AuctionRepo {
   // Auction events
   listEvents(): Promise<AuctionEvent[]>;
   getEvent(id: string): Promise<AuctionEvent | null>;
-  createEvent(e: { title: string; startsAt: string; endsAt: string }): Promise<AuctionEvent>;
+  createEvent(e: { title: string; kind: AuctionEventKind; startsAt: string; endsAt: string }): Promise<AuctionEvent>;
   cancelEvent(id: string): Promise<void>;
 }
 

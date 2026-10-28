@@ -2,7 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { memoryStore } from "@/lib/orders/memory-repo";
 import { auctionHolder, type AuctionRepo, type NewAuction } from "./repo";
-import { BidError, type Auction, type AuctionBid, type AuctionEvent, type BidContact } from "./types";
+import { BidError, type Auction, type AuctionBid, type AuctionEvent, type AuctionEventKind, type BidContact } from "./types";
 
 const g = globalThis as unknown as { __highluxAuctions?: Auction[]; __highluxAuctionEvents?: AuctionEvent[] };
 const store = () => (g.__highluxAuctions ??= []);
@@ -63,7 +63,7 @@ export class MemoryAuctionRepo implements AuctionRepo {
   async getEvent(id: string) {
     return events().find((e) => e.id === id) ?? null;
   }
-  async createEvent(e: { title: string; startsAt: string; endsAt: string }) {
+  async createEvent(e: { title: string; kind: AuctionEventKind; startsAt: string; endsAt: string }) {
     const ev: AuctionEvent = { id: randomUUID(), ...e, status: "active", createdAt: new Date().toISOString() };
     events().push(ev);
     return ev;

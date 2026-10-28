@@ -71,6 +71,7 @@ export async function cancelAuctionAction(id: string) {
 
 const eventSchema = z.object({
   title: z.string().trim().min(3, "Enter the auction event title").max(120),
+  kind: z.enum(["website", "manual"]).default("manual"),
   startsAt: z.string().trim().min(1, "Choose the starting date and time"),
   endsAt: z.string().trim().min(1, "Choose the ending date and time"),
   tz: z.coerce.number().default(-480),
@@ -91,7 +92,7 @@ export async function createEventAction(_prev: AuctionFormState, form: FormData)
   if (Date.parse(endsAt) <= Date.now()) return { error: "The ending date and time is already past.", field: "endsAt" };
   let id: string;
   try {
-    id = (await (await getAuctionRepo()).createEvent({ title: v.title, startsAt, endsAt })).id;
+    id = (await (await getAuctionRepo()).createEvent({ title: v.title, kind: v.kind, startsAt, endsAt })).id;
   } catch (e) {
     console.error("create auction event failed", e);
     return { error: "Couldn't create the event. Make sure the auction events SQL was run in Supabase." };

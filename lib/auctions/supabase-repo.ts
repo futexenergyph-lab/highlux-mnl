@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { auctionHolder, type AuctionRepo, type NewAuction } from "./repo";
-import { BidError, type Auction, type AuctionBid, type AuctionEvent, type BidContact } from "./types";
+import { BidError, type Auction, type AuctionBid, type AuctionEvent, type AuctionEventKind, type BidContact } from "./types";
 
 const num = (v: unknown) => (v == null ? 0 : Number(v));
 const mapBid = (b: any): AuctionBid => ({ id: b.id, userId: b.user_id, bidderName: b.bidder_name, amount: num(b.amount), createdAt: b.created_at, contact: { email: b.contact?.email ?? "", fullName: b.contact?.full_name ?? "", phone: b.contact?.phone ?? "" } });
@@ -21,7 +21,7 @@ const mapAuction = (a: any): Auction => ({
   bids: (a.auction_bids ?? []).map(mapBid).sort((x: AuctionBid, y: AuctionBid) => y.createdAt.localeCompare(x.createdAt)),
 });
 const SELECT = "*, auction_bids(*)";
-const mapEvent = (e: any): AuctionEvent => ({ id: e.id, title: e.title, startsAt: e.starts_at, endsAt: e.ends_at, status: e.status, createdAt: e.created_at });
+const mapEvent = (e: any): AuctionEvent => ({ id: e.id, title: e.title, kind: e.kind ?? "website", startsAt: e.starts_at, endsAt: e.ends_at, status: e.status, createdAt: e.created_at });
 
 export class SupabaseAuctionRepo implements AuctionRepo {
   private db = createAdminClient();
@@ -107,8 +107,8 @@ export class SupabaseAuctionRepo implements AuctionRepo {
     return data ? mapEvent(data) : null;
   }
 
-  async createEvent(e: { title: string; startsAt: string; endsAt: string }) {
-    const { data, error } = await this.db.from("auction_events").insert({ title: e.title, starts_at: e.startsAt, ends_at: e.endsAt }).select("*").single();
+  async createEvent(e: { title: string; kind: AuctionEventKind; startsAt: string; endsAt: string }) {
+    const { data, error } = await this.db.from("auction_events").insert({ title: e.title, kind: e.kind, starts_at: e.startsAt, ends_at: e.endsAt }).select("*").single();
     if (error) throw error;
     return mapEvent(data);
   }
