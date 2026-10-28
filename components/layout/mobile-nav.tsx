@@ -1,7 +1,8 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { ChevronDown, Heart, Package, User } from "lucide-react";
+import { ChevronDown, Heart, LogOut, Package, User } from "lucide-react";
+import { signOutAction } from "@/app/(store)/login/actions";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { NAV, brandsFor, categoryBySlug } from "@/lib/catalog";
 import { contactLinks } from "@/lib/site";
@@ -90,6 +91,15 @@ export function MobileNav({ trigger }: { trigger: React.ReactNode }) {
                 </SheetClose>
               </li>
             ))}
+            {account && (
+              <li>
+                <form action={signOutAction}>
+                  <button type="submit" onClick={() => setOpen(false)} className="flex w-full items-center gap-3 py-2.5 text-left text-sm text-cream-muted hover:text-gold-light">
+                    <LogOut className="h-4 w-4 text-gold" strokeWidth={1.25} /> Sign out
+                  </button>
+                </form>
+              </li>
+            )}
           </ul>
         </nav>
         <div className="border-t border-gold/20 p-6">
