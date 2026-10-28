@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Gavel } from "lucide-react";
 import { cn, formatPHP } from "@/lib/utils";
 
@@ -19,7 +20,7 @@ function load(productId: string) {
   if (!cache.has(productId))
     cache.set(
       productId,
-      fetch(`/api/bidding/product/${productId}`, { cache: "no-store" })
+      fetch(`/api/bidding/product/${productId}?t=${Date.now()}`, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null),
     );
@@ -31,9 +32,17 @@ export function useProductAuction(productId: string) {
   const [info, setInfo] = React.useState<ProductAuctionInfo | undefined>(undefined);
   React.useEffect(() => {
     let live = true;
-    load(productId).then((v) => live && setInfo(v));
+    const refresh = (fresh: boolean) => {
+      if (fresh) cache.delete(productId);
+      load(productId).then((v) => live && setInfo(v));
+    };
+    refresh(false);
+    // Coming back with the browser's Back button can restore an old copy of the page — check again.
+    const onShow = (e: PageTransitionEvent) => e.persisted && refresh(true);
+    window.addEventListener("pageshow", onShow);
     return () => {
       live = false;
+      window.removeEventListener("pageshow", onShow);
     };
   }, [productId]);
   return info; // undefined while loading
@@ -101,4 +110,14 @@ export function AuctionBanner({ productId }: { productId: string }) {
 export function HideDuringAuction({ productId, children }: { productId: string; children: React.ReactNode }) {
   const info = useProductAuction(productId);
   return info ? null : <>{children}</>;
+}
+
+/** A piece in a manual live auction opens its auction page (Item #, was price, countdown) instead of the shop listing. */
+export function ManualAuctionRedirect({ productId }: { productId: string }) {
+  const info = useProductAuction(productId);
+  const router = useRouter();
+  React.useEffect(() => {
+    if (info?.manual) router.replace(`/bidding/${info.id}`);
+  }, [info, router]);
+  return null;
 }
