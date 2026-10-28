@@ -10,7 +10,8 @@ import { CONDITION_LABELS, type CategorySlug } from "@/lib/types";
 import { formatPHP } from "@/lib/utils";
 
 /** Share card: photo left, brand / title / price / condition right, in the site's gold-on-black style. */
-export async function renderProductCard(category: string, slug: string) {
+/** `auction` swaps the price for the was price and adds the Item # line (manual live auctions). */
+export async function renderProductCard(category: string, slug: string, auction?: { itemNumber: number | null }) {
   const params = { category, slug };
   const p = await getProduct(params.category as CategorySlug, params.slug);
   const fonts = await ogFonts();
@@ -30,13 +31,20 @@ export async function renderProductCard(category: string, slug: string) {
             <div style={{ fontSize: 22, letterSpacing: 6, color: GOLD, textTransform: "uppercase" }}>{p?.brand ?? site.name}</div>
             <div style={{ marginTop: 18, fontFamily: "Playfair", fontSize: p && p.title.length > 40 ? 46 : 54, lineHeight: 1.15, color: CREAM }}>{p?.model ?? "Pre-loved luxury"}</div>
             {p && <div style={{ marginTop: 18, fontSize: 22, color: "#c9bfa9" }}>{`${CONDITION_LABELS[p.condition]} condition · 100% authentic`}</div>}
+            {auction && <div style={{ marginTop: 14, fontSize: 22, color: GOLD_LIGHT }}>{`Manual Live Auction${auction.itemNumber != null ? ` | Item #${auction.itemNumber}` : ""}`}</div>}
             <div style={{ marginTop: 22, display: "flex", alignItems: "center" }}>
               <img src={seal} width={40} height={40} alt="" />
               <div style={{ marginLeft: 12, fontSize: 22, color: CREAM }}>Authenticity Guarantee</div>
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {p && (
+            {p && auction && (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ fontSize: 18, letterSpacing: 4, color: GOLD }}>WAS PRICE</div>
+                <div style={{ marginTop: 6, fontSize: 50, color: CREAM }}>{formatPHP(p.compareAtPrice ?? p.price)}</div>
+              </div>
+            )}
+            {p && !auction && (
               <div style={{ display: "flex", alignItems: "baseline" }}>
                 <div style={{ fontSize: 50, color: sold ? "#8f8676" : GOLD_LIGHT, textDecoration: sold ? "line-through" : "none" }}>{formatPHP(p.price)}</div>
                 {p.compareAtPrice && !sold && <div style={{ marginLeft: 18, fontSize: 26, color: "#8f8676", textDecoration: "line-through" }}>{formatPHP(p.compareAtPrice)}</div>}

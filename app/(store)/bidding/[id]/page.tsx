@@ -15,8 +15,15 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const r = await loadPublicAuction(params.id, null).catch(() => null);
   if (!r?.product) return { title: "Bidding" };
-  if (r.manual) return { title: `${r.product.title} · Manual Live Auction`, description: `This item is in Manual Live Auction | Item #${r.manual.itemNumber ?? ""}. 100% authentic.` };
-  return { title: `Bid: ${r.product.title}`, description: `Live auction — current bid ${formatPHP(r.pub.highBid ?? r.pub.startingBid)}. 100% authentic.` };
+  const images = [{ url: `/api/og/bidding/${params.id}`, width: 1200, height: 630, alt: r.product.title }];
+  if (r.manual) {
+    const title = `${r.product.title} · Manual Live Auction | Item #${r.manual.itemNumber ?? ""}`;
+    const description = `This item is in Manual Live Auction | Item #${r.manual.itemNumber ?? ""}. Was price ${formatPHP(r.product.compareAtPrice ?? r.product.price)}. 100% authentic.`;
+    return { title, description, openGraph: { title, description, images, type: "website" }, twitter: { card: "summary_large_image", title, description, images } };
+  }
+  const title = `Bid: ${r.product.title}`;
+  const description = `Live auction — current bid ${formatPHP(r.pub.highBid ?? r.pub.startingBid)}. 100% authentic.`;
+  return { title, description, openGraph: { title, description, images, type: "website" }, twitter: { card: "summary_large_image", title, description, images } };
 }
 
 export default async function AuctionPage({ params }: { params: { id: string } }) {
