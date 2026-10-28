@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getAuctionRepo } from "@/lib/auctions/repo";
+import { auctionPhase } from "@/lib/auctions/types";
 import { CreditCard, Truck, Wallet } from "lucide-react";
 import { Breadcrumbs } from "@/components/shop/breadcrumbs";
 import { ProductGallery } from "@/components/product/gallery";
@@ -50,6 +52,13 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 export default async function ProductPage({ params }: { params: Params }) {
   const p = await load(params);
   if (!p) notFound();
+  // A piece held by a manual (off-website) live auction opens its auction page instead.
+  if (p.status === "reserved") {
+    const repo = await getAuctionRepo();
+    const a = await repo.liveForProduct(p.id).catch(() => null);
+    const event = a?.eventId && auctionPhase(a) !== "ended" ? await repo.getEvent(a.eventId).catch(() => null) : null;
+    if (a && event?.kind === "manual") redirect(`/bidding/${a.id}`);
+  }
   const cat = categoryBySlug(p.category)!;
   const sub = productType(cat, p.subCategory);
   const [related, checkout] = await Promise.all([getRelated(p), getCheckoutSettings()]);
