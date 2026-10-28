@@ -133,6 +133,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Starts</dt><dd className="text-right text-cream">{fmtDateTime(event.startsAt)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Ends</dt><dd className="text-right text-cream">{fmtDateTime(event.endsAt)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Pieces</dt><dd className="text-cream">{lots.length}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="shrink-0 text-cream-dim">Bidding link</dt><dd className="min-w-0 truncate text-right">{event.bidLink ? <a href={event.bidLink} target="_blank" rel="noopener noreferrer" className="text-gold-light underline">{event.bidLink.replace(/^https?:\/\//, "")}</a> : <span className="text-red-300">Not set — Edit event to add it</span>}</dd></div>
               {!manual && (
                 <>
                   <div className="flex justify-between gap-3"><dt className="text-cream-dim">Bids</dt><dd className="text-cream">{lots.reduce((s, a) => s + a.bids.length, 0)}</dd></div>
