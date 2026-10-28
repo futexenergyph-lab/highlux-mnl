@@ -5,7 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { Heart, Loader2, Mail, Package, Wallet } from "lucide-react";
 import type { AuthMode } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
-import { googleAction, magicLinkAction, signInAction, signUpAction, type AuthState } from "./actions";
+import { googleAction, magicLinkAction, signInAction, type AuthState } from "./actions";
 
 const input = "h-12 w-full border border-gold/30 bg-ink/60 px-3.5 text-[0.95rem] text-cream placeholder:text-cream-dim/60 focus:border-gold focus:outline-none";
 const labelCls = "mb-1.5 block text-[0.68rem] uppercase tracking-[0.14em] text-cream-muted";
@@ -47,10 +47,9 @@ function Feedback({ state }: { state: AuthState }) {
   );
 }
 
-export function LoginForm({ next, initialTab, error, mode, google }: { next: string; initialTab: "signin" | "signup"; error?: string; mode: AuthMode; google: boolean }) {
-  const [tab, setTab] = React.useState<"signin" | "signup" | "link">(initialTab);
+export function LoginForm({ next, error, mode, google }: { next: string; error?: string; mode: AuthMode; google: boolean }) {
+  const [tab, setTab] = React.useState<"signin" | "link">("signin");
   const [signInState, signIn] = useFormState(signInAction, null);
-  const [signUpState, signUp] = useFormState(signUpAction, null);
   const [linkState, sendLink] = useFormState(magicLinkAction, null);
 
   return (
@@ -94,13 +93,7 @@ export function LoginForm({ next, initialTab, error, mode, google }: { next: str
           </>
         )}
 
-        <div className="mb-6 grid grid-cols-2 border-b border-gold/20" role="tablist">
-          {(["signin", "signup"] as const).map((t) => (
-            <button key={t} role="tab" aria-selected={tab === t || (t === "signin" && tab === "link")} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 py-3 text-xs uppercase tracking-wider2", tab === t || (t === "signin" && tab === "link") ? "border-gold text-gold-light" : "border-transparent text-cream-muted hover:text-cream")}>
-              {t === "signin" ? "Sign in" : "Create account"}
-            </button>
-          ))}
-        </div>
+        <h2 className="mb-6 border-b border-gold/20 pb-3 text-center text-xs uppercase tracking-wider2 text-gold-light">Sign in</h2>
 
         {tab === "signin" && (
           <form action={signIn} className="space-y-4">
@@ -115,6 +108,10 @@ export function LoginForm({ next, initialTab, error, mode, google }: { next: str
             <Feedback state={signInState} />
             <Submit>Sign in</Submit>
             <button type="button" onClick={() => setTab("link")} className="w-full text-center text-xs text-cream-muted underline-offset-4 hover:text-gold-light hover:underline">Email me a sign-in link instead</button>
+            <div className="border-t border-gold/20 pt-5 text-center">
+              <p className="text-sm text-cream">Be a member now!</p>
+              <Link href={`/register?next=${encodeURIComponent(next)}`} className="btn-outline-gold mt-3 h-12 w-full text-xs">Create account</Link>
+            </div>
           </form>
         )}
 
@@ -126,17 +123,6 @@ export function LoginForm({ next, initialTab, error, mode, google }: { next: str
             <Feedback state={linkState} />
             <Submit>Send sign-in link</Submit>
             <button type="button" onClick={() => setTab("signin")} className="w-full text-center text-xs text-cream-muted hover:text-gold-light">Back to password sign-in</button>
-          </form>
-        )}
-
-        {tab === "signup" && (
-          <form action={signUp} className="space-y-4">
-            <input type="hidden" name="next" value={next} />
-            <label className="block"><span className={labelCls}>Full name</span><input name="fullName" autoComplete="name" required className={input} /></label>
-            <label className="block"><span className={labelCls}>Email</span><input name="email" type="email" autoComplete="email" required className={input} /></label>
-            <label className="block"><span className={labelCls}>Password</span><input name="password" type="password" autoComplete="new-password" minLength={8} required className={input} /><span className="mt-1 block text-xs text-cream-dim">At least 8 characters.</span></label>
-            <Feedback state={signUpState} />
-            <Submit>Create account</Submit>
           </form>
         )}
 

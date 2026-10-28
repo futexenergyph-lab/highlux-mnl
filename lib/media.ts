@@ -5,10 +5,10 @@ import { isSupabaseConfigured } from "@/lib/supabase/server";
 /**
  * File storage. Supabase Storage in production; an in-memory store served by
  * /api/media/… when running without Supabase.
- * Public buckets: product-media, site-assets. Private: payment-proofs, consignments.
+ * Public buckets: product-media, site-assets. Private: payment-proofs, consignments, member-ids.
  */
 export type PublicBucket = "product-media" | "site-assets";
-export type PrivateBucket = "payment-proofs" | "consignments";
+export type PrivateBucket = "payment-proofs" | "consignments" | "member-ids";
 const PUBLIC: string[] = ["product-media", "site-assets"];
 
 const g = globalThis as unknown as { __highluxMedia?: Map<string, { type: string; bytes: ArrayBuffer }> };

@@ -59,6 +59,7 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
    - `20261014000009_shoes.sql`: the Shoes category
    - `20261019000010_auctions.sql`: Bidding (auctions, bids and the `place_bid` function)
    - `20261021000011_product_capital.sql`: staff-only capital per listing (`product_costs`)
+   - `20261028000012_member_details.sql`: registration details and ID uploads (`member_details`, private `member-ids` bucket)
 4. Make yourself an admin after signing up:
    ```sql
    update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');

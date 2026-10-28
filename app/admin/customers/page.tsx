@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
+import { listMemberDetails } from "@/lib/members";
 import { formatPHP } from "@/lib/utils";
 import { Badge, PageHeader, fmtDate, inputCls } from "@/components/admin/ui";
 
@@ -9,7 +10,7 @@ export const metadata = { title: "Customers" };
 
 export default async function CustomersPage({ searchParams }: { searchParams: { q?: string } }) {
   await requireStaff("/admin/customers");
-  const all = await (await getAdminRepo()).listCustomers();
+  const [all, members] = await Promise.all([(await getAdminRepo()).listCustomers(), listMemberDetails()]);
   const q = searchParams.q?.trim().toLowerCase() ?? "";
   const list = all.filter((c) => !q || [c.name ?? "", c.email, c.phone ?? ""].some((v) => v.toLowerCase().includes(q)));
   const buyers = all.filter((c) => c.orders > 0).length;
@@ -39,10 +40,14 @@ export default async function CustomersPage({ searchParams }: { searchParams: { 
               {list.map((c) => (
                 <tr key={c.id}>
                   <td className="p-3">
-                    <span className="flex items-center gap-2 text-cream">{c.name ?? "—"} {c.id.startsWith("guest:") ? <Badge>guest</Badge> : <Badge tone="blue">account</Badge>}</span>
+                    <span className="flex flex-wrap items-center gap-2 text-cream">
+                      {c.id.startsWith("guest:") ? c.name ?? "—" : <Link href={`/admin/customers/${c.id}`} className="hover:text-gold-light hover:underline">{c.name ?? "—"}</Link>}
+                      {c.id.startsWith("guest:") ? <Badge>guest</Badge> : <Badge tone="blue">account</Badge>}
+                      {members.has(c.id) && <Link href={`/admin/customers/${c.id}`}><Badge tone="green">ID on file</Badge></Link>}
+                    </span>
                     <a href={`mailto:${c.email}`} className="text-xs text-cream-muted hover:text-gold-light">{c.email}</a>
                   </td>
-                  <td className="p-3 text-cream-muted">{c.phone ?? "—"}</td>
+                  <td className="p-3 text-cream-muted">{members.get(c.id)?.phone ?? c.phone ?? "—"}</td>
                   <td className="p-3 text-right">{c.orders > 0 ? <Link href={`/admin/orders?tab=all&q=${encodeURIComponent(c.email)}`} className="text-gold-light underline">{c.orders}</Link> : "0"}</td>
                   <td className="p-3 text-right text-cream">{formatPHP(c.spent)}</td>
                   <td className="p-3 text-cream-muted">{fmtDate(c.lastOrderAt)}</td>

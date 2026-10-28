@@ -14,10 +14,11 @@ const ERRORS: Record<string, string> = {
 export default async function LoginPage({ searchParams }: { searchParams: { next?: string; error?: string; tab?: string } }) {
   const next = safeNext(searchParams.next);
   if (await getCurrentUser()) redirect(next);
+  // Old "Create account" tab links now go to the registration form.
+  if (searchParams.tab === "signup") redirect(`/register?next=${encodeURIComponent(next)}`);
   return (
     <LoginForm
       next={next}
-      initialTab={searchParams.tab === "signup" ? "signup" : "signin"}
       error={searchParams.error ? ERRORS[searchParams.error] : undefined}
       mode={authMode()}
       google={googleAuthEnabled()}
