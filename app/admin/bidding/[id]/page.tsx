@@ -5,7 +5,7 @@ import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { getAuctionRepo } from "@/lib/auctions/repo";
 import { settleDueAuctions } from "@/lib/auctions/service";
-import { auctionPhase, nextMinBid, topBid } from "@/lib/auctions/types";
+import { auctionPhase, lotNumber, nextMinBid, topBid } from "@/lib/auctions/types";
 import { formatPHP } from "@/lib/utils";
 import { Badge, Card, PageHeader, fmtDateTime } from "@/components/admin/ui";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
@@ -21,6 +21,9 @@ export default async function AuctionAdminPage({ params, searchParams }: { param
   if (!a) notFound();
   if (await settleDueAuctions([a])) a = (await repo.get(params.id))!;
   const product = await (await getAdminRepo()).getProduct(a.productId);
+  const event = a.eventId ? await repo.getEvent(a.eventId).catch(() => null) : null;
+  const manual = event?.kind === "manual";
+  const itemNo = a.eventId ? lotNumber(await repo.list(), a) : null;
   const phase = auctionPhase(a);
   const top = topBid(a);
   const winner = a.bids.find((b) => b.id === a!.winnerBidId);
@@ -28,7 +31,8 @@ export default async function AuctionAdminPage({ params, searchParams }: { param
 
   return (
     <>
-      <Link href="/admin/bidding" className="text-xs uppercase tracking-wider text-cream-muted hover:text-gold-light">← Bidding</Link>
+      <Link href={event ? `/admin/bidding/events/${event.id}` : "/admin/bidding"} className="text-xs uppercase tracking-wider text-cream-muted hover:text-gold-light">← {event ? event.title : "Bidding"}</Link>
+      {itemNo != null && <p className="mt-3 text-xs font-bold uppercase tracking-wider text-gold">Item #{itemNo}{manual && " · Manual live auction"}</p>}
       <PageHeader
         title={product?.title ?? "Auction"}
         description={phase === "scheduled" ? `Starts ${fmtDateTime(a.startsAt)} · ends ${fmtDateTime(a.endsAt)}` : `${phase === "live" ? "Ends" : "Ended"} ${fmtDateTime(a.endsAt)}`}
@@ -41,6 +45,11 @@ export default async function AuctionAdminPage({ params, searchParams }: { param
         </div>
       )}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
+        {manual ? (
+          <Card title="Manual live auction">
+            <p className="text-sm text-cream-muted">Bidding for this piece happens outside the website. When you have a buyer, record the sale with ⋮ → Mark sold on the piece in Products.</p>
+          </Card>
+        ) : (
         <Card title={`Bids (${a.bids.length})`}>
           {a.bids.length === 0 ? (
             <p className="text-sm text-cream-muted">No bids yet.</p>
@@ -58,6 +67,7 @@ export default async function AuctionAdminPage({ params, searchParams }: { param
             </ul>
           )}
         </Card>
+        )}
         <div className="space-y-5">
           <Card title="Summary">
             {product?.images[0] && (
@@ -68,14 +78,14 @@ export default async function AuctionAdminPage({ params, searchParams }: { param
             <dl className="space-y-1.5 text-sm">
               <div className="flex justify-between"><dt className="text-cream-muted">Starting bid</dt><dd>{formatPHP(a.startingBid)}</dd></div>
               <div className="flex justify-between"><dt className="text-cream-muted">Increment</dt><dd>{formatPHP(a.minIncrement)}</dd></div>
-              <div className="flex justify-between"><dt className="text-cream-muted">Reserve</dt><dd>{a.reservePrice ? formatPHP(a.reservePrice) : "None"}</dd></div>
+              {!manual && <div className="flex justify-between"><dt className="text-cream-muted">Reserve</dt><dd>{a.reservePrice ? formatPHP(a.reservePrice) : "None"}</dd></div>}
               <div className="flex justify-between"><dt className="text-cream-muted">Listed price</dt><dd>{product ? formatPHP(product.price) : "—"}</dd></div>
-              <div className="flex justify-between border-t border-gold/10 pt-1.5"><dt className="text-cream-muted">High bid</dt><dd className="text-gold-light">{top ? formatPHP(top.amount) : "—"}</dd></div>
-              {phase === "live" && <div className="flex justify-between"><dt className="text-cream-muted">Next bid from</dt><dd>{formatPHP(nextMinBid(a))}</dd></div>}
+              {!manual && <div className="flex justify-between border-t border-gold/10 pt-1.5"><dt className="text-cream-muted">High bid</dt><dd className="text-gold-light">{top ? formatPHP(top.amount) : "—"}</dd></div>}
+              {phase === "live" && !manual && <div className="flex justify-between"><dt className="text-cream-muted">Next bid from</dt><dd>{formatPHP(nextMinBid(a))}</dd></div>}
               {a.reservePrice && top && phase === "live" && <p className="pt-1 text-xs text-cream-dim">{top.amount >= a.reservePrice ? "Reserve met." : "Reserve not met yet."}</p>}
             </dl>
           </Card>
-          {phase === "ended" && (
+          {phase === "ended" && !manual && (
             <Card title="Result">
               {winner ? (
                 <p className="text-sm text-cream">
@@ -87,12 +97,12 @@ export default async function AuctionAdminPage({ params, searchParams }: { param
               )}
             </Card>
           )}
-          <Card title="Share">
+          {!manual && <Card title="Share">
             <div className="flex flex-wrap gap-2">
               <CopyLinkButton path={`/bidding/${a.id}`} />
               <Link href={`/bidding/${a.id}`} target="_blank" className="inline-flex h-10 items-center border border-gold/40 px-4 text-xs uppercase tracking-wider text-cream hover:border-gold">View bidding page</Link>
             </div>
-          </Card>
+          </Card>}
           {(phase === "live" || phase === "scheduled") && <CancelAuctionButton id={a.id} bids={a.bids.length} />}
         </div>
       </div>

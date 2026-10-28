@@ -15,7 +15,7 @@ export default async function NewAuctionPage({ searchParams }: { searchParams: {
     .sort((a, b) => a.title.localeCompare(b.title))
     .map((p) => ({ id: p.id, label: p.title, price: p.price, image: p.images[0]?.url ?? null }));
   const ev = searchParams.event ? await (await getAuctionRepo()).getEvent(searchParams.event).catch(() => null) : null;
-  const event = ev && ev.status === "active" ? { id: ev.id, title: ev.title, when: `${fmtDateTime(ev.startsAt)} – ${fmtDateTime(ev.endsAt)}` } : undefined;
+  const event = ev && ev.status === "active" ? { id: ev.id, title: ev.title, manual: ev.kind === "manual", when: `${fmtDateTime(ev.startsAt)} – ${fmtDateTime(ev.endsAt)}` } : undefined;
   return (
     <>
       <PageHeader

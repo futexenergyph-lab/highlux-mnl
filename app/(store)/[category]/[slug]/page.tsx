@@ -8,7 +8,7 @@ import { AuthenticityBadge } from "@/components/product/authenticity-badge";
 import { ProductActions, StickyBuyBar, type ActionProduct } from "@/components/product/product-actions";
 import { AuthenticityBlock, ConditionMeter, Inclusions, SpecsTable } from "@/components/product/product-details";
 import { ProductCard } from "@/components/product/product-card";
-import { AuctionBanner } from "@/components/bidding/auction-banner";
+import { AuctionBanner, HideDuringAuction, ProductPrice } from "@/components/bidding/product-auction";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
 import { ViewTracker } from "@/components/product/view-tracker";
 import { CATEGORIES, categoryBySlug, productHref, productType } from "@/lib/catalog";
@@ -65,7 +65,6 @@ export default async function ProductPage({ params }: { params: Params }) {
     status: p.status,
     url: `${site.url}${productHref(p)}`,
   };
-  const saving = p.compareAtPrice && p.compareAtPrice > p.price ? p.compareAtPrice - p.price : 0;
 
   const url = `${site.url}${productHref(p)}`;
   const productLd = {
@@ -127,25 +126,28 @@ export default async function ProductPage({ params }: { params: Params }) {
             </Link>
             <h1 className="mt-2 font-serif text-3xl leading-tight text-cream sm:text-4xl">{p.title}</h1>
 
-            <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className={p.status === "sold" ? "font-sans text-2xl text-cream-dim line-through" : "font-sans text-2xl tracking-wide text-gold-light"}>{formatPHP(p.price)}</span>
-              {saving > 0 && p.status !== "sold" && (
+            <ProductPrice
+              productId={p.id}
+              price={p.price}
+              compareAtPrice={p.compareAtPrice ?? null}
+              status={p.status}
+              note={
                 <>
-                  <span className="text-sm text-cream-dim line-through">{formatPHP(p.compareAtPrice!)}</span>
-                  <span className="bg-gold-gradient px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-ink">Save {formatPHP(saving)}</span>
+                  {p.status === "available" && <p className="mt-2 text-xs text-cream-dim">Only one available{layaway && " · Layaway accepted"}</p>}
+                  {p.status === "reserved" && <p className="mt-2 text-sm text-gold-light">This piece is currently on hold for another client.</p>}
                 </>
-              )}
-            </div>
-            {p.status === "available" && <p className="mt-2 text-xs text-cream-dim">Only one available{layaway && " · Layaway accepted"}</p>}
-            {p.status === "reserved" && <p className="mt-2 text-sm text-gold-light">This piece is currently on hold for another client.</p>}
+              }
+            />
             {p.status === "sold" && <p className="mt-2 text-sm text-cream-muted">This piece has found its new home. Message us and we&rsquo;ll help source a similar one.</p>}
 
             <div className="gold-divider my-6" />
 
             {p.status !== "sold" && <AuctionBanner productId={p.id} />}
-            <div id="buy-box">
+            <HideDuringAuction productId={p.id}>
+              <div id="buy-box">
               <ProductActions product={action} />
             </div>
+            </HideDuringAuction>
 
             <ul className="mt-6 grid grid-cols-3 gap-2 text-center">
               {[
@@ -212,7 +214,9 @@ export default async function ProductPage({ params }: { params: Params }) {
         <ViewTracker productId={p.id} />
       </div>
 
-      <StickyBuyBar product={action} anchorId="buy-box" />
+      <HideDuringAuction productId={p.id}>
+        <StickyBuyBar product={action} anchorId="buy-box" />
+      </HideDuringAuction>
     </>
   );
 }

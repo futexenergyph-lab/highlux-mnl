@@ -6,7 +6,7 @@ import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { getAuctionRepo } from "@/lib/auctions/repo";
 import { settleDueAuctions } from "@/lib/auctions/service";
-import { EVENT_KIND_LABEL, auctionPhase, eventPhase, topBid } from "@/lib/auctions/types";
+import { EVENT_KIND_LABEL, auctionPhase, eventPhase, lotNumber, topBid } from "@/lib/auctions/types";
 import { formatPHP } from "@/lib/utils";
 import { Badge, Card, PageHeader, btnGold, fmtDateTime } from "@/components/admin/ui";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
@@ -23,8 +23,10 @@ export default async function EventPage({ params, searchParams }: { params: { id
   const repo = await getAuctionRepo();
   const event = await repo.getEvent(params.id).catch(() => null);
   if (!event) notFound();
-  let lots = (await repo.list()).filter((a) => a.eventId === event.id);
-  if (await settleDueAuctions(lots)) lots = (await repo.list()).filter((a) => a.eventId === event.id);
+  let all = await repo.list();
+  if (await settleDueAuctions(all.filter((a) => a.eventId === event.id))) all = await repo.list();
+  const lots = all.filter((a) => a.eventId === event.id).sort((x, y) => (lotNumber(all, x) ?? 0) - (lotNumber(all, y) ?? 0));
+  const manual = event.kind === "manual";
   const products = new Map((await (await getAdminRepo()).listProducts()).map((p) => [p.id, p]));
   const phase = eventPhase(event);
   const open = phase === "scheduled" || phase === "live";
@@ -58,8 +60,11 @@ export default async function EventPage({ params, searchParams }: { params: { id
                         {p?.images[0] && <Image src={p.images[0].url} alt="" fill sizes="56px" unoptimized className="object-cover" />}
                       </span>
                       <span className="min-w-0 flex-1">
+                        <span className="block text-[0.65rem] font-bold uppercase tracking-wider text-gold">Item #{lotNumber(all, a)}</span>
                         <span className="block truncate text-sm text-cream">{p?.title ?? "Deleted piece"}</span>
-                        <span className="block text-xs text-cream-dim">{top ? `High bid ${formatPHP(top.amount)} · ${a.bids.length} bid${a.bids.length === 1 ? "" : "s"}` : `Starts at ${formatPHP(a.startingBid)} · no bids`}</span>
+                        <span className="block text-xs text-cream-dim">
+                          {manual ? `Starting bid ${formatPHP(a.startingBid)}` : top ? `High bid ${formatPHP(top.amount)} · ${a.bids.length} bid${a.bids.length === 1 ? "" : "s"}` : `Starts at ${formatPHP(a.startingBid)} · no bids`}
+                        </span>
                       </span>
                       <Badge tone={TONE[ph]}>{LABEL[ph]}</Badge>
                     </Link>
@@ -77,14 +82,24 @@ export default async function EventPage({ params, searchParams }: { params: { id
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Starts</dt><dd className="text-right text-cream">{fmtDateTime(event.startsAt)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Ends</dt><dd className="text-right text-cream">{fmtDateTime(event.endsAt)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Pieces</dt><dd className="text-cream">{lots.length}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-cream-dim">Bids</dt><dd className="text-cream">{lots.reduce((s, a) => s + a.bids.length, 0)}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-cream-dim">Total of high bids</dt><dd className="tabular-nums text-gold-light">{formatPHP(total)}</dd></div>
+              {!manual && (
+                <>
+                  <div className="flex justify-between gap-3"><dt className="text-cream-dim">Bids</dt><dd className="text-cream">{lots.reduce((s, a) => s + a.bids.length, 0)}</dd></div>
+                  <div className="flex justify-between gap-3"><dt className="text-cream-dim">Total of high bids</dt><dd className="tabular-nums text-gold-light">{formatPHP(total)}</dd></div>
+                </>
+              )}
             </dl>
-            <p className="mt-3 text-xs text-cream-dim">Late bids can extend a single piece by 2 minutes past the event end.</p>
+            <p className="mt-3 text-xs text-cream-dim">
+              {manual
+                ? "Bidding happens outside the website. Each piece's page shows “This item is in Manual Live Auction | Item #”. When the event ends, record the sale with ⋮ → Mark sold on the piece; unsold pieces go back on sale automatically."
+                : "Late bids can extend a single piece by 2 minutes past the event end."}
+            </p>
           </Card>
-          <Card title="Share">
-            <CopyLinkButton path={`/bidding/event/${event.id}`} />
-          </Card>
+          {!manual && (
+            <Card title="Share">
+              <CopyLinkButton path={`/bidding/event/${event.id}`} />
+            </Card>
+          )}
           {open && (
             <Card title="Cancel">
               <CancelEventButton id={event.id} lots={lots.filter((a) => a.status === "live").length} />

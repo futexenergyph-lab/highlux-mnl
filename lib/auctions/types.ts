@@ -76,3 +76,11 @@ export class BidError extends Error {
     super(code);
   }
 }
+
+/** "Item #" of a lot inside its event: the order it was added (cancelled lots keep their number). */
+export function lotNumber(all: Pick<Auction, "id" | "eventId" | "createdAt">[], a: Pick<Auction, "id" | "eventId">): number | null {
+  if (!a.eventId) return null;
+  const lots = all.filter((x) => x.eventId === a.eventId).sort((x, y) => x.createdAt.localeCompare(y.createdAt) || x.id.localeCompare(y.id));
+  const i = lots.findIndex((x) => x.id === a.id);
+  return i < 0 ? null : i + 1;
+}

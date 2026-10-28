@@ -54,7 +54,7 @@ export function toPublic(a: Auction, userId: string | null, payUrl: string | nul
 export async function loadPublicAuction(id: string, userId: string | null) {
   const repo = await getAuctionRepo();
   let a = await repo.get(id);
-  if (!a) return null;
+  if (!a || (a.eventId && (await manualEventIds()).has(a.eventId))) return null;
   if (await settleDueAuctions([a])) a = (await repo.get(id))!;
   let payUrl: string | null = null;
   if (a.orderId && userId && a.bids.find((b) => b.id === a!.winnerBidId)?.userId === userId) {
@@ -65,11 +65,18 @@ export async function loadPublicAuction(id: string, userId: string | null) {
   return { auction: a, product, pub: toPublic(a, userId, payUrl) };
 }
 
+/** Ids of manual (off-website) events; their lots are never shown for online bidding. */
+export async function manualEventIds() {
+  const events = await (await getAuctionRepo()).listEvents().catch(() => []);
+  return new Set(events.filter((e) => e.kind === "manual").map((e) => e.id));
+}
+
 /** Running and upcoming auctions with their products, soonest-ending first. */
 export async function listPublicAuctions() {
   const repo = await getAuctionRepo();
-  let list = await repo.list().catch(() => []);
-  if (await settleDueAuctions(list)) list = await repo.list();
+  const manual = await manualEventIds();
+  let list = (await repo.list().catch(() => [])).filter((a) => !a.eventId || !manual.has(a.eventId));
+  if (await settleDueAuctions(list)) list = (await repo.list()).filter((a) => !a.eventId || !manual.has(a.eventId));
   const catalog = await getCatalog();
   return list
     .filter((a) => ["live", "scheduled"].includes(auctionPhase(a)))
@@ -82,6 +89,7 @@ export async function listPublicAuctions() {
 export async function listPublicEvents(): Promise<{ event: AuctionEvent; phase: AuctionStatus }[]> {
   const events = await (await getAuctionRepo()).listEvents().catch(() => []);
   return events
+    .filter((e) => e.kind !== "manual") // manual events run outside the website
     .map((event) => ({ event, phase: eventPhase(event) }))
     .filter((e) => e.phase === "live" || e.phase === "scheduled")
     .sort((x, y) => x.event.startsAt.localeCompare(y.event.startsAt));
@@ -90,7 +98,7 @@ export async function listPublicEvents(): Promise<{ event: AuctionEvent; phase: 
 export async function loadPublicEvent(id: string) {
   const repo = await getAuctionRepo();
   const event = await repo.getEvent(id).catch(() => null);
-  if (!event || event.status === "cancelled") return null;
+  if (!event || event.status === "cancelled" || event.kind === "manual") return null;
   let list = (await repo.list()).filter((a) => a.eventId === id);
   if (await settleDueAuctions(list)) list = (await repo.list()).filter((a) => a.eventId === id);
   const catalog = await getCatalog();

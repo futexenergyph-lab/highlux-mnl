@@ -5,7 +5,7 @@ import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { getAuctionRepo } from "@/lib/auctions/repo";
 import { settleDueAuctions } from "@/lib/auctions/service";
-import { auctionPhase, eventPhase, topBid } from "@/lib/auctions/types";
+import { auctionPhase, eventPhase, lotNumber, topBid } from "@/lib/auctions/types";
 import { formatPHP } from "@/lib/utils";
 import { Badge, PageHeader, Tabs, btnGold, btnOutline, fmtDateTime } from "@/components/admin/ui";
 
@@ -21,6 +21,7 @@ export default async function BiddingPage({ searchParams }: { searchParams: { ta
   let auctions = await repo.list().catch(() => null);
   if (auctions && (await settleDueAuctions(auctions))) auctions = await repo.list();
   const events = await repo.listEvents().catch(() => null);
+  const eventsById = new Map((events ?? []).map((e) => [e.id, e]));
   const products = new Map((await (await getAdminRepo()).listProducts()).map((p) => [p.id, p]));
   const tab = searchParams.tab ?? "running";
   const inTab = (phase: string) => (tab === "running" ? phase === "live" || phase === "scheduled" : tab === "all" ? true : phase === tab);
@@ -89,9 +90,14 @@ export default async function BiddingPage({ searchParams }: { searchParams: { ta
                     {p?.images[0] && <Image src={p.images[0].url} alt="" fill sizes="56px" unoptimized className="object-cover" />}
                   </span>
                   <span className="min-w-0 flex-1">
+                    {a.eventId && (
+                      <span className="block truncate text-[0.65rem] font-bold uppercase tracking-wider text-gold">
+                        Item #{lotNumber(auctions ?? [], a)} · {eventsById.get(a.eventId)?.title ?? "Event"}
+                      </span>
+                    )}
                     <span className="block truncate text-sm text-cream">{p?.title ?? "Deleted piece"}</span>
                     <span className="block text-xs text-cream-dim">
-                      {top ? `High bid ${formatPHP(top.amount)} · ${a.bids.length} bid${a.bids.length === 1 ? "" : "s"}` : `Starts at ${formatPHP(a.startingBid)} · no bids`}
+                      {a.eventId && eventsById.get(a.eventId)?.kind === "manual" ? `Starting bid ${formatPHP(a.startingBid)} · manual live auction` : top ? `High bid ${formatPHP(top.amount)} · ${a.bids.length} bid${a.bids.length === 1 ? "" : "s"}` : `Starts at ${formatPHP(a.startingBid)} · no bids`}
                     </span>
                     <span className="block text-xs text-cream-dim">{phase === "scheduled" ? `Starts ${fmtDateTime(a.startsAt)}` : `${phase === "live" ? "Ends" : "Ended"} ${fmtDateTime(a.endsAt)}`}</span>
                   </span>

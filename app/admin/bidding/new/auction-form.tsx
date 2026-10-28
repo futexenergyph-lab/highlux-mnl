@@ -39,7 +39,7 @@ const DURATIONS = [
   ["7 days", 168],
 ] as const;
 
-export function AuctionForm({ items, preselect, event }: { items: ItemOption[]; preselect?: string; event?: { id: string; title: string; when: string } }) {
+export function AuctionForm({ items, preselect, event }: { items: ItemOption[]; preselect?: string; event?: { id: string; title: string; when: string; manual?: boolean } }) {
   const [state, action] = useFormState<AuctionFormState, FormData>(createAuctionAction, null);
   const [item, setItem] = React.useState<ItemOption | null>(() => items.find((i) => i.id === preselect) ?? null);
   const [starting, setStarting] = React.useState("");
@@ -62,16 +62,16 @@ export function AuctionForm({ items, preselect, event }: { items: ItemOption[]; 
         <ItemPicker items={items} value={item?.id ?? ""} onChange={setItem} />
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className={cn("grid gap-4", event?.manual ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
         <Field label="Starting bid (₱)" error={err("startingBid")}>
           <input name="startingBid" inputMode="decimal" required value={starting} onChange={(e) => setStarting(money(e.target.value))} className={inputCls} placeholder="e.g. 15000" />
         </Field>
         <Field label="Bid increment (₱)" error={err("minIncrement")} hint="Each bid must beat the last by this much.">
           <input name="minIncrement" inputMode="decimal" required value={increment} onChange={(e) => setIncrement(money(e.target.value))} className={inputCls} />
         </Field>
-        <Field label="Reserve price (₱, optional)" error={err("reservePrice")} hint="Lowest price you'll accept. Hidden from bidders.">
+        {!event?.manual && <Field label="Reserve price (₱, optional)" error={err("reservePrice")} hint="Lowest price you'll accept. Hidden from bidders.">
           <input name="reservePrice" inputMode="decimal" value={reserve} onChange={(e) => setReserve(money(e.target.value))} className={inputCls} placeholder="Leave blank = no minimum" />
-        </Field>
+        </Field>}
       </div>
 
       {event ? (
@@ -95,9 +95,15 @@ export function AuctionForm({ items, preselect, event }: { items: ItemOption[]; 
       </div>
       )}
 
+      {event?.manual ? (
+        <p className="border-l-2 border-gold/60 bg-gold/[0.04] px-3 py-2 text-xs leading-relaxed text-cream-muted">
+          Bidding happens outside the website. The piece is held while the event runs and gets the next Item # in this event.
+        </p>
+      ) : (
       <p className={cn("border-l-2 border-gold/60 bg-gold/[0.04] px-3 py-2 text-xs leading-relaxed text-cream-muted")}>
         Bids in the last 2 minutes extend the end by 2 minutes. When it ends, the highest bidder (if the reserve is met) gets an order to pay at their winning price; otherwise the piece goes back on sale.
       </p>
+      )}
       <div className="flex flex-wrap gap-3">
         <Submit label={event ? "Add to event" : "Start auction"} />
         <Link href={event ? `/admin/bidding/events/${event.id}` : "/admin/bidding"} className={btnOutline}>Cancel</Link>
