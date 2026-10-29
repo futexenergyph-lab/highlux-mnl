@@ -17,6 +17,7 @@ export function EventMenu({ id, title, running }: { id: string; title: string; r
 
   const share = async () => {
     const url = `${window.location.origin}/bidding/event/${id}`;
+    fetch(`/bidding/event/${id}`).catch(() => {}); // warm the page so link previews load fast
     const text = `Highlux ${title}\n\nView all the items up for bidding — photos, was price and starting bid:`;
     if (navigator.share) {
       try {

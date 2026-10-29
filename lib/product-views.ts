@@ -22,3 +22,23 @@ export async function productViewCounts(): Promise<Map<string, number>> {
   if (error || !data) return new Map();
   return new Map(data.map((r: { id: string; view_count: number | null }) => [r.id, r.view_count ?? 0]));
 }
+
+const gA = globalThis as unknown as { __highluxAuctionViews?: Map<string, number> };
+const auctionMemory = () => (gA.__highluxAuctionViews ??= new Map());
+
+/** One opening of an auction item's page (manual or website auction). */
+export async function recordAuctionView(id: string) {
+  if (!isSupabaseConfigured()) {
+    auctionMemory().set(id, (auctionMemory().get(id) ?? 0) + 1);
+    return;
+  }
+  await createAdminClient().rpc("increment_auction_view", { p_id: id }).then(() => undefined, () => undefined);
+}
+
+/** auction id → link opens. Empty if the auction views migration hasn't been run. */
+export async function auctionViewCounts(): Promise<Map<string, number>> {
+  if (!isSupabaseConfigured()) return new Map(auctionMemory());
+  const { data, error } = await createAdminClient().from("auctions").select("id, view_count").limit(5000);
+  if (error || !data) return new Map();
+  return new Map(data.map((r: { id: string; view_count: number | null }) => [r.id, r.view_count ?? 0]));
+}

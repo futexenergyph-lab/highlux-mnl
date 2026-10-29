@@ -10,6 +10,7 @@ import { ProductGallery } from "@/components/product/gallery";
 import { ConditionMeter, Inclusions } from "@/components/product/product-details";
 import { BidPanel } from "@/components/bidding/bid-panel";
 import { Countdown } from "@/components/bidding/countdown";
+import { ViewTracker } from "@/components/product/view-tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default async function AuctionPage({ params }: { params: { id: string } }
   const description = p.description ? withoutPrices(p.description) : "";
   return (
     <div className="container py-6 lg:py-10">
+      <ViewTracker productId={params.id} kind="auction" />
       <nav className="mb-5 text-[0.7rem] uppercase tracking-[0.18em] text-cream-dim">
         <Link href="/" className="hover:text-gold-light">Home</Link> <span className="mx-1.5">›</span> <Link href="/bidding" className="hover:text-gold-light">Bidding</Link>
       </nav>

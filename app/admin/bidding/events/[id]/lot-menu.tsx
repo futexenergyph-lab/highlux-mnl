@@ -20,6 +20,9 @@ export function LotMenu({ id, path, text, canRemove }: { id: string; path: strin
   };
 
   const share = async () => {
+    // Build the preview card now so Viber/Messenger get it instantly when they fetch the link.
+    fetch(`/api/og${path}`).catch(() => {});
+    fetch(path).catch(() => {});
     const full = text.replace("{LINK}", `${window.location.origin}${path}`).replace("{GUIDELINES}", `${window.location.origin}/bidding/guidelines`);
     // Phones open the share sheet (Viber, Messenger…); otherwise the post is copied.
     if (navigator.share) {

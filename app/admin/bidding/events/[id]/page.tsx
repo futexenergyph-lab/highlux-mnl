@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Eye, Plus } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { getAuctionRepo } from "@/lib/auctions/repo";
@@ -13,7 +13,7 @@ import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { CancelEventButton } from "./cancel-event-button";
 import { KindSwitch } from "./kind-switch";
 import { LotMenu } from "./lot-menu";
-import { productHref } from "@/lib/catalog";
+import { auctionViewCounts } from "@/lib/product-views";
 
 export const metadata = { title: "Auction event" };
 export const dynamic = "force-dynamic";
@@ -70,6 +70,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
   const lots = inEvent.filter((a) => a.status !== "cancelled");
   const removed = inEvent.length - lots.length;
   const manual = event.kind === "manual";
+  const opens = await auctionViewCounts();
   const products = new Map((await (await getAdminRepo()).listProducts()).map((p) => [p.id, p]));
   const phase = eventPhase(event);
   const open = phase === "scheduled" || phase === "live";
@@ -107,6 +108,9 @@ export default async function EventPage({ params, searchParams }: { params: { id
                       <span className="min-w-0 flex-1">
                         <span className="block text-[0.65rem] font-bold uppercase tracking-wider text-gold">Item #{no}</span>
                         <span className="block truncate text-sm text-cream">{p?.title ?? "Deleted piece"}</span>
+                        <span className="mt-0.5 flex items-center gap-1 text-xs tabular-nums text-gold-light/80">
+                          <Eye className="h-3.5 w-3.5" /> {(opens.get(a.id) ?? 0).toLocaleString("en-PH")} link open{opens.get(a.id) === 1 ? "" : "s"}
+                        </span>
                         <span className="block text-xs text-cream-dim">
                           {manual ? `Starting bid ${formatPHP(a.startingBid)}` : top ? `High bid ${formatPHP(top.amount)} · ${a.bids.length} bid${a.bids.length === 1 ? "" : "s"}` : `Starts at ${formatPHP(a.startingBid)} · no bids`}
                         </span>
@@ -115,7 +119,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
                     </Link>
                     <LotMenu
                       id={a.id}
-                      path={p ? productHref(p) : `/bidding/${a.id}`}
+                      path={`/bidding/${a.id}`}
                       text={sharePost(event.title, no, p?.title ?? "", a.startingBid, a.minIncrement, a.startsAt, a.endsAt)}
                       canRemove={ph === "live" || ph === "scheduled"}
                     />
@@ -133,6 +137,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Starts</dt><dd className="text-right text-cream">{fmtDateTime(event.startsAt)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Ends</dt><dd className="text-right text-cream">{fmtDateTime(event.endsAt)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Pieces</dt><dd className="text-cream">{lots.length}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-cream-dim">Link opens (all items)</dt><dd className="tabular-nums text-cream">{lots.reduce((s, a) => s + (opens.get(a.id) ?? 0), 0).toLocaleString("en-PH")}</dd></div>
               <div className="flex justify-between gap-3"><dt className="shrink-0 text-cream-dim">Bidding link</dt><dd className="min-w-0 truncate text-right">{event.bidLink ? <a href={event.bidLink} target="_blank" rel="noopener noreferrer" className="text-gold-light underline">{event.bidLink.replace(/^https?:\/\//, "")}</a> : <span className="text-red-300">Not set — Edit event to add it</span>}</dd></div>
               {!manual && (
                 <>
