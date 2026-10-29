@@ -42,3 +42,21 @@ export async function auctionViewCounts(): Promise<Map<string, number>> {
   if (error || !data) return new Map();
   return new Map(data.map((r: { id: string; view_count: number | null }) => [r.id, r.view_count ?? 0]));
 }
+
+/**
+ * product id → all views: shop page views plus opens of the piece's auction pages
+ * (pieces in an auction open their auction page instead of the shop listing).
+ */
+export async function allProductViewCounts(): Promise<Map<string, number>> {
+  const [views, opens, auctions] = await Promise.all([
+    productViewCounts(),
+    auctionViewCounts(),
+    import("@/lib/auctions/repo").then((m) => m.getAuctionRepo()).then((r) => r.list()).catch(() => []),
+  ]);
+  const total = new Map(views);
+  for (const a of auctions) {
+    const n = opens.get(a.id) ?? 0;
+    if (n) total.set(a.productId, (total.get(a.productId) ?? 0) + n);
+  }
+  return total;
+}

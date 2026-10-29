@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Eye, Plus, Search } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
-import { productViewCounts } from "@/lib/product-views";
+import { allProductViewCounts } from "@/lib/product-views";
 import { matchesQuery } from "@/lib/filters";
 import { CATEGORIES } from "@/lib/catalog";
 import { CONDITION_LABELS } from "@/lib/types";
@@ -19,7 +19,7 @@ const TONE = { available: "green", reserved: "gold", sold: "muted", hidden: "red
 
 export default async function ProductsPage({ searchParams }: { searchParams: { status?: string; q?: string; category?: string } }) {
   await requireStaff("/admin/products");
-  const [all, views] = await Promise.all([(async () => (await getAdminRepo()).listProducts())(), productViewCounts()]);
+  const [all, views] = await Promise.all([(async () => (await getAdminRepo()).listProducts())(), allProductViewCounts()]);
   const status = searchParams.status ?? "all";
   const q = searchParams.q?.trim() ?? "";
   // "curated" = featured on the homepage's Curated Picks row (and still for sale, like the homepage).
