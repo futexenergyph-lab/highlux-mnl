@@ -11,12 +11,15 @@ import { ConditionMeter, Inclusions } from "@/components/product/product-details
 import { BidPanel } from "@/components/bidding/bid-panel";
 import { Countdown } from "@/components/bidding/countdown";
 import { ViewTracker } from "@/components/product/view-tracker";
+import { BiddingClosed, StaffOnlyBar } from "@/components/bidding/bidding-closed";
+import { getStaffUser } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const r = await loadPublicAuction(params.id, null).catch(() => null);
   if (!r?.product) return { title: "Bidding" };
+  if (isClosed(r)) return { title: "Bidding has ended", robots: { index: false } };
   const images = [{ url: `/api/og/bidding/${params.id}`, width: 1200, height: 630, alt: r.product.title }];
   if (r.manual) {
     const title = `${r.product.title} · Manual Live Auction | Item #${r.manual.itemNumber ?? ""}`;
@@ -28,17 +31,27 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   return { title, description, openGraph: { title, description, images, type: "website" }, twitter: { card: "summary_large_image", title, description, images } };
 }
 
+/** Manual-event items close for visitors when the item or its event has ended or was cancelled. */
+function isClosed(r: NonNullable<Awaited<ReturnType<typeof loadPublicAuction>>>) {
+  if (r.pub.phase === "cancelled") return true;
+  return !!r.manual && (r.pub.phase === "ended" || r.manual.eventPhase === "ended" || r.manual.eventPhase === "cancelled");
+}
+
 export default async function AuctionPage({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
   const r = await loadPublicAuction(params.id, user?.id ?? null).catch(() => null);
   if (!r?.product) notFound();
+  const closed = isClosed(r);
+  if (closed && !(await getStaffUser())) return <BiddingClosed title={r.product.title} />;
   const p = r.product;
   const cat = categoryBySlug(p.category);
   // The selling price in the description stays hidden while the piece is up for bidding.
   const description = p.description ? withoutPrices(p.description) : "";
   return (
+    <>
+    {closed && <StaffOnlyBar />}
     <div className="container py-6 lg:py-10">
-      <ViewTracker productId={params.id} kind="auction" />
+      {!closed && <ViewTracker productId={params.id} kind="auction" />}
       <nav className="mb-5 text-[0.7rem] uppercase tracking-[0.18em] text-cream-dim">
         <Link href="/" className="hover:text-gold-light">Home</Link> <span className="mx-1.5">›</span> <Link href="/bidding" className="hover:text-gold-light">Bidding</Link>
       </nav>
@@ -88,5 +101,6 @@ export default async function AuctionPage({ params }: { params: { id: string } }
         </div>
       </div>
     </div>
+    </>
   );
 }

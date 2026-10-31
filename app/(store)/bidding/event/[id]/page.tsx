@@ -7,6 +7,8 @@ import { Countdown } from "@/components/bidding/countdown";
 import { LotCard } from "@/components/bidding/lot-card";
 import Image from "next/image";
 import { formatPHP } from "@/lib/utils";
+import { BiddingClosed, StaffOnlyBar } from "@/components/bidding/bidding-closed";
+import { getStaffUser } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,7 @@ const when = (iso: string) => new Date(iso).toLocaleString("en-PH", { weekday: "
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const r = await loadPublicEvent(params.id);
   if (!r) return { title: "Bidding" };
+  if (r.phase === "ended" || r.phase === "cancelled") return { title: "Bidding has ended", robots: { index: false } };
   const title = `Highlux ${r.event.title}`;
   const description = `${r.lots.length} item${r.lots.length === 1 ? "" : "s"} up for bidding · ${when(r.event.startsAt)} – ${when(r.event.endsAt)}. 100% authentic.`;
   const first = r.lots[0]?.product;
@@ -26,7 +29,11 @@ export default async function EventPage({ params }: { params: { id: string } }) 
   const r = await loadPublicEvent(params.id);
   if (!r) notFound();
   const { event, manual, phase, lots, serverNow } = r;
+  const closed = phase === "ended" || phase === "cancelled";
+  if (closed && !(await getStaffUser())) return <BiddingClosed title={event.title} />;
   return (
+    <>
+    {closed && <StaffOnlyBar />}
     <div className="container py-8 lg:py-12">
       <Link href="/bidding" className="text-xs uppercase tracking-wider text-cream-muted hover:text-gold-light">← All auctions</Link>
       <p className="eyebrow mt-4 text-gold">{manual ? "Manual live auction" : phase === "scheduled" ? "Upcoming auction event" : phase === "live" ? "Live auction event" : "Auction event"}</p>
@@ -85,5 +92,6 @@ export default async function EventPage({ params }: { params: { id: string } }) 
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -57,7 +57,7 @@ export async function loadPublicAuction(id: string, userId: string | null) {
   if (!a) return null;
   // Lots in a manual event can be viewed (shared link) but not bid on.
   const event = a.eventId ? await repo.getEvent(a.eventId).catch(() => null) : null;
-  const manual = event?.kind === "manual" ? { itemNumber: lotNumber(await repo.list(), a), bidLink: event.bidLink, eventId: event.id, eventTitle: event.title } : null;
+  const manual = event?.kind === "manual" ? { itemNumber: lotNumber(await repo.list(), a), bidLink: event.bidLink, eventId: event.id, eventTitle: event.title, eventPhase: eventPhase(event) } : null;
   if (await settleDueAuctions([a])) a = (await repo.get(id))!;
   let payUrl: string | null = null;
   if (a.orderId && userId && a.bids.find((b) => b.id === a!.winnerBidId)?.userId === userId) {
@@ -101,7 +101,7 @@ export async function listPublicEvents(): Promise<{ event: AuctionEvent; phase: 
 export async function loadPublicEvent(id: string) {
   const repo = await getAuctionRepo();
   const event = await repo.getEvent(id).catch(() => null);
-  if (!event || event.status === "cancelled") return null;
+  if (!event) return null;
   let list = (await repo.list()).filter((a) => a.eventId === id);
   if (await settleDueAuctions(list)) list = (await repo.list()).filter((a) => a.eventId === id);
   const catalog = await getCatalog();
