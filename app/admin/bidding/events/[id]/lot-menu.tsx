@@ -9,7 +9,7 @@ import { cancelAuctionAction } from "../../actions";
 const itemCls = "cursor-pointer px-4 py-2.5 text-sm text-cream outline-none data-[highlighted]:bg-gold/10 data-[highlighted]:text-gold-light";
 
 /** ⋮ on a piece in an auction event: share the bidding post, or take the piece out of the event. */
-export function LotMenu({ id, path, text, canRemove }: { id: string; path: string; text: string; canRemove: boolean }) {
+export function LotMenu({ id, path, text, canRemove, productId, canRecordSale }: { id: string; path: string; text: string; canRemove: boolean; productId?: string; canRecordSale?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
   const [flash, setFlash] = React.useState<string | null>(null);
@@ -46,6 +46,12 @@ export function LotMenu({ id, path, text, canRemove }: { id: string; path: strin
         </Dropdown.Trigger>
         <Dropdown.Portal>
           <Dropdown.Content align="end" className="z-50 min-w-60 border border-gold/25 bg-ink py-1 shadow-luxe">
+            {productId && canRecordSale && (
+              <Dropdown.Item onSelect={() => router.push(`/admin/purchases/new?product=${productId}`)} className={`${itemCls} font-semibold`}>
+                Mark as sold (record purchase)
+              </Dropdown.Item>
+            )}
+            {productId && <Dropdown.Item onSelect={() => router.push(`/admin/products/${productId}`)} className={itemCls}>Edit product listing</Dropdown.Item>}
             <Dropdown.Item onSelect={share} className={itemCls}>Share link</Dropdown.Item>
             {canRemove && (
               <>

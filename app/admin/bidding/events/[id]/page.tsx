@@ -115,13 +115,16 @@ export default async function EventPage({ params, searchParams }: { params: { id
                           {manual ? `Starting bid ${formatPHP(a.startingBid)}` : top ? `High bid ${formatPHP(top.amount)} · ${a.bids.length} bid${a.bids.length === 1 ? "" : "s"}` : `Starts at ${formatPHP(a.startingBid)} · no bids`}
                         </span>
                       </span>
-                      <Badge tone={TONE[ph]}>{LABEL[ph]}</Badge>
+                      {p?.status === "sold" && ph === "ended" ? <Badge tone="green">Sold</Badge> : <Badge tone={TONE[ph]}>{LABEL[ph]}</Badge>}
                     </Link>
                     <LotMenu
                       id={a.id}
                       path={`/bidding/${a.id}`}
                       text={sharePost(event.title, no, p?.title ?? "", a.startingBid, a.minIncrement, a.startsAt, a.endsAt)}
                       canRemove={ph === "live" || ph === "scheduled"}
+                      productId={p?.id}
+                      // After bidding the piece is back on sale (available) until its sale is recorded.
+                      canRecordSale={p?.status === "available"}
                     />
                   </li>
                 );
@@ -148,7 +151,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
             </dl>
             <p className="mt-3 text-xs text-cream-dim">
               {manual
-                ? "Bidding happens outside the website. Each piece's page shows “This item is in Manual Live Auction | Item #”. When the event ends, record the sale with ⋮ → Mark sold on the piece; unsold pieces go back on sale automatically."
+                ? "Bidding happens outside the website. Each piece's page shows “This item is in Manual Live Auction | Item #”. When the event ends, record each sale with ⋮ → Mark as sold (record purchase) on the item; unsold pieces go back on sale automatically."
                 : "Late bids can extend a single piece by 2 minutes past the event end."}
             </p>
           </Card>
