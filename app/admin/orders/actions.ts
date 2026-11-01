@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { assertStaff } from "@/lib/admin/auth";
 import { AdminError, getAdminRepo } from "@/lib/admin/repo";
-import { advanceFulfillment, approveProof, cancelOrder, recordManualPayment, rejectProof } from "@/lib/admin/service";
+import { advanceFulfillment, approveProof, cancelOrder, deleteOrder, recordManualPayment, rejectProof } from "@/lib/admin/service";
 import { PAYMENT_METHODS } from "@/lib/checkout/pricing";
 
 export type ActionResult = { ok?: boolean; error?: string };
@@ -52,4 +52,9 @@ export async function cancelOrderAction(orderId: string) {
 export async function saveNotesAction(orderId: string, notes: string) {
   await assertStaff();
   return run(async () => (await getAdminRepo()).setOrderNotes(orderId, notes.trim().slice(0, 4000) || null));
+}
+
+export async function deleteOrderAction(orderId: string) {
+  await assertStaff();
+  return run(() => deleteOrder(orderId));
 }

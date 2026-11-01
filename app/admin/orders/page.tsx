@@ -1,5 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { OrderMenu } from "./order-menu";
+import { isShipping } from "@/lib/checkout/pricing";
+import { PURCHASED } from "@/lib/admin/purchases";
+
 import { Search } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
@@ -44,8 +48,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: { tab
       ) : (
         <ul className="divide-y divide-gold/10 border border-gold/15 bg-ink">
           {list.map((o) => (
-            <li key={o.id}>
-              <Link href={`/admin/orders/${o.orderNumber}`} className="flex items-center gap-4 p-3 hover:bg-cream/[0.02] sm:p-4">
+            <li key={o.id} className="flex items-center">
+              <Link href={`/admin/orders/${o.orderNumber}`} className="flex min-w-0 flex-1 items-center gap-4 p-3 hover:bg-cream/[0.02] sm:p-4">
                 <span className="relative hidden h-14 w-14 shrink-0 overflow-hidden border border-gold/15 sm:block">
                   {o.items[0]?.imageUrl && <Image src={o.items[0].imageUrl} alt="" fill sizes="56px" unoptimized className="object-cover" />}
                 </span>
@@ -62,6 +66,16 @@ export default async function OrdersPage({ searchParams }: { searchParams: { tab
                   {o.total - o.amountPaid > 0 && !["cancelled", "expired"].includes(effectiveOrderStatus(o)) && <span className="block text-xs text-gold-light">{formatPHP(o.total - o.amountPaid)} due</span>}
                 </span>
               </Link>
+              <OrderMenu
+                order={{
+                  id: o.id,
+                  orderNumber: o.orderNumber,
+                  status: effectiveOrderStatus(o),
+                  shipping: isShipping(o.fulfillment),
+                  purchased: (PURCHASED as readonly string[]).includes(o.status),
+                  items: o.items.map((i) => i.title).join(", "),
+                }}
+              />
             </li>
           ))}
         </ul>

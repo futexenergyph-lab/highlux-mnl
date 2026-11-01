@@ -46,6 +46,8 @@ export interface AdminRepo {
   createManualPayment(orderId: string, amount: number, method: PaymentMethod): Promise<string>;
   setFulfillment(orderId: string, status: Extract<OrderStatus, "packed" | "shipped" | "delivered">, courier?: string | null, tracking?: string | null): Promise<void>;
   cancelOrder(orderId: string): Promise<void>;
+  /** Deletes the order (items and payments with it) and puts its pieces back on sale. */
+  deleteOrder(orderId: string): Promise<void>;
   setOrderNotes(orderId: string, notes: string | null): Promise<void>;
   /**
    * Edit a purchase record. Contact fields and capital work on any order; payment fields

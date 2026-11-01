@@ -205,6 +205,22 @@ export class SupabaseAdminRepo implements AdminRepo {
     this.check(error);
   }
 
+  async deleteOrder(orderId: string) {
+    const { data: items, error: ie } = await this.db.from("order_items").select("product_id").eq("order_id", orderId);
+    this.check(ie);
+    const { error } = await this.db.from("orders").delete().eq("id", orderId);
+    this.check(error);
+    const ids = (items ?? []).map((i: any) => i.product_id).filter(Boolean);
+    if (ids.length) {
+      const { error: pe } = await this.db
+        .from("products")
+        .update({ status: "available", reserved_session: null, reserved_until: null, sold_at: null })
+        .in("id", ids)
+        .in("status", ["reserved", "sold"]);
+      this.check(pe);
+    }
+  }
+
   async cancelOrder(orderId: string) {
     const { error } = await this.db.rpc("cancel_order", { p_order_id: orderId });
     if (error?.message.includes("ORDER_NOT_CANCELLABLE")) throw new AdminError("NOT_ALLOWED", "Paid orders can't be cancelled here — refund first.");

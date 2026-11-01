@@ -99,6 +99,14 @@ export async function advanceFulfillment(orderId: string, to: "packed" | "shippe
   }
 }
 
+/** Removes an order completely (e.g. a mistaken or duplicate one) and puts its pieces back on sale. */
+export async function deleteOrder(orderId: string) {
+  const order = await loadOrder(orderId);
+  await (await getAdminRepo()).deleteOrder(orderId);
+  const products = await (await getOrderRepo()).getCheckoutProducts(order.items.map((i) => i.productId));
+  refreshStorefront(products.map((p) => ({ category: p.category as CategorySlug, slug: p.slug })));
+}
+
 export async function cancelOrder(orderId: string) {
   const order = await loadOrder(orderId);
   await (await getAdminRepo()).cancelOrder(orderId);
