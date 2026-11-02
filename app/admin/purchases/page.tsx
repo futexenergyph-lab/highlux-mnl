@@ -6,6 +6,7 @@ import { getAdminRepo } from "@/lib/admin/repo";
 import { purchaseRows } from "@/lib/admin/purchases";
 import { withListingCapital } from "@/lib/admin/service";
 import { formatPHP } from "@/lib/utils";
+import { CATEGORIES } from "@/lib/catalog";
 import { PageHeader, btnGold, btnOutline, fmtDate, inputCls } from "@/components/admin/ui";
 
 export const metadata = { title: "Purchase records" };
@@ -19,6 +20,11 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
   // Stock on hand right now (not tied to the date range above).
   const available = products.filter((p) => p.status === "available");
   const availableValue = available.reduce((s, p) => s + p.price, 0);
+  // Listed value of the pieces for sale, per category (Luxury Bags, Watches, Jewelry, Shoes, Accessories).
+  const categoryValues = CATEGORIES.map((c) => {
+    const inCat = available.filter((p) => p.category === c.slug);
+    return [`${c.tileTitle} value (${inCat.length})`, formatPHP(inCat.reduce((s, p) => s + p.price, 0))];
+  });
 
   // Quick ranges: this month (default), last 30 days, this year, all time; custom dates override.
   const today = manilaDay(new Date());
@@ -93,9 +99,10 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
           ["Orders", String(orderCount)],
           ["Shipping collected", formatPHP(shipping)],
           ["Available listings", String(available.length)],
+          ...categoryValues,
           ["Available listing value", formatPHP(availableValue)],
         ].map(([k, v]) => (
-          <div key={k} className="border border-gold/15 bg-ink p-4">
+          <div key={k} className={`border border-gold/15 bg-ink p-4 ${k === "Available listing value" ? "col-span-2 lg:col-span-4" : ""}`}>
             <dt className="text-[0.65rem] uppercase tracking-[0.16em] text-cream-dim">{k}</dt>
             <dd className="mt-1 font-serif text-2xl tabular-nums text-cream">{v}</dd>
           </div>
