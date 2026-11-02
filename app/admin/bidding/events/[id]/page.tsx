@@ -66,7 +66,7 @@ export default async function EventPage({ params, searchParams }: { params: { id
   let all = await repo.list();
   if (await settleDueAuctions(all.filter((a) => a.eventId === event.id))) all = await repo.list();
   const inEvent = all.filter((a) => a.eventId === event.id).sort((x, y) => (lotNumber(all, x) ?? 0) - (lotNumber(all, y) ?? 0));
-  // Removed (cancelled) items drop off the list; they keep their Item # so shared posts stay right.
+  // Removed (cancelled) items drop off the list, and the remaining items are renumbered.
   const lots = inEvent.filter((a) => a.status !== "cancelled");
   const removed = inEvent.length - lots.length;
   const manual = event.kind === "manual";

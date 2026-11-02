@@ -66,7 +66,7 @@ export function LotMenu({ id, path, text, canRemove, productId, canRecordSale }:
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center" onClick={() => !busy && setConfirm(false)}>
           <div role="alertdialog" aria-modal="true" className="w-full max-w-sm border border-red-400/40 bg-ink p-5 shadow-luxe" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-serif text-xl text-cream">Remove this item?</h2>
-            <p className="mt-2 text-sm text-cream-muted">It&rsquo;s taken out of this auction event and goes back on sale in the shop. Its Item # stays reserved, so the other items keep their numbers.</p>
+            <p className="mt-2 text-sm text-cream-muted">It&rsquo;s taken out of this auction event and goes back on sale in the shop. The items after it move up one number, so re-share any posts that show their Item #.</p>
             <div className="mt-5 grid grid-cols-2 gap-2">
               <button type="button" disabled={busy} onClick={() => setConfirm(false)} className="h-11 border border-gold/40 text-xs uppercase tracking-wider text-cream disabled:opacity-50">Cancel</button>
               <button
