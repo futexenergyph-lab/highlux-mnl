@@ -26,8 +26,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const description = `This item is in Manual Live Auction | Item #${r.manual.itemNumber ?? ""}. Was price ${formatPHP(r.product.compareAtPrice ?? r.product.price)}. 100% authentic.`;
     return { title, description, openGraph: { title, description, images, type: "website" }, twitter: { card: "summary_large_image", title, description, images } };
   }
-  const title = `Bid: ${r.product.title}`;
-  const description = `Live auction — current bid ${formatPHP(r.pub.highBid ?? r.pub.startingBid)}. 100% authentic.`;
+  const title = `${r.product.title} · Live Auction`;
+  const description = `Live auction. Was price ${formatPHP(r.product.compareAtPrice ?? r.product.price)}. 100% authentic.`;
   return { title, description, openGraph: { title, description, images, type: "website" }, twitter: { card: "summary_large_image", title, description, images } };
 }
 
