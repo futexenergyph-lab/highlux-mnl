@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { AlertTriangle, Box, CircleX, CreditCard, Gavel, ShieldCheck, Timer, TrendingUp, Truck, User, Users } from "lucide-react";
 import { getAuctionRepo } from "@/lib/auctions/repo";
@@ -8,7 +7,6 @@ import { eventPhase } from "@/lib/auctions/types";
 export const metadata: Metadata = {
   title: "Manual Bidding Guidelines",
   description: "Auction rules and guidelines for HIGHLUX MNL live bidding events in our Viber community.",
-  openGraph: { images: [{ url: "/bidding/first-bidding-event-guidelines.jpg", width: 1600, height: 900 }] },
 };
 export const dynamic = "force-dynamic";
 
@@ -90,9 +88,6 @@ export default async function GuidelinesPage() {
       <h1 className="mt-2 font-serif text-3xl text-cream sm:text-4xl">Auction Rules &amp; Guidelines</h1>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-cream-muted">Please read these before placing your bid to understand the bidding rules and avoid any issues.</p>
 
-      <div className="relative mt-6 aspect-[16/9] w-full overflow-hidden border border-gold/20">
-        <Image src="/bidding/first-bidding-event-guidelines.jpg" alt="HIGHLUX MNL First Bidding Event at Viber Community — Payday Sale. Auction rules and guidelines." fill priority sizes="(min-width: 1024px) 900px, 100vw" className="object-cover" />
-      </div>
 
       {current && (
         <section className="mt-6 border border-gold/30 bg-ink-50 p-5">
