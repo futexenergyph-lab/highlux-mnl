@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { assertStaff } from "@/lib/admin/auth";
 import { AdminError } from "@/lib/admin/repo";
+import { markReturned } from "@/lib/admin/service";
 import { PURCHASED } from "@/lib/admin/purchases";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { CATALOG_TAG } from "@/lib/data";
@@ -167,4 +168,18 @@ export async function updatePurchaseAction(_prev: ManualState, form: FormData): 
   }
   revalidatePath("/admin", "layout");
   redirect(`/admin/purchases?range=all&updated=${encodeURIComponent(order.orderNumber)}`);
+}
+
+/** "Mark as returned" on Edit purchase: drops the sale from Purchase Records and puts the piece back on sale. */
+export async function markReturnedAction(orderNumber: string): Promise<{ error?: string }> {
+  await assertStaff();
+  const order = await (await getOrderRepo()).getOrder(orderNumber);
+  if (!order) return { error: "Order not found." };
+  try {
+    await markReturned(order.id);
+  } catch (e) {
+    return { error: e instanceof AdminError ? e.message : "Couldn't mark it as returned. Please try again." };
+  }
+  revalidatePath("/admin", "layout");
+  redirect(`/admin/purchases?range=all&returned=${encodeURIComponent(orderNumber)}`);
 }

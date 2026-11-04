@@ -48,6 +48,11 @@ export interface AdminRepo {
   cancelOrder(orderId: string): Promise<void>;
   /** Deletes the order (items and payments with it) and puts its pieces back on sale. */
   deleteOrder(orderId: string): Promise<void>;
+  /**
+   * A paid sale that came back: the order is closed as cancelled with a "Returned" note,
+   * its payments stop counting as revenue, and its pieces go back on sale.
+   */
+  markReturned(orderId: string, note: string): Promise<void>;
   setOrderNotes(orderId: string, notes: string | null): Promise<void>;
   /**
    * Edit a purchase record. Contact fields and capital work on any order; payment fields

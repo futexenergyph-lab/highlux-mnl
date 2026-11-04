@@ -5,6 +5,7 @@ import { withListingCapital } from "@/lib/admin/service";
 import { PURCHASED, manualMode, MANUAL_MODES, MANUAL_MODE_LABELS } from "@/lib/admin/purchases";
 import { PageHeader } from "@/components/admin/ui";
 import { ManualPurchaseForm } from "../../new/manual-form";
+import { ReturnButton } from "./return-button";
 
 export const metadata = { title: "Edit purchase" };
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export default async function EditPurchasePage({ params }: { params: { number: s
           hasProof: order.payments.some((p) => !!p.proofPath),
         }}
       />
+      <ReturnButton orderNumber={order.orderNumber} item={order.items.map((i) => i.title).join(", ")} />
     </>
   );
 }

@@ -156,6 +156,15 @@ export class MemoryAdminRepo implements AdminRepo {
   }
 
   /** Mirrors public.cancel_order(). */
+  async markReturned(orderId: string, note: string) {
+    const o = this.s.orders.find((x) => x.id === orderId);
+    if (!o) throw new AdminError("NOT_FOUND");
+    Object.assign(o, { status: "cancelled", cancelledAt: new Date().toISOString(), holdExpiresAt: null, adminNotes: [note, o.adminNotes].filter(Boolean).join("\n") });
+    for (const p of this.s.payments) if (p.orderId === orderId && p.status === "paid") p.status = "failed";
+    const ids = (this.s.items.get(orderId) ?? []).map((it: any) => it.productId);
+    for (const p of this.s.products) if (ids.includes(p.id) && (p.status === "reserved" || p.status === "sold")) Object.assign(p, { status: "available", reservedSession: null, reservedUntil: null, soldAt: null });
+  }
+
   async deleteOrder(orderId: string) {
     const i = this.s.orders.findIndex((x) => x.id === orderId);
     if (i < 0) throw new AdminError("NOT_FOUND");

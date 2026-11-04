@@ -13,7 +13,7 @@ export const metadata = { title: "Purchase records" };
 
 const manilaDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
 
-export default async function PurchasesPage({ searchParams }: { searchParams: { from?: string; to?: string; q?: string; range?: string; saved?: string; updated?: string; capital?: string } }) {
+export default async function PurchasesPage({ searchParams }: { searchParams: { from?: string; to?: string; q?: string; range?: string; saved?: string; updated?: string; capital?: string; returned?: string } }) {
   await requireStaff("/admin/purchases");
   const repo = await getAdminRepo();
   const [orders, products] = await Promise.all([repo.listOrders().then(withListingCapital), repo.listProducts()]);
@@ -67,6 +67,7 @@ export default async function PurchasesPage({ searchParams }: { searchParams: { 
           </>
         }
       />
+      {searchParams.returned && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">{searchParams.returned} marked as returned — removed from sales, and the piece is back on sale.</p>}
       {searchParams.updated && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Changes to <Link href={`/admin/orders/${searchParams.updated}`} className="text-gold-light underline">{searchParams.updated}</Link> saved.</p>}
       {searchParams.capital === "missing" && <p role="alert" className="mb-5 border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">The sale was saved, but capital couldn&rsquo;t be stored yet — run the one-time capital SQL in Supabase, then add it with ✎.</p>}
       {searchParams.saved && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Purchase saved as order <Link href={`/admin/orders/${searchParams.saved}`} className="text-gold-light underline">{searchParams.saved}</Link>. The item is now marked sold.</p>}

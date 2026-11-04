@@ -99,6 +99,16 @@ export async function advanceFulfillment(orderId: string, to: "packed" | "shippe
   }
 }
 
+/** A paid sale was returned: out of sales and revenue, pieces back on sale (the order stays, marked Returned). */
+export async function markReturned(orderId: string) {
+  const order = await loadOrder(orderId);
+  if (!["paid", "packed", "shipped", "delivered"].includes(order.status)) throw new AdminError("NOT_ALLOWED", "Only paid sales can be marked as returned.");
+  const day = new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Manila" });
+  await (await getAdminRepo()).markReturned(orderId, `RETURNED on ${day} — removed from sales; item back on sale.`);
+  const products = await (await getOrderRepo()).getCheckoutProducts(order.items.map((i) => i.productId));
+  refreshStorefront(products.map((p) => ({ category: p.category as CategorySlug, slug: p.slug })));
+}
+
 /** Removes an order completely (e.g. a mistaken or duplicate one) and puts its pieces back on sale. */
 export async function deleteOrder(orderId: string) {
   const order = await loadOrder(orderId);

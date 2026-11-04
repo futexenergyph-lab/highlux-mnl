@@ -205,6 +205,27 @@ export class SupabaseAdminRepo implements AdminRepo {
     this.check(error);
   }
 
+  async markReturned(orderId: string, note: string) {
+    const { data: o, error: oe } = await this.db.from("orders").select("admin_notes").eq("id", orderId).maybeSingle();
+    this.check(oe);
+    if (!o) throw new AdminError("NOT_FOUND");
+    const notes = [note, o.admin_notes].filter(Boolean).join("\n");
+    const { error } = await this.db.from("orders").update({ status: "cancelled", cancelled_at: new Date().toISOString(), hold_expires_at: null, admin_notes: notes }).eq("id", orderId);
+    this.check(error);
+    const pays = await this.db.from("payments").update({ status: "failed", rejection_reason: "Returned — refunded" }).eq("order_id", orderId).eq("status", "paid");
+    this.check(pays.error);
+    const { data: items } = await this.db.from("order_items").select("product_id").eq("order_id", orderId);
+    const ids = (items ?? []).map((i: any) => i.product_id).filter(Boolean);
+    if (ids.length) {
+      const { error: pe } = await this.db
+        .from("products")
+        .update({ status: "available", reserved_session: null, reserved_until: null, sold_at: null })
+        .in("id", ids)
+        .in("status", ["reserved", "sold"]);
+      this.check(pe);
+    }
+  }
+
   async deleteOrder(orderId: string) {
     const { data: items, error: ie } = await this.db.from("order_items").select("product_id").eq("order_id", orderId);
     this.check(ie);
