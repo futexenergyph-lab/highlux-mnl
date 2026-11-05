@@ -78,12 +78,17 @@ export async function manualEventIds() {
 export async function listPublicAuctions() {
   const repo = await getAuctionRepo();
   const manual = await manualEventIds();
-  let list = (await repo.list().catch(() => [])).filter((a) => !a.eventId || !manual.has(a.eventId));
-  if (await settleDueAuctions(list)) list = (await repo.list()).filter((a) => !a.eventId || !manual.has(a.eventId));
+  let list = await repo.list().catch(() => []);
+  if (await settleDueAuctions(list)) list = await repo.list();
   const catalog = await getCatalog();
+  // Lots of manual (off-website) events are listed too, flagged so their cards show Item # and was price, not bids.
   return list
     .filter((a) => ["live", "scheduled"].includes(auctionPhase(a)))
-    .map((a) => ({ a: toPublic(a, null), product: catalog.find((p) => p.id === a.productId) }))
+    .map((a) => ({
+      a: toPublic(a, null),
+      product: catalog.find((p) => p.id === a.productId),
+      manual: a.eventId && manual.has(a.eventId) ? { itemNumber: lotNumber(list, a) } : null,
+    }))
     .filter((x) => x.product)
     .sort((x, y) => x.a.endsAt.localeCompare(y.a.endsAt));
 }
@@ -92,10 +97,10 @@ export async function listPublicAuctions() {
 export async function listPublicEvents(): Promise<{ event: AuctionEvent; phase: AuctionStatus }[]> {
   const events = await (await getAuctionRepo()).listEvents().catch(() => []);
   return events
-    .filter((e) => e.kind !== "manual") // manual events run outside the website
     .map((event) => ({ event, phase: eventPhase(event) }))
     .filter((e) => e.phase === "live" || e.phase === "scheduled")
-    .sort((x, y) => x.event.startsAt.localeCompare(y.event.startsAt));
+    // Ongoing events first, then upcoming ones, each soonest first.
+    .sort((x, y) => Number(y.phase === "live") - Number(x.phase === "live") || x.event.startsAt.localeCompare(y.event.startsAt));
 }
 
 export async function loadPublicEvent(id: string) {

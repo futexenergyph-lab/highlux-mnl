@@ -22,17 +22,27 @@ export default async function BiddingIndex() {
           <section key={event.id} className="mt-10">
             <div className="flex flex-wrap items-end justify-between gap-2 border-b border-gold/20 pb-3">
               <div>
-                <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-gold">{phase === "live" ? "Live event" : "Upcoming event"}</p>
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-gold">
+                  {phase === "live" ? "Live event" : "Upcoming event"}
+                  {event.kind === "manual" && " · Manual live auction"}
+                </p>
                 <h2 className="font-serif text-2xl text-cream">{event.title}</h2>
                 <p className="text-xs text-cream-muted">{when(event.startsAt)} – {when(event.endsAt)}</p>
               </div>
-              <Link href={`/bidding/event/${event.id}`} className="text-xs uppercase tracking-wider text-gold-light underline-offset-4 hover:underline">View event</Link>
+              <div className="flex flex-wrap items-center gap-3">
+                {event.bidLink && (
+                  <a href={event.bidLink} target="_blank" rel="noopener noreferrer" className="btn-gold px-4 py-2 text-[0.7rem]">Bid here!</a>
+                )}
+                <Link href={`/bidding/event/${event.id}`} className="text-xs uppercase tracking-wider text-gold-light underline-offset-4 hover:underline">View event</Link>
+              </div>
             </div>
             {lots.length === 0 ? (
               <p className="mt-4 text-sm text-cream-muted">Pieces will be announced soon.</p>
             ) : (
               <ul className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-                {lots.map(({ a, product }) => <li key={a.id} className="min-w-0"><LotCard a={a} p={product!} /></li>)}
+                {lots
+                  .sort((x, y) => (x.manual?.itemNumber ?? 0) - (y.manual?.itemNumber ?? 0))
+                  .map(({ a, product, manual }) => <li key={a.id} className="min-w-0"><LotCard a={a} p={product!} manual={manual} /></li>)}
               </ul>
             )}
           </section>

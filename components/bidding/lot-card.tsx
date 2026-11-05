@@ -6,7 +6,7 @@ import { formatPHP } from "@/lib/utils";
 import { Countdown } from "./countdown";
 
 /** One auction tile on /bidding and the event pages. */
-export function LotCard({ a, p }: { a: PublicAuction; p: Product }) {
+export function LotCard({ a, p, manual }: { a: PublicAuction; p: Product; manual?: { itemNumber: number | null } | null }) {
   const done = a.phase === "ended";
   return (
     <Link href={`/bidding/${a.id}`} className="group block border border-gold/20 bg-ink-50 hover:border-gold/60">
@@ -15,12 +15,20 @@ export function LotCard({ a, p }: { a: PublicAuction; p: Product }) {
         <span className="absolute left-2 top-2 bg-[#141210] px-2 py-1 text-[0.6rem] uppercase tracking-wider text-[#e8cf8a]">{a.phase === "scheduled" ? "Upcoming" : done ? "Ended" : "Live"}</span>
       </span>
       <span className="block p-3">
+        {manual?.itemNumber != null && <span className="block text-[0.65rem] font-bold uppercase tracking-wider text-gold">Item #{manual.itemNumber}</span>}
         <span className="block truncate text-[0.6rem] font-bold uppercase tracking-[0.2em] text-gold">{p.brand}</span>
         <span className="mt-0.5 line-clamp-2 block text-sm text-cream">{p.title}</span>
-        <span className="mt-2 flex items-baseline justify-between gap-2">
-          <span className="font-bold tabular-nums text-cream">{formatPHP(a.highBid ?? a.startingBid)}</span>
-          <span className="text-[0.65rem] text-cream-dim">{a.bidCount} bid{a.bidCount === 1 ? "" : "s"}</span>
-        </span>
+        {manual ? (
+          <span className="mt-2 block">
+            <span className="block text-[0.6rem] uppercase tracking-wider text-cream-dim">Was price</span>
+            <span className="font-bold tabular-nums text-cream">{formatPHP(p.compareAtPrice ?? p.price)}</span>
+          </span>
+        ) : (
+          <span className="mt-2 flex items-baseline justify-between gap-2">
+            <span className="font-bold tabular-nums text-cream">{formatPHP(a.highBid ?? a.startingBid)}</span>
+            <span className="text-[0.65rem] text-cream-dim">{a.bidCount} bid{a.bidCount === 1 ? "" : "s"}</span>
+          </span>
+        )}
         {!done && (
           <span className="mt-1 block text-[0.7rem] text-cream-dim">
             {a.phase === "scheduled" ? "Starts in " : "Ends in "}
