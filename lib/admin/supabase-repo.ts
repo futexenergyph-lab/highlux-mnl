@@ -148,7 +148,7 @@ export class SupabaseAdminRepo implements AdminRepo {
   async badgeCounts() {
     const [proofs, toFulfil, review, consignments] = await Promise.all([
       this.db.from("payments").select("order_id").eq("status", "pending").not("proof_path", "is", null).limit(1000),
-      this.db.from("orders").select("id", { count: "exact", head: true }).in("status", ["paid", "packed"]),
+      this.db.from("orders").select("id", { count: "exact", head: true }).or("status.in.(paid,packed),and(status.eq.pending_payment,payment_method.eq.pay_at_meetup)"),
       this.db.from("orders").select("id", { count: "exact", head: true }).eq("needs_review", true),
       this.db.from("consignments").select("id", { count: "exact", head: true }).eq("status", "new"),
     ]);

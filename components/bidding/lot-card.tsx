@@ -20,8 +20,11 @@ export function LotCard({ a, p, manual }: { a: PublicAuction; p: Product; manual
         <span className="mt-0.5 line-clamp-2 block text-sm text-cream">{p.title}</span>
         {manual ? (
           <span className="mt-2 block">
-            <span className="block text-[0.6rem] uppercase tracking-wider text-cream-dim">Was price</span>
-            <span className="font-bold tabular-nums text-cream">{formatPHP(p.compareAtPrice ?? p.price)}</span>
+            <span className="block text-[0.6rem] font-bold uppercase tracking-wider text-gold">Starting bid</span>
+            <span className="block text-lg font-bold tabular-nums leading-tight text-cream sm:text-xl">{formatPHP(a.startingBid)}</span>
+            <span className="mt-1 block text-[0.68rem] tabular-nums text-cream-dim">
+              Was price <span className="line-through">{formatPHP(p.compareAtPrice ?? p.price)}</span>
+            </span>
           </span>
         ) : (
           <span className="mt-2 flex items-baseline justify-between gap-2">

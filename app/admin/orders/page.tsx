@@ -15,8 +15,14 @@ import { OrderBadges, effectiveOrderStatus } from "@/components/admin/order-stat
 
 export const metadata = { title: "Orders" };
 
+/** Pay-at-meet-up orders waiting for us to set a time and place (nothing is paid online). */
+function isMeetupToArrange(o: OrderDetail) {
+  return o.paymentMethod === "pay_at_meetup" && effectiveOrderStatus(o) === "pending_payment";
+}
+
 const TABS: { key: string; label: string; test: (o: OrderDetail) => boolean }[] = [
-  { key: "action", label: "Needs action", test: (o) => hasPendingProof(o) || o.needsReview || ["paid", "packed"].includes(o.status) },
+  { key: "action", label: "Needs action", test: (o) => hasPendingProof(o) || o.needsReview || ["paid", "packed"].includes(o.status) || isMeetupToArrange(o) },
+  { key: "meetup", label: "Meet-ups to arrange", test: isMeetupToArrange },
   { key: "verify", label: "Proof to verify", test: (o) => hasPendingProof(o) },
   { key: "pending", label: "Pending payment", test: (o) => effectiveOrderStatus(o) === "pending_payment" && !hasPendingProof(o) },
   { key: "fulfil", label: "To pack / ship", test: (o) => o.status === "paid" || o.status === "packed" },

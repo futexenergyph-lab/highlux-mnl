@@ -97,7 +97,7 @@ export class MemoryAdminRepo implements AdminRepo {
     const [orders, consignments] = await Promise.all([this.listOrders(), this.listConsignments()]);
     return {
       proofs: orders.filter((o) => o.payments.some((p) => p.status === "pending" && p.proofPath)).length,
-      toFulfil: orders.filter((o) => o.status === "paid" || o.status === "packed").length,
+      toFulfil: orders.filter((o) => o.status === "paid" || o.status === "packed" || (o.status === "pending_payment" && o.paymentMethod === "pay_at_meetup")).length,
       consignments: consignments.filter((c) => c.status === "new").length,
       review: orders.filter((o) => o.needsReview).length,
     };

@@ -41,6 +41,7 @@ export default async function Dashboard({ searchParams }: { searchParams: { rang
   const toPack = orders.filter((o) => o.status === "paid");
   const toShip = orders.filter((o) => o.status === "packed");
   const review = orders.filter((o) => o.needsReview);
+  const meetups = orders.filter((o) => o.paymentMethod === "pay_at_meetup" && o.status === "pending_payment");
   const newConsign = consignments.filter((c) => c.status === "new");
   const outstanding = orders.filter((o) => ["pending_payment", "layaway"].includes(o.status)).reduce((s, o) => s + (o.total - o.amountPaid), 0);
 
@@ -48,6 +49,7 @@ export default async function Dashboard({ searchParams }: { searchParams: { rang
     { n: proofs.length, label: "payment proofs to verify", href: "/admin/orders?tab=verify", Icon: FileCheck2 },
     { n: toPack.length, label: "paid orders to pack", href: "/admin/orders?tab=fulfil", Icon: PackageCheck },
     { n: toShip.length, label: "packed orders to ship", href: "/admin/orders?tab=fulfil", Icon: PackageCheck },
+    { n: meetups.length, label: "meet-up orders to arrange", href: "/admin/orders?tab=meetup", Icon: PackageCheck },
     { n: review.length, label: "orders need review", href: "/admin/orders?tab=action", Icon: AlertTriangle },
     { n: newConsign.length, label: "new consignment submissions", href: "/admin/consignments", Icon: Inbox },
   ].filter((t) => t.n > 0);
