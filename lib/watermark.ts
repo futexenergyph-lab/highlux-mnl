@@ -16,6 +16,16 @@ const loadLogo = () => (logo ??= readFile(path.join(process.cwd(), "lib/watermar
  * product photo so it can't be reposted cleanly. Also fixes phone rotation,
  * caps the long side at 2000px and re-encodes as JPEG.
  */
+/** Same clean-up as the watermarked copy (rotation, 2000px cap, JPEG) but without the logo. */
+export async function cleanImage(input: ArrayBuffer): Promise<Buffer> {
+  return sharp(Buffer.from(input))
+    .rotate()
+    .resize({ width: MAX_SIDE, height: MAX_SIDE, fit: "inside", withoutEnlargement: true })
+    .flatten({ background: "#ffffff" })
+    .jpeg({ quality: 90, mozjpeg: true })
+    .toBuffer();
+}
+
 export async function watermarkImage(input: ArrayBuffer): Promise<Buffer> {
   const { data, info } = await sharp(Buffer.from(input))
     .rotate()

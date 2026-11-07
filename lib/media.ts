@@ -5,10 +5,11 @@ import { isSupabaseConfigured } from "@/lib/supabase/server";
 /**
  * File storage. Supabase Storage in production; an in-memory store served by
  * /api/media/… when running without Supabase.
- * Public buckets: product-media, site-assets. Private: payment-proofs, consignments, member-ids.
+ * Public buckets: product-media, site-assets. Private: payment-proofs, consignments, member-ids, product-originals
+ * (clean, unwatermarked copies of product photos for staff banners).
  */
 export type PublicBucket = "product-media" | "site-assets";
-export type PrivateBucket = "payment-proofs" | "consignments" | "member-ids";
+export type PrivateBucket = "payment-proofs" | "consignments" | "member-ids" | "product-originals";
 const PUBLIC: string[] = ["product-media", "site-assets"];
 
 const g = globalThis as unknown as { __highluxMedia?: Map<string, { type: string; bytes: ArrayBuffer }> };
@@ -48,4 +49,21 @@ export async function signedUrl(bucket: PrivateBucket, path: string, seconds = 6
   const { data, error } = await createAdminClient().storage.from(bucket).createSignedUrl(path, seconds);
   if (error) throw error;
   return data.signedUrl;
+}
+
+/** Read a private file (server side, staff routes only). Returns null when it isn't there. */
+export async function readPrivate(bucket: PrivateBucket, path: string): Promise<Buffer | null> {
+  if (!isSupabaseConfigured()) {
+    const f = memoryMedia().get(`${bucket}/${path}`);
+    return f ? Buffer.from(f.bytes) : null;
+  }
+  const { data, error } = await createAdminClient().storage.from(bucket).download(path);
+  if (error || !data) return null;
+  return Buffer.from(await data.arrayBuffer());
+}
+
+/** Where the clean copy of a product photo lives: same path as the watermarked one, in product-originals. */
+export function originalPathFor(photoUrl: string): string | null {
+  const i = photoUrl.indexOf("/product-media/");
+  return i === -1 ? null : photoUrl.slice(i + "/product-media/".length).split("?")[0];
 }

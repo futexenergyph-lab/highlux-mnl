@@ -39,7 +39,7 @@ Phases 1–6 are done (catalog, shop, checkout/payments/layaway, accounts, admin
 - Full registration form with ID upload (private `member-ids` bucket).
 
 ## Database migrations
-When adding a migration: add the file in `supabase/migrations/`, list it in README.md under "Added after launch", and run `npm run db:setup-sql` to regenerate `supabase/setup.sql`. Remind the owner to run the new file once in the Supabase SQL Editor. Latest so far: `20261029000015_auction_views.sql`.
+When adding a migration: add the file in `supabase/migrations/`, list it in README.md under "Added after launch", and run `npm run db:setup-sql` to regenerate `supabase/setup.sql`. Remind the owner to run the new file once in the Supabase SQL Editor. Latest so far: `20261107000016_product_originals.sql`.
 
 ## How to work with the owner
 - The owner works from a phone and is not a developer: explain results in plain language, short, no jargon.

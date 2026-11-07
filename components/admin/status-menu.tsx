@@ -6,7 +6,7 @@ import { Check, Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { deleteProductAction, setProductStatusAction } from "@/app/admin/products/actions";
 import { captionWithLink, copyText } from "@/lib/client/clipboard";
 import type { ProductStatus } from "@/lib/types";
-import { downloadPhotos } from "./download-photos-button";
+import { downloadPhotos, downloadWasPriceBanner } from "./download-photos-button";
 
 export interface MenuProduct {
   id: string;
@@ -78,6 +78,20 @@ export function StatusMenu({ product: p }: { product: MenuProduct }) {
               className={itemCls}
             >
               Download all photos ({p.images.length})
+            </Dropdown.Item>
+            <Dropdown.Item
+              onSelect={async () => {
+                setBusy(true);
+                try {
+                  if ((await downloadWasPriceBanner(p.id, p.slug)) === "done") done("Banner saved");
+                } catch {
+                  alert("Couldn't make the banner — try again.");
+                }
+                setBusy(false);
+              }}
+              className={itemCls}
+            >
+              Download Banner + Was Price
             </Dropdown.Item>
             <Dropdown.Item
               onSelect={async () => {

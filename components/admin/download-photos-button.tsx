@@ -19,6 +19,11 @@ export async function downloadPhotos(images: { url: string }[], name: string): P
       return new File([blob], `${name}-${String(i + 1).padStart(2, "0")}.${ext}`, { type: blob.type || "image/jpeg" });
     }),
   );
+  return saveFiles(files);
+}
+
+/** Saves files: share sheet on phones ("Save image" → Photos/Gallery), plain downloads elsewhere. */
+export async function saveFiles(files: File[]): Promise<"done" | "cancelled"> {
   if (window.matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files })) {
     try {
       await navigator.share({ files });
@@ -38,6 +43,13 @@ export async function downloadPhotos(images: { url: string }[], name: string): P
     await new Promise((r) => setTimeout(r, 250));
   }
   return "done";
+}
+
+/** Builds the "Banner + Was Price" JPEG for a product and saves it. */
+export async function downloadWasPriceBanner(productId: string, name: string): Promise<"done" | "cancelled"> {
+  const res = await fetch(`/api/admin/banner?id=${encodeURIComponent(productId)}`);
+  if (!res.ok) throw new Error("banner failed");
+  return saveFiles([new File([await res.blob()], `${name}-banner.jpg`, { type: "image/jpeg" })]);
 }
 
 export function DownloadPhotosButton({ images, name }: { images: { url: string }[]; name: string }) {
