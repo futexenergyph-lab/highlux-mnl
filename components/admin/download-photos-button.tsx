@@ -45,11 +45,11 @@ export async function saveFiles(files: File[]): Promise<"done" | "cancelled"> {
   return "done";
 }
 
-/** Builds the "Banner + Was Price" JPEG for a product and saves it. */
-export async function downloadWasPriceBanner(productId: string, name: string): Promise<"done" | "cancelled"> {
-  const res = await fetch(`/api/admin/banner?id=${encodeURIComponent(productId)}`);
+/** Builds a banner JPEG for a product ("was": 9:16 Was Price, "sale": square Sale Price) and saves it. */
+export async function downloadBanner(productId: string, name: string, type: "was" | "sale"): Promise<"done" | "cancelled"> {
+  const res = await fetch(`/api/admin/banner?id=${encodeURIComponent(productId)}&type=${type}`);
   if (!res.ok) throw new Error("banner failed");
-  return saveFiles([new File([await res.blob()], `${name}-banner.jpg`, { type: "image/jpeg" })]);
+  return saveFiles([new File([await res.blob()], `${name}-${type}-banner.jpg`, { type: "image/jpeg" })]);
 }
 
 export function DownloadPhotosButton({ images, name }: { images: { url: string }[]; name: string }) {

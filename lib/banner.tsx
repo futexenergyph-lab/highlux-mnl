@@ -69,3 +69,50 @@ export async function renderWasPriceBanner(p: Product): Promise<Buffer> {
   );
   return sharp(Buffer.from(await png.arrayBuffer())).flatten({ background: "#ffffff" }).jpeg({ quality: 92, mozjpeg: true }).toBuffer();
 }
+
+const SQ = 1080;
+const SQ_PHOTO = 922;
+const SQ_STRIP = SQ - SQ_PHOTO;
+const SQ_LEFT = 628;
+
+/** "Louis Vuitton Idylle Speedy" → "Idylle Speedy" when the title starts with the brand (it's shown above). */
+const withoutBrand = (title: string, brand: string) => {
+  const t = title.trim();
+  return brand && t.toLowerCase().startsWith(`${brand.toLowerCase()} `) ? t.slice(brand.length).trim() : t;
+};
+
+/** Square JPEG (1080×1080) for social posts: clean photo, then brand / title / was price on cream and Sale Price on gold. */
+export async function renderSalePriceBanner(p: Product): Promise<Buffer> {
+  const raw = await firstPhoto(p.images[0]?.url);
+  const photo = raw
+    ? `data:image/jpeg;base64,${(await sharp(raw).rotate().resize(SQ, SQ_PHOTO, { fit: "cover" }).jpeg({ quality: 92 }).toBuffer()).toString("base64")}`
+    : null;
+  const title = withoutBrand(p.title, p.brand);
+  const titleSize = title.length > 40 ? 24 : title.length > 32 ? 27 : 30;
+  const brandSize = p.brand.length > 22 ? 26 : 33;
+  const price = formatPHP(p.price);
+  const priceSize = Math.min(76, Math.floor(400 / (price.length * 0.64)));
+  const was = p.compareAtPrice && p.compareAtPrice > p.price ? formatPHP(p.compareAtPrice) : null;
+  const png = new ImageResponse(
+    (
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#f3ede1", fontFamily: "Montserrat" }}>
+        <div style={{ width: SQ, height: SQ_PHOTO, display: "flex", background: "#e9e4da" }}>
+          {photo && <img src={photo} width={SQ} height={SQ_PHOTO} alt="" />}
+        </div>
+        <div style={{ height: SQ_STRIP, display: "flex" }}>
+          <div style={{ width: SQ_LEFT, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 30px 0 46px", background: "#f3ede1" }}>
+            <div style={{ fontSize: brandSize, fontWeight: 700, letterSpacing: 6, color: "#b3913f", textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.brand}</div>
+            <div style={{ marginTop: 8, fontSize: titleSize, fontWeight: 500, color: "#1c1a17", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+            {was && <div style={{ marginTop: 8, fontSize: 23, fontWeight: 500, color: "#7a746b" }}>{`Was ${was}`}</div>}
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#dcc27f", color: "#2b1a0e" }}>
+            <div style={{ fontSize: 36, fontWeight: 700 }}>Sale Price</div>
+            <div style={{ marginTop: 2, fontSize: priceSize, fontWeight: 700, lineHeight: 1.1 }}>{price}</div>
+          </div>
+        </div>
+      </div>
+    ),
+    { width: SQ, height: SQ, fonts: await bannerFonts() },
+  );
+  return sharp(Buffer.from(await png.arrayBuffer())).flatten({ background: "#ffffff" }).jpeg({ quality: 92, mozjpeg: true }).toBuffer();
+}
