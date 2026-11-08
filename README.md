@@ -64,6 +64,7 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
    - `20261029000014_event_bid_link.sql`: bidding location link on auction events
    - `20261029000015_auction_views.sql`: link-open counter per auction item
    - `20261107000016_product_originals.sql`: private bucket for clean (unwatermarked) photo copies, used by "Download Banner + Was Price"
+   - `20261108000017_auction_lot_order.sql`: drag-to-reorder pieces in an auction event (Item #s follow the order)
 4. Make yourself an admin after signing up:
    ```sql
    update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');

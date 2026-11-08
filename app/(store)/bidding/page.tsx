@@ -41,7 +41,7 @@ export default async function BiddingIndex() {
             ) : (
               <ul className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
                 {lots
-                  .sort((x, y) => (x.manual?.itemNumber ?? 0) - (y.manual?.itemNumber ?? 0))
+                  .sort((x, y) => (x.lotOrder ?? 0) - (y.lotOrder ?? 0))
                   .map(({ a, product, manual }) => <li key={a.id} className="min-w-0"><LotCard a={a} p={product!} manual={manual} /></li>)}
               </ul>
             )}

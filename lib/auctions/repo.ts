@@ -26,6 +26,8 @@ export interface AuctionRepo {
   releaseProduct(productId: string, auctionId: string): Promise<void>;
   /** Auctions whose product is this one and are still running (for the product page banner). */
   liveForProduct(productId: string): Promise<Auction | null>;
+  /** Saves the drag order of an event's pieces (ids in their new order). */
+  reorderLots(eventId: string, ids: string[]): Promise<void>;
   // Auction events
   listEvents(): Promise<AuctionEvent[]>;
   getEvent(id: string): Promise<AuctionEvent | null>;

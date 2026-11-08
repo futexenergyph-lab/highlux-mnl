@@ -88,6 +88,8 @@ export async function listPublicAuctions() {
       a: toPublic(a, null),
       product: catalog.find((p) => p.id === a.productId),
       manual: a.eventId && manual.has(a.eventId) ? { itemNumber: lotNumber(list, a) } : null,
+      /** Place inside its event (the admin's drag order). */
+      lotOrder: lotNumber(list, a),
     }))
     .filter((x) => x.product)
     .sort((x, y) => x.a.endsAt.localeCompare(y.a.endsAt));

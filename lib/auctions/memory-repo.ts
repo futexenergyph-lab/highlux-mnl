@@ -24,7 +24,7 @@ export class MemoryAuctionRepo implements AuctionRepo {
   async create(n: NewAuction) {
     const p = memoryStore().products.find((x) => x.id === n.productId);
     if (!p || p.status !== "available" || store().some((x) => x.productId === n.productId && x.status === "live")) throw new Error("PRODUCT_UNAVAILABLE");
-    const a: Auction = { id: randomUUID(), ...n, eventId: n.eventId ?? null, status: "live", winnerBidId: null, orderId: null, createdAt: new Date().toISOString(), bids: [] };
+    const a: Auction = { id: randomUUID(), ...n, eventId: n.eventId ?? null, position: null, status: "live", winnerBidId: null, orderId: null, createdAt: new Date().toISOString(), bids: [] };
     store().push(a);
     Object.assign(p, { status: "reserved", reservedSession: auctionHolder(a.id), reservedUntil: null });
     return copy(a);
@@ -56,6 +56,12 @@ export class MemoryAuctionRepo implements AuctionRepo {
   async releaseProduct(productId: string, auctionId: string) {
     const p = memoryStore().products.find((x) => x.id === productId);
     if (p && p.status === "reserved" && p.reservedSession === auctionHolder(auctionId)) Object.assign(p, { status: "available", reservedSession: null, reservedUntil: null });
+  }
+  async reorderLots(eventId: string, ids: string[]) {
+    ids.forEach((id, i) => {
+      const a = store().find((x) => x.id === id && x.eventId === eventId);
+      if (a) a.position = i + 1;
+    });
   }
   async listEvents() {
     return [...events()].sort((a, b) => b.startsAt.localeCompare(a.startsAt));

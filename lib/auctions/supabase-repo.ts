@@ -17,6 +17,7 @@ const mapAuction = (a: any): Auction => ({
   winnerBidId: a.winner_bid_id,
   orderId: a.order_id,
   eventId: a.event_id ?? null,
+  position: a.position ?? null,
   createdAt: a.created_at,
   bids: (a.auction_bids ?? []).map(mapBid).sort((x: AuctionBid, y: AuctionBid) => y.createdAt.localeCompare(x.createdAt)),
 });
@@ -93,6 +94,12 @@ export class SupabaseAuctionRepo implements AuctionRepo {
       .eq("id", productId)
       .eq("status", "reserved")
       .eq("reserved_session", auctionHolder(auctionId));
+  }
+
+  async reorderLots(eventId: string, ids: string[]) {
+    const results = await Promise.all(ids.map((id, i) => this.db.from("auctions").update({ position: i + 1 }).eq("id", id).eq("event_id", eventId)));
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw failed.error;
   }
 
   async listEvents() {

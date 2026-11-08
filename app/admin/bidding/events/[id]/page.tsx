@@ -13,6 +13,7 @@ import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { CancelEventButton } from "./cancel-event-button";
 import { KindSwitch } from "./kind-switch";
 import { LotMenu } from "./lot-menu";
+import { SortableLots } from "./sortable-lots";
 import { auctionViewCounts } from "@/lib/product-views";
 
 export const metadata = { title: "Auction event" };
@@ -93,14 +94,17 @@ export default async function EventPage({ params, searchParams }: { params: { id
           {lots.length === 0 ? (
             <p className="text-sm text-cream-muted">No pieces yet.{open && <> Tap <span className="text-gold-light">Add piece</span> to choose from your available listings.</>}</p>
           ) : (
-            <ul className="-mx-2 divide-y divide-gold/10">
-              {lots.map((a) => {
+            <SortableLots
+              eventId={event.id}
+              rows={lots.map((a) => {
                 const p = products.get(a.productId);
                 const top = topBid(a);
                 const ph = auctionPhase(a);
                 const no = lotNumber(all, a);
-                return (
-                  <li key={a.id} className="flex items-center gap-1">
+                return {
+                  id: a.id,
+                  node: (
+                  <>
                     <Link href={`/admin/bidding/${a.id}`} className="flex min-w-0 flex-1 items-center gap-3 p-2 hover:bg-cream/[0.02]">
                       <span className="relative h-14 w-14 shrink-0 overflow-hidden border border-gold/15 bg-ink-50">
                         {p?.images[0] && <Image src={p.images[0].url} alt="" fill sizes="56px" unoptimized className="object-cover" />}
@@ -126,10 +130,11 @@ export default async function EventPage({ params, searchParams }: { params: { id
                       // After bidding the piece is back on sale (available) until its sale is recorded.
                       canRecordSale={p?.status === "available"}
                     />
-                  </li>
-                );
+                  </>
+                  ),
+                };
               })}
-            </ul>
+            />
           )}
         </Card>
 

@@ -121,6 +121,27 @@ export async function cancelEventAction(id: string) {
   revalidatePath(`/admin/bidding/events/${id}`);
 }
 
+/** Saves the order of an event's pieces after dragging; Item #s follow this order. */
+export async function reorderLotsAction(eventId: string, ids: string[]): Promise<{ error?: string }> {
+  try {
+    await assertStaff();
+  } catch {
+    return { error: "You don't have access to do this." };
+  }
+  const parsed = z.object({ eventId: z.string().uuid(), ids: z.array(z.string().uuid()).max(500) }).safeParse({ eventId, ids });
+  if (!parsed.success) return { error: "Couldn't save the new order." };
+  try {
+    await (await getAuctionRepo()).reorderLots(parsed.data.eventId, parsed.data.ids);
+  } catch {
+    return { error: "Couldn't save the new order — try again." };
+  }
+  revalidatePath("/admin/bidding");
+  revalidatePath(`/admin/bidding/events/${eventId}`);
+  revalidatePath("/bidding");
+  revalidatePath(`/bidding/event/${eventId}`);
+  return {};
+}
+
 /** Switch an event between website (online bidding) and manual (bidding outside the website). */
 export async function setEventKindAction(id: string, kind: "website" | "manual") {
   await assertStaff();

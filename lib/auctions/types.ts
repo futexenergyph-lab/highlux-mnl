@@ -26,6 +26,8 @@ export interface Auction {
   orderId: string | null;
   /** The auction event this lot belongs to, if any. */
   eventId: string | null;
+  /** Order inside its event, set by dragging in admin; null = not moved yet (falls after, by date added). */
+  position: number | null;
   createdAt: string;
   bids: AuctionBid[]; // newest first
 }
@@ -79,12 +81,15 @@ export class BidError extends Error {
   }
 }
 
+type LotKey = Pick<Auction, "id" | "createdAt"> & { position?: number | null };
+/** Event order: the admin's drag order first, then pieces never moved, oldest first. */
+export const compareLots = (x: LotKey, y: LotKey) =>
+  (x.position ?? Number.MAX_SAFE_INTEGER) - (y.position ?? Number.MAX_SAFE_INTEGER) || x.createdAt.localeCompare(y.createdAt) || x.id.localeCompare(y.id);
+
 /** "Item #" of a lot inside its event: its place among the event's items still in it (removed ones don't count). */
-export function lotNumber(all: Pick<Auction, "id" | "eventId" | "createdAt" | "status">[], a: Pick<Auction, "id" | "eventId">): number | null {
+export function lotNumber(all: (Pick<Auction, "id" | "eventId" | "createdAt" | "status"> & { position?: number | null })[], a: Pick<Auction, "id" | "eventId">): number | null {
   if (!a.eventId) return null;
-  const lots = all
-    .filter((x) => x.eventId === a.eventId && x.status !== "cancelled")
-    .sort((x, y) => x.createdAt.localeCompare(y.createdAt) || x.id.localeCompare(y.id));
+  const lots = all.filter((x) => x.eventId === a.eventId && x.status !== "cancelled").sort(compareLots);
   const i = lots.findIndex((x) => x.id === a.id);
   return i < 0 ? null : i + 1;
 }
