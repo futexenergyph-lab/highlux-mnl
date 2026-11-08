@@ -40,11 +40,38 @@ async function firstPhoto(url: string | undefined): Promise<Buffer | null> {
   return res?.ok ? Buffer.from(await res.arrayBuffer()) : null;
 }
 
+/** Most of a photo we're allowed to trim to fill the frame; beyond this it's shown whole on a blurred backdrop. */
+const MAX_TRIM = 0.1;
+
+/**
+ * Fits the whole piece into a w×h frame, centred: trims at most 10% off the long side (so the bag is never cut),
+ * and fills any space left at the sides/top with a soft blurred copy of the same photo.
+ */
+async function fitPhoto(raw: Buffer, w: number, h: number): Promise<Buffer> {
+  const { data, info } = await sharp(raw).rotate().toBuffer({ resolveWithObject: true });
+  const cover = Math.max(w / info.width, h / info.height);
+  const contain = Math.min(w / info.width, h / info.height);
+  const scale = Math.min(cover, contain / (1 - MAX_TRIM));
+  const sw = Math.round(info.width * scale);
+  const sh = Math.round(info.height * scale);
+  const fw = Math.min(sw, w);
+  const fh = Math.min(sh, h);
+  const fg = await sharp(data)
+    .resize(sw, sh)
+    .extract({ left: Math.floor((sw - fw) / 2), top: Math.floor((sh - fh) / 2), width: fw, height: fh })
+    .toBuffer();
+  const base = fw === w && fh === h ? sharp(fg) : sharp(data).resize(w, h, { fit: "cover" }).blur(40).modulate({ brightness: 0.97 });
+  return base
+    .composite(fw === w && fh === h ? [] : [{ input: fg, left: Math.floor((w - fw) / 2), top: Math.floor((h - fh) / 2) }])
+    .jpeg({ quality: 92 })
+    .toBuffer();
+}
+
 /** 9:16 JPEG (1080×1920) for social posts: clean photo on top, brand + title on cream, WAS PRICE on a gold band. */
 export async function renderWasPriceBanner(p: Product): Promise<Buffer> {
   const raw = await firstPhoto(p.images[0]?.url);
   const photo = raw
-    ? `data:image/jpeg;base64,${(await sharp(raw).rotate().resize(W, PHOTO, { fit: "cover" }).jpeg({ quality: 92 }).toBuffer()).toString("base64")}`
+    ? `data:image/jpeg;base64,${(await fitPhoto(raw, W, PHOTO)).toString("base64")}`
     : null;
   const titleSize = p.title.length > 70 ? 42 : p.title.length > 45 ? 48 : 52;
   const price = formatPHP(p.compareAtPrice ?? p.price);
@@ -85,7 +112,7 @@ const withoutBrand = (title: string, brand: string) => {
 export async function renderSalePriceBanner(p: Product): Promise<Buffer> {
   const raw = await firstPhoto(p.images[0]?.url);
   const photo = raw
-    ? `data:image/jpeg;base64,${(await sharp(raw).rotate().resize(SQ, SQ_PHOTO, { fit: "cover" }).jpeg({ quality: 92 }).toBuffer()).toString("base64")}`
+    ? `data:image/jpeg;base64,${(await fitPhoto(raw, SQ, SQ_PHOTO)).toString("base64")}`
     : null;
   const title = withoutBrand(p.title, p.brand);
   const titleSize = title.length > 40 ? 24 : title.length > 32 ? 27 : 30;
