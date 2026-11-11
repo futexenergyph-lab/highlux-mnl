@@ -2,7 +2,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ExternalLink, Gavel, Gem, Home, Inbox, LayoutDashboard, Menu, Package, Receipt, Settings, Users, Wallet, X } from "lucide-react";
+import { ExternalLink, Gavel, Gem, Home, Inbox, LayoutDashboard, Menu, Package, Receipt, Settings, Users, Wallet, X, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin/purchases", label: "Purchase Records", Icon: Receipt },
   { href: "/admin/products", label: "Products", Icon: Gem },
   { href: "/admin/bidding", label: "Bidding", Icon: Gavel },
+  { href: "/admin/flash-sales", label: "Flash Sale Deals", Icon: Zap },
   { href: "/admin/layaway", label: "Layaway", Icon: Wallet },
   { href: "/admin/consignments", label: "Consignments", Icon: Inbox, badge: "consignments" as const },
   { href: "/admin/customers", label: "Customers", Icon: Users },

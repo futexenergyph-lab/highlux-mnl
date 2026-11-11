@@ -1,4 +1,5 @@
 import "server-only";
+import { flashWindows, liveSales, withFlashPrice } from "@/lib/flash/pricing";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { CATALOG_TAG } from "@/lib/data";
 import { productHref } from "@/lib/catalog";
@@ -83,7 +84,9 @@ export async function placeOrder(input: PlaceOrderInput, sessionId: string, user
     return { ok: false, error: "That payment method isn't available for this order." };
   }
 
-  const products = await repo.getCheckoutProducts(input.productIds);
+  // Running flash sales: charge the sale price (place_order checks the same price in the database).
+  const live = liveSales(await flashWindows(true));
+  const products = (await repo.getCheckoutProducts(input.productIds)).map((p) => withFlashPrice(p, live));
   if (products.length !== input.productIds.length) return { ok: false, error: "Some items are no longer listed.", unavailable: input.productIds.filter((id) => !products.some((p) => p.id === id)) };
   const subtotal = products.reduce((s, p) => s + p.price, 0);
   if (input.paymentPlan === "layaway" && !layawayEligible(subtotal, settings)) return { ok: false, error: "Layaway isn't available for this order." };

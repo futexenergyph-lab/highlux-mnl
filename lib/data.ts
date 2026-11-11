@@ -6,6 +6,7 @@ import { createPublicClient } from "./supabase/public";
 import { DEFAULT_HOME_CONTENT, SAMPLE_REVIEWS } from "./sample-data";
 import { memoryStore } from "./orders/memory-repo";
 import { getMemorySetting } from "./memory-settings";
+import { flashWindows, liveSales, withFlashPrice } from "./flash/pricing";
 import { PAGE_SIZE, applyFilters, compareProducts, computeFacets, matchesQuery, type Filters } from "./filters";
 import type { CategorySlug, HomeContent, Product, Review } from "./types";
 
@@ -70,7 +71,14 @@ const fetchCatalog = unstable_cache(
   { revalidate: 60, tags: [CATALOG_TAG] },
 );
 
+/** The public catalog with running flash sale prices swapped in. */
 export const getCatalog = cache(async (): Promise<Product[]> => {
+  const [products, windows] = await Promise.all([getBaseCatalog(), flashWindows()]);
+  const live = liveSales(windows);
+  return live.size ? products.map((p) => withFlashPrice(p, live)) : products;
+});
+
+const getBaseCatalog = cache(async (): Promise<Product[]> => {
   if (!isSupabaseConfigured()) {
     // Sample mode reads the in-memory store so checkout holds and sales show up live.
     return memoryStore()

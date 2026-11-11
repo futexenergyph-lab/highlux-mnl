@@ -34,8 +34,8 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         />
         <AuthenticityBadge className="absolute bottom-0 left-1/2 z-[1] w-max -translate-x-1/2 bg-white px-2 py-1 sm:px-2.5" />
         {product.compareAtPrice && !sold && (
-          <span className="absolute right-3 top-3 bg-[#141210] px-2 py-1 font-sans text-[0.6rem] font-bold uppercase tracking-[0.14em] text-[#e8cf8a]">
-            Price drop
+          <span className={cn("absolute right-3 top-3 px-2 py-1 font-sans text-[0.6rem] font-bold uppercase tracking-[0.14em]", product.flashSale ? "bg-[#e8cf8a] text-[#141210]" : "bg-[#141210] text-[#e8cf8a]")}>
+            {product.flashSale ? "⚡ Flash sale" : "Price drop"}
           </span>
         )}
       </div>

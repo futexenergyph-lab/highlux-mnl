@@ -94,6 +94,8 @@ export interface Product {
   status: ProductStatus;
   featured: boolean;
   createdAt: string;
+  /** Set while the piece is in a running flash sale (its price is the sale price). */
+  flashSale?: { endsAt: string; eventId: string } | null;
 }
 
 export interface Brand {

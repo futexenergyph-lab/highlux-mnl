@@ -1,4 +1,6 @@
 import "server-only";
+import { memoryFlashWindows } from "@/lib/flash/memory-repo";
+import { liveSales, withFlashPrice } from "@/lib/flash/pricing";
 import { randomBytes, randomUUID } from "node:crypto";
 import { SAMPLE_PRODUCTS } from "@/lib/sample-data";
 import { safeName, uploadPrivate } from "@/lib/media";
@@ -94,7 +96,10 @@ export class MemoryOrderRepo implements OrderRepo {
     const products = a.productIds.map((id) => this.product(id));
     const bad = a.productIds.filter((id, i) => !products[i] || !takeable(products[i]!, a.sessionId));
     if (bad.length) throw new OrderError("ITEM_UNAVAILABLE", bad);
-    const subtotal = products.reduce((s, p) => s + p!.price, 0);
+    // Mirrors place_order: a running flash sale's price is what's charged.
+    const sale = liveSales(memoryFlashWindows());
+    const priceOf = (p: { id: string; price: number }) => withFlashPrice(p, sale).price;
+    const subtotal = products.reduce((s, p) => s + priceOf(p!), 0);
     if (subtotal !== a.expectedSubtotal) throw new OrderError("PRICE_CHANGED");
 
     const order: Order = {
@@ -126,7 +131,7 @@ export class MemoryOrderRepo implements OrderRepo {
       deliveredAt: null,
     };
     this.s.orders.push(order);
-    this.s.items.set(order.id, products.map((p) => ({ productId: p!.id, title: p!.title, brand: p!.brand, price: p!.price, imageUrl: p!.images[0]?.url ?? null })));
+    this.s.items.set(order.id, products.map((p) => ({ productId: p!.id, title: p!.title, brand: p!.brand, price: priceOf(p!), imageUrl: p!.images[0]?.url ?? null })));
     this.s.installments.set(order.id, a.installments.map((i) => ({ ...i, status: "due" as const, paidAt: null })));
     for (const p of products) Object.assign(p!, { status: "reserved", reservedSession: `order:${order.id}`, reservedUntil: order.holdExpiresAt });
     return { ...order };

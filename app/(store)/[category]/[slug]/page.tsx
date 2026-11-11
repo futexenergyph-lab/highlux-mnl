@@ -10,6 +10,7 @@ import { AuthenticityBadge } from "@/components/product/authenticity-badge";
 import { ProductActions, StickyBuyBar, type ActionProduct } from "@/components/product/product-actions";
 import { AuthenticityBlock, ConditionMeter, Inclusions, SpecsTable } from "@/components/product/product-details";
 import { ProductCard } from "@/components/product/product-card";
+import { FlashCountdown } from "@/components/flash/flash-countdown";
 import { AuctionBanner, HideDuringAuction, ManualAuctionRedirect, ProductPrice } from "@/components/bidding/product-auction";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
 import { ViewTracker } from "@/components/product/view-tracker";
@@ -148,6 +149,9 @@ export default async function ProductPage({ params }: { params: Params }) {
               }
             />
             {p.status === "sold" && <p className="mt-2 text-sm text-cream-muted">This piece has found its new home. Message us and we&rsquo;ll help source a similar one.</p>}
+            {p.flashSale && p.status !== "sold" && (
+              <FlashCountdown to={p.flashSale.endsAt} label="Flash sale ends in" className="mt-3 inline-block bg-gold-gradient px-3 py-1.5 text-xs uppercase tracking-wider text-ink" />
+            )}
 
             <div className="gold-divider my-6" />
 
