@@ -1,6 +1,7 @@
 import { TrustBar } from "@/components/home/trust-bar";
 import { Hero } from "@/components/home/hero";
 import { CategoryTiles } from "@/components/home/category-tiles";
+import { FlashSaleSection } from "@/components/home/flash-sale-section";
 import { SectionHeading } from "@/components/home/section-heading";
 import { NewArrivalsCarousel } from "@/components/home/new-arrivals";
 import { ShopByBrand } from "@/components/home/shop-by-brand";
@@ -47,6 +48,7 @@ export default async function HomePage() {
       <div className="lg:hidden">
         <TrustBar />
       </div>
+      <FlashSaleSection />
       <CategoryTiles slides={slides} />
 
  {featured.length > 0 && (

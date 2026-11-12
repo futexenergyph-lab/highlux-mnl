@@ -6,7 +6,8 @@ import { ProductCard } from "@/components/product/product-card";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export function NewArrivalsCarousel({ products }: { products: Product[] }) {
+/** `captions`: optional line under a card, by product id (e.g. an upcoming flash price). */
+export function NewArrivalsCarousel({ products, captions }: { products: Product[]; captions?: Record<string, string> }) {
   const [ref, api] = useEmblaCarousel({ align: "start", dragFree: true, containScroll: "trimSnaps" });
   const [canPrev, setCanPrev] = React.useState(false);
   const [canNext, setCanNext] = React.useState(true);
@@ -31,6 +32,7 @@ export function NewArrivalsCarousel({ products }: { products: Product[] }) {
           {products.map((p, i) => (
             <li key={p.id} className="min-w-0 shrink-0 grow-0 basis-[68%] pl-4 sm:basis-[42%] sm:pl-6 md:basis-[31%] lg:basis-[23%] xl:basis-1/5">
               <ProductCard product={p} priority={i < 2} />
+              {captions?.[p.id] && <p className="mt-1 text-center text-xs font-bold text-gold-light">{captions[p.id]}</p>}
             </li>
           ))}
         </ul>
