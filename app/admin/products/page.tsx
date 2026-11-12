@@ -30,6 +30,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
   const compare = (a: Product, b: Product) =>
     sort === "price_desc" ? b.price - a.price || b.createdAt.localeCompare(a.createdAt)
     : sort === "price_asc" ? a.price - b.price || b.createdAt.localeCompare(a.createdAt)
+    : sort === "views_desc" ? (views.get(b.id) ?? 0) - (views.get(a.id) ?? 0) || b.createdAt.localeCompare(a.createdAt)
+    : sort === "views_asc" ? (views.get(a.id) ?? 0) - (views.get(b.id) ?? 0) || b.createdAt.localeCompare(a.createdAt)
     : sort === "oldest" ? a.createdAt.localeCompare(b.createdAt)
     : b.createdAt.localeCompare(a.createdAt);
   const list = all
