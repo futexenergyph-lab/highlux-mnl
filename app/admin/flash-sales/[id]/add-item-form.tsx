@@ -17,13 +17,15 @@ function Submit() {
 }
 
 /** Choose an available piece and its sale price. */
-export function AddItemForm({ eventId, items }: { eventId: string; items: ItemOption[] }) {
+export function AddItemForm({ eventId, items, was }: { eventId: string; items: ItemOption[]; was: Record<string, number> }) {
   const [state, action] = useFormState<FlashFormState, FormData>(addFlashItemAction, null);
   const [item, setItem] = React.useState<ItemOption | null>(null);
   const [price, setPrice] = React.useState("");
   const err = (f: string) => (state?.field === f ? state.error : undefined);
   const sale = Number(price);
-  const off = item && sale > 0 && sale < item.price ? Math.round((1 - sale / item.price) * 100) : 0;
+  // Discount is shown from the was price (what customers see crossed out).
+  const wasPrice = item ? was[item.id] ?? item.price : 0;
+  const off = item && sale > 0 && sale < wasPrice ? Math.round((1 - sale / wasPrice) * 100) : 0;
 
   return (
     <form action={action} className="space-y-4">
@@ -32,13 +34,18 @@ export function AddItemForm({ eventId, items }: { eventId: string; items: ItemOp
       <label className="block">
         <span className={labelCls}>Piece (available inventory)</span>
         <ItemPicker items={items} value={item?.id ?? ""} onChange={setItem} />
-        {item && <span className="mt-1 block text-xs text-cream-dim">Regular price {formatPHP(item.price)}</span>}
+        {item && (
+          <span className="mt-1 block text-xs text-cream-dim">
+            Was price {formatPHP(wasPrice)}
+            {wasPrice !== item.price && <> · selling now at {formatPHP(item.price)}</>}
+          </span>
+        )}
         {err("productId") && <span className="mt-1 block text-xs text-red-300">{err("productId")}</span>}
       </label>
       <label className="block">
         <span className={labelCls}>Sale price (₱)</span>
         <input name="salePrice" inputMode="decimal" required value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))} className={inputCls} placeholder="e.g. 25000" />
-        {off > 0 && <span className="mt-1 block text-xs text-gold-light">{off}% off · saves {formatPHP(item!.price - sale)}</span>}
+        {off > 0 && <span className="mt-1 block text-xs text-gold-light">{off}% off the was price · saves {formatPHP(wasPrice - sale)}</span>}
         {err("salePrice") && <span className="mt-1 block text-xs text-red-300">{err("salePrice")}</span>}
       </label>
       <Submit />

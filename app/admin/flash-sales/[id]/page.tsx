@@ -45,7 +45,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
         <div className="min-w-0 space-y-5">
           {phase !== "ended" && (
             <Card title="Add a piece">
-              <AddItemForm key={items.length} eventId={event.id} items={options} />
+              <AddItemForm key={items.length} eventId={event.id} items={options} was={Object.fromEntries(all.map((p) => [p.id, Math.max(p.compareAtPrice ?? 0, p.price)]))} />
             </Card>
           )}
           <Card title={`Pieces on flash sale (${items.length})`}>
@@ -68,7 +68,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
                           <span className="block text-sm text-cream-dim">Deleted piece</span>
                         )}
                         {note && <span className="block text-xs text-gold-light/80">{note}</span>}
-                        <ItemControls eventId={event.id} itemId={i.id} salePrice={i.salePrice} regular={p?.price ?? i.salePrice} />
+                        <ItemControls eventId={event.id} itemId={i.id} salePrice={i.salePrice} current={p?.price ?? i.salePrice} was={Math.max(p?.compareAtPrice ?? 0, p?.price ?? i.salePrice)} />
                       </div>
                     </li>
                   );

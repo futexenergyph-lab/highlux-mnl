@@ -119,7 +119,7 @@ export async function addFlashItemAction(_prev: FlashFormState, form: FormData):
   const product = await (await getAdminRepo()).getProduct(v.productId);
   if (!product) return { error: "That piece no longer exists.", field: "productId" };
   if (product.status !== "available") return { error: "Only available pieces can join a flash sale.", field: "productId" };
-  if (v.salePrice >= product.price) return { error: `The sale price must be lower than the regular price (${formatPHP(product.price)}).`, field: "salePrice" };
+  if (v.salePrice >= product.price) return { error: `The flash price must be lower than its current selling price (${formatPHP(product.price)}).`, field: "salePrice" };
   // A piece can't be in two flash sales that run at the same time.
   const events = new Map((await repo.listEvents()).map((e) => [e.id, e]));
   const clash = (await repo.listItems()).find((i) => {
@@ -148,7 +148,7 @@ export async function updateFlashPriceAction(eventId: string, itemId: string, sa
   const item = (await repo.listItems(eventId)).find((i) => i.id === itemId);
   if (!item) return { error: "This piece is no longer in the flash sale." };
   const product = await (await getAdminRepo()).getProduct(item.productId);
-  if (product && parsed.data >= product.price) return { error: `Must be lower than the regular price (${formatPHP(product.price)}).` };
+  if (product && parsed.data >= product.price) return { error: `Must be lower than the current selling price (${formatPHP(product.price)}).` };
   try {
     await repo.setSalePrice(itemId, parsed.data);
   } catch {

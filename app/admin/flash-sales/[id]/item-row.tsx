@@ -7,7 +7,7 @@ import { inputCls } from "@/components/admin/ui";
 import { removeFlashItemAction, updateFlashPriceAction } from "../actions";
 
 /** Sale price box (saves on Save / Enter) and Remove for one piece in a flash sale. */
-export function ItemControls({ eventId, itemId, salePrice, regular }: { eventId: string; itemId: string; salePrice: number; regular: number }) {
+export function ItemControls({ eventId, itemId, salePrice, current, was }: { eventId: string; itemId: string; salePrice: number; current: number; was: number }) {
   const router = useRouter();
   const [value, setValue] = React.useState(String(salePrice));
   const [busy, setBusy] = React.useState<"save" | "remove" | null>(null);
@@ -32,7 +32,7 @@ export function ItemControls({ eventId, itemId, salePrice, regular }: { eventId:
     router.refresh();
   };
   const sale = Number(value);
-  const off = sale > 0 && sale < regular ? Math.round((1 - sale / regular) * 100) : 0;
+  const off = sale > 0 && sale < was ? Math.round((1 - sale / was) * 100) : 0;
 
   return (
     <div className="mt-2">
@@ -56,7 +56,8 @@ export function ItemControls({ eventId, itemId, salePrice, regular }: { eventId:
         </button>
       </div>
       <p className="mt-1 text-xs text-cream-dim">
-        Regular <span className="line-through">{formatPHP(regular)}</span>
+        Was <span className="line-through">{formatPHP(was)}</span>
+        {was !== current && <> · selling now {formatPHP(current)}</>}
         {off > 0 && <span className="text-gold-light"> · {off}% off</span>}
         {msg && <span className={msg.ok ? " text-green-300" : " text-red-300"}> · {msg.text}</span>}
       </p>
