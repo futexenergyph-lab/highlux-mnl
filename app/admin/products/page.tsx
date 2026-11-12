@@ -10,6 +10,8 @@ import { CONDITION_LABELS } from "@/lib/types";
 import { formatPHP } from "@/lib/utils";
 import { Badge, PageHeader, Tabs, btnGold, fmtDate, inputCls } from "@/components/admin/ui";
 import { StatusMenu } from "@/components/admin/status-menu";
+import { SortSelect } from "./sort-select";
+import { PRODUCT_SORTS } from "./sorts";
 import { duplicateGroups } from "@/lib/admin/duplicates";
 import type { Product } from "@/lib/types";
 
@@ -17,16 +19,22 @@ export const metadata = { title: "Products" };
 
 const TONE = { available: "green", reserved: "gold", sold: "muted", hidden: "red" } as const;
 
-export default async function ProductsPage({ searchParams }: { searchParams: { status?: string; q?: string; category?: string } }) {
+export default async function ProductsPage({ searchParams }: { searchParams: { status?: string; q?: string; category?: string; sort?: string } }) {
   await requireStaff("/admin/products");
   const [all, views] = await Promise.all([(async () => (await getAdminRepo()).listProducts())(), allProductViewCounts()]);
   const status = searchParams.status ?? "all";
   const q = searchParams.q?.trim() ?? "";
   // "curated" = featured on the homepage's Curated Picks row (and still for sale, like the homepage).
   const inTab = (p: (typeof all)[number], s: string) => (s === "all" ? true : s === "curated" ? p.featured && p.status !== "sold" && p.status !== "hidden" : p.status === s);
-  const list = all.filter(
-    (p) => inTab(p, status) && (!searchParams.category || p.category === searchParams.category) && (!q || matchesQuery(p, q)),
-  );
+  const sort = PRODUCT_SORTS.some(([k]) => k === searchParams.sort) ? searchParams.sort! : "newest";
+  const compare = (a: Product, b: Product) =>
+    sort === "price_desc" ? b.price - a.price || b.createdAt.localeCompare(a.createdAt)
+    : sort === "price_asc" ? a.price - b.price || b.createdAt.localeCompare(a.createdAt)
+    : sort === "oldest" ? a.createdAt.localeCompare(b.createdAt)
+    : b.createdAt.localeCompare(a.createdAt);
+  const list = all
+    .filter((p) => inTab(p, status) && (!searchParams.category || p.category === searchParams.category) && (!q || matchesQuery(p, q)))
+    .sort(compare);
   // Duplicates: groups of the same model (not sold), narrowed by the search and category like the other tabs.
   const groups = duplicateGroups(all);
   const shownGroups = groups.filter((g) => g.items.some((p) => (!searchParams.category || p.category === searchParams.category) && (!q || matchesQuery(p, q))));
@@ -40,6 +48,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
         <span className="block text-[0.6rem] uppercase tracking-[0.16em] text-gold">{p.brand}{p.featured && " · ★ Featured"}</span>
         <span className={`block text-sm text-cream hover:text-gold-light ${big ? "line-clamp-2" : "truncate"}`}>{p.title}</span>
         {big && <span className="block text-sm tabular-nums text-gold-light">{formatPHP(p.price)}</span>}
+        {!big && <span className="block text-sm tabular-nums text-gold-light sm:hidden">{formatPHP(p.price)}</span>}
         <span className="block text-xs text-cream-dim">{CONDITION_LABELS[p.condition]} · {p.images.length} photo{p.images.length === 1 ? "" : "s"} · added {fmtDate(p.createdAt)}</span>
         <span className="mt-0.5 flex items-center gap-1 text-xs tabular-nums text-gold-light/80"><Eye className="h-3.5 w-3.5" /> {(views.get(p.id) ?? 0).toLocaleString("en-PH")} view{views.get(p.id) === 1 ? "" : "s"}</span>
         {big && <span className="mt-1.5 block"><Badge tone={TONE[p.status]}>{p.status}</Badge></span>}
@@ -54,7 +63,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
       <StatusMenu product={{ id: p.id, title: p.title, status: p.status, category: p.category, slug: p.slug, description: p.description, images: p.images }} />
     </li>
   );
-  const qs = (s: string) => `/admin/products?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}${searchParams.category ? `&category=${searchParams.category}` : ""}`;
+  const qs = (s: string) => `/admin/products?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}${searchParams.category ? `&category=${searchParams.category}` : ""}${sort !== "newest" ? `&sort=${sort}` : ""}`;
 
   return (
     <>
@@ -62,6 +71,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
       <Tabs current={status} tabs={["all", "available", "curated", "duplicates", "reserved", "sold", "hidden"].map((s) => ({ key: s, label: s === "curated" ? "Curated Picks" : s, href: qs(s), count: count(s) }))} />
       <form className="mb-5 flex flex-col gap-2 sm:flex-row">
         <input type="hidden" name="status" value={status} />
+        {sort !== "newest" && <input type="hidden" name="sort" value={sort} />}
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cream-dim" />
           <input name="q" defaultValue={q} placeholder="Search brand, model…" className={`${inputCls} pl-9`} />
@@ -72,6 +82,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
         </select>
         <button className="h-10 border border-gold/40 px-4 text-xs uppercase tracking-wider text-cream hover:border-gold">Filter</button>
       </form>
+      {status !== "duplicates" && <SortSelect value={sort} />}
 
       {status === "duplicates" ? (
         shownGroups.length === 0 ? (
