@@ -104,7 +104,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
             </p>
           </Card>
           <Card title="Share">
-            <CopyLinkButton path="/flash-sale" label="Copy flash sale page link" />
+            <CopyLinkButton path={`/flash-sale?event=${event.id}`} label="Copy flash sale page link" />
             <p className="mt-2 text-xs text-cream-dim">Opens the Flash Sale page with a countdown and every piece on sale.</p>
           </Card>
           <Link href={`/admin/flash-sales/${event.id}/edit`} className="flex h-10 items-center justify-center border border-gold/40 text-xs uppercase tracking-wider text-cream hover:border-gold">{group ? "Edit title, times or group link" : "Edit title or times"}</Link>

@@ -2,7 +2,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
-import { Loader2, MoreVertical } from "lucide-react";
+import { Check, Loader2, MoreVertical } from "lucide-react";
+import { copyText } from "@/lib/client/clipboard";
 import { deleteFlashEventAction, purgeFlashEventAction, restoreFlashEventAction } from "./actions";
 
 const itemCls = "cursor-pointer px-4 py-2.5 text-sm text-cream outline-none data-[highlighted]:bg-gold/10 data-[highlighted]:text-gold-light";
@@ -13,6 +14,14 @@ export function FlashMenu({ id, title, pieces, deleted = false }: { id: string; 
   const [busy, setBusy] = React.useState(false);
   const [confirm, setConfirm] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [flash, setFlash] = React.useState<string | null>(null);
+  const share = async () => {
+    const path = `/flash-sale?event=${id}`;
+    fetch(path).catch(() => {}); // warm the page so the link preview loads fast
+    await copyText(["‼️ FLASH SALE ALERT‼️", "", title, "Comment “Mine” to grab the flash deal", "", `View all the items on our flash sale: ${window.location.origin}${path}`, "", "Grab it now!"].join("\n"));
+    setFlash("Copied");
+    setTimeout(() => setFlash(null), 2200);
+  };
   const restore = async () => {
     setBusy(true);
     const res = await restoreFlashEventAction(id);
@@ -23,6 +32,7 @@ export function FlashMenu({ id, title, pieces, deleted = false }: { id: string; 
 
   return (
     <div className="relative shrink-0">
+      {flash && <span className="absolute bottom-full right-0 z-10 mb-1 flex items-center gap-1 whitespace-nowrap border border-gold/40 bg-ink px-2 py-1 text-[0.65rem] text-gold-light"><Check className="h-3 w-3" /> {flash}</span>}
       <Dropdown.Root>
         <Dropdown.Trigger className="p-2 text-cream-muted hover:text-cream" aria-label="Flash sale actions">
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
@@ -32,7 +42,10 @@ export function FlashMenu({ id, title, pieces, deleted = false }: { id: string; 
             {deleted ? (
               <Dropdown.Item onSelect={restore} className={itemCls}>Restore</Dropdown.Item>
             ) : (
-              <Dropdown.Item onSelect={() => router.push(`/admin/flash-sales/${id}/edit`)} className={itemCls}>Edit</Dropdown.Item>
+              <>
+                <Dropdown.Item onSelect={() => router.push(`/admin/flash-sales/${id}/edit`)} className={itemCls}>Edit</Dropdown.Item>
+                <Dropdown.Item onSelect={share} className={itemCls}>Share event link listing</Dropdown.Item>
+              </>
             )}
             <Dropdown.Separator className="my-1 h-px bg-gold/15" />
             <Dropdown.Item onSelect={() => setConfirm(true)} className={`${itemCls} !text-red-400 data-[highlighted]:bg-red-500/10`}>{deleted ? "Delete forever" : "Delete flash sale event"}</Dropdown.Item>

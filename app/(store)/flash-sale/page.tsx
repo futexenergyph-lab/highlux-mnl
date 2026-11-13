@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Zap } from "lucide-react";
 import { listPublicFlashSales } from "@/lib/flash/public";
 import { ProductCard } from "@/components/product/product-card";
@@ -8,8 +9,11 @@ import { formatPHP } from "@/lib/utils";
 export const metadata: Metadata = { title: "Flash Sale Deals", description: "Limited-time prices on authentic pre-loved luxury — bags, watches, jewelry and more. Only while the timer runs." };
 export const dynamic = "force-dynamic";
 
-export default async function FlashSalePage() {
-  const sales = await listPublicFlashSales();
+export default async function FlashSalePage({ searchParams }: { searchParams: { event?: string } }) {
+  const all = await listPublicFlashSales();
+  // A shared event link (?event=…) shows just that sale; if it has ended, every running sale shows instead.
+  const picked = searchParams.event ? all.filter((s) => s.event.id === searchParams.event) : [];
+  const sales = picked.length ? picked : all;
   const serverNow = new Date().toISOString();
   const when = (iso: string) => new Date(iso).toLocaleString("en-PH", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" });
   return (
@@ -17,6 +21,9 @@ export default async function FlashSalePage() {
       <p className="eyebrow text-gold">Limited time only</p>
       <h1 className="mt-2 font-serif text-4xl text-cream">Flash Sale Deals</h1>
       <p className="mt-2 max-w-xl text-sm text-cream-muted">Special prices on selected authentic pieces, only while the timer runs. Each piece is one of a kind — first to check out gets it.</p>
+      {picked.length > 0 && all.length > 1 && (
+        <Link href="/flash-sale" className="mt-4 inline-block text-xs uppercase tracking-wider text-gold-light underline-offset-4 hover:underline">See all flash sales</Link>
+      )}
       {sales.length === 0 && (
         <div className="mt-10 border border-gold/15 p-12 text-center text-sm text-cream-muted">
           <Zap className="mx-auto mb-3 h-8 w-8 text-gold/60" strokeWidth={1.2} />
@@ -26,7 +33,7 @@ export default async function FlashSalePage() {
       {sales.map(({ event, phase, items }) => {
         const group = event.kind === "group";
         return (
-        <section key={event.id} className="mt-10">
+        <section key={event.id} id={`event-${event.id}`} className="mt-10">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-gold/20 pb-3">
             <div>
               <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-gold">{phase === "live" ? "On now" : "Coming soon"}{group && " · Group flash sale"}</p>
