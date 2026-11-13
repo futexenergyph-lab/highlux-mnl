@@ -8,7 +8,7 @@ export interface PublicFlashEvent {
   event: FlashEvent;
   phase: FlashPhase;
   /** salePrice = the sale price (website) or the Mine price (group). */
-  items: { product: Product; salePrice: number; stealPrice: number | null }[];
+  items: { product: Product; salePrice: number; stealPrice: number | null; itemNo: number }[];
 }
 
 /** Running and upcoming flash sales with their pieces: running first, then upcoming, soonest first. */
@@ -25,10 +25,11 @@ export async function listPublicFlashSales(): Promise<PublicFlashEvent[]> {
       event,
       phase,
       items: items
-        .filter((i) => i.eventId === event.id && byId.has(i.productId))
-        .map((i) => ({ product: byId.get(i.productId)!, salePrice: i.salePrice, stealPrice: i.stealPrice }))
-        // Pieces still for sale first.
-        .sort((a, b) => Number(a.product.status === "sold") - Number(b.product.status === "sold")),
+        // Item # follows the order pieces were added (same as admin), counted before hidden pieces are dropped.
+        .filter((i) => i.eventId === event.id)
+        .map((i, n) => ({ i, itemNo: n + 1 }))
+        .filter(({ i }) => byId.has(i.productId))
+        .map(({ i, itemNo }) => ({ product: byId.get(i.productId)!, salePrice: i.salePrice, stealPrice: i.stealPrice, itemNo })),
     }));
 }
 

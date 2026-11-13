@@ -16,6 +16,36 @@ import { ItemControls } from "./item-row";
 export const metadata = { title: "Flash sale" };
 export const dynamic = "force-dynamic";
 
+const when = (iso: string) => new Date(iso).toLocaleString("en-PH", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" });
+
+/** The post shared to the group chat for one piece. {LINK} is filled in by the browser. */
+function sharePost(e: { title: string; startsAt: string; endsAt: string; kind: string }, itemNo: number, title: string, mine: number, steal: number | null) {
+  const group = e.kind === "group";
+  return [
+    e.title,
+    "",
+    `🏷 Item #: ${itemNo}`,
+    title,
+    "",
+    "Click the link below to view the actual photos and complete description of the item.",
+    "",
+    "🔗 Listing Link: {LINK}",
+    "",
+    "‼️FLASH SALE‼️",
+    "",
+    ...(group ? [`🔴 Mine: ${formatPHP(mine)}`, `🔵 Steal: ${steal ? formatPHP(steal) : ""}`, "", "📌 Commenting steal price means sold!"] : [`🔴 Flash Sale Price: ${formatPHP(mine)}`]),
+    "",
+    "🗓️ Flash Sale Schedule",
+    "",
+    `🟢 Starts: ${when(e.startsAt)}`,
+    `🔴 Ends: ${when(e.endsAt)}`,
+    "",
+    "📢 IMPORTANT REMINDER",
+    "",
+    "Once we received the payment, we can deliver the item same day.",
+  ].join("\n");
+}
+
 const STATUS_NOTE = { available: null, reserved: "On hold / in checkout", sold: "Sold", hidden: "Hidden from site" } as const;
 
 export default async function FlashSaleEventPage({ params, searchParams }: { params: { id: string }; searchParams: { created?: string; added?: string; updated?: string } }) {
@@ -60,7 +90,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
               <p className="text-sm text-cream-muted">No pieces yet.</p>
             ) : (
               <ul className="-mx-2 divide-y divide-gold/10">
-                {items.map((i) => {
+                {items.map((i, n) => {
                   const p = products.get(i.productId);
                   const note = p ? STATUS_NOTE[p.status] : "Deleted piece";
                   return (
@@ -69,13 +99,16 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
                         {p?.images[0] && <Image src={p.images[0].url} alt="" fill sizes="64px" unoptimized className="object-cover" />}
                       </span>
                       <div className="min-w-0 flex-1">
+                        <span className="block text-[0.65rem] font-bold uppercase tracking-wider text-gold">Item #{n + 1}</span>
                         {p ? (
                           <Link href={`/admin/products/${p.id}`} className="block truncate text-sm text-cream hover:text-gold-light">{p.title}</Link>
                         ) : (
                           <span className="block text-sm text-cream-dim">Deleted piece</span>
                         )}
                         {note && <span className="block text-xs text-gold-light/80">{note}</span>}
-                        <ItemControls eventId={event.id} itemId={i.id} title={p?.title ?? "Deleted piece"} salePrice={i.salePrice} stealPrice={i.stealPrice} group={group} current={p?.price ?? i.salePrice} was={Math.max(p?.compareAtPrice ?? 0, p?.price ?? i.salePrice)} />
+                        <ItemControls
+                          share={p ? { path: `/${p.category}/${p.slug}`, text: sharePost(event, n + 1, p.title, i.salePrice, i.stealPrice) } : undefined}
+                          eventId={event.id} itemId={i.id} title={p?.title ?? "Deleted piece"} salePrice={i.salePrice} stealPrice={i.stealPrice} group={group} current={p?.price ?? i.salePrice} was={Math.max(p?.compareAtPrice ?? 0, p?.price ?? i.salePrice)} />
                       </div>
                     </li>
                   );

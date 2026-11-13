@@ -57,8 +57,9 @@ export default async function FlashSalePage({ searchParams }: { searchParams: { 
             <p className="mt-4 text-sm text-cream-muted">Pieces will be announced soon.</p>
           ) : (
             <ul className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-              {items.map(({ product, salePrice }) => (
+              {items.map(({ product, salePrice, itemNo }) => (
                 <li key={product.id} className="min-w-0">
+                  <p className="mb-1.5 text-center text-[0.65rem] font-bold uppercase tracking-[0.18em] text-gold">Item #{itemNo}</p>
                   <ProductCard product={product} />
                   {!group && phase === "scheduled" && product.status !== "sold" && (
                     <p className="mt-1 text-center text-xs font-bold text-gold-light">Flash price {formatPHP(salePrice)} from {when(event.startsAt)}</p>
