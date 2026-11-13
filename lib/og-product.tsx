@@ -17,6 +17,9 @@ export async function renderProductCard(category: string, slug: string, auction?
   const fonts = await ogFonts();
   const photo = await ogImageSrc(p?.images[0]?.url);
   const sold = p?.status === "sold";
+  // Flash sales: a "FLASH SALE" tag; group sales show only the was price and the Mine price.
+  const group = !auction && !sold && p?.groupSale ? p.groupSale : null;
+  const flash = !auction && !sold && (group || p?.flashSale);
   const seal = `data:image/png;base64,${(await readFile(join(process.cwd(), "public/brand/authenticity-seal.png"))).toString("base64")}`;
 
   return new ImageResponse(
@@ -25,6 +28,7 @@ export async function renderProductCard(category: string, slug: string, auction?
         <div style={{ width: 630, height: 630, display: "flex", position: "relative", background: "#1a1611" }}>
           {photo && <img src={photo} width={630} height={630} style={{ objectFit: "cover", opacity: sold ? 0.6 : 1 }} alt="" />}
           {sold && <div style={{ position: "absolute", top: 32, left: 32, background: CREAM, color: INK, padding: "10px 22px", fontSize: 26, letterSpacing: 6 }}>SOLD</div>}
+          {flash && <div style={{ position: "absolute", top: 32, left: 32, background: GOLD_LIGHT, color: INK, padding: "10px 22px", fontSize: 28, letterSpacing: 6 }}>FLASH SALE</div>}
         </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "56px 56px 48px", borderLeft: `2px solid ${GOLD}` }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
@@ -44,7 +48,21 @@ export async function renderProductCard(category: string, slug: string, auction?
                 <div style={{ marginTop: 6, fontSize: 50, color: CREAM }}>{formatPHP(p.compareAtPrice ?? p.price)}</div>
               </div>
             )}
-            {p && !auction && (
+            {p && group && (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ fontSize: 18, letterSpacing: 4, color: GOLD }}>FLASH SALE</div>
+                <div style={{ marginTop: 8, display: "flex", alignItems: "baseline" }}>
+                  <div style={{ fontSize: 20, letterSpacing: 3, color: "#8f8676" }}>WAS</div>
+                  <div style={{ marginLeft: 12, fontSize: 30, color: "#8f8676", textDecoration: "line-through" }}>{formatPHP(group.was)}</div>
+                </div>
+                <div style={{ marginTop: 4, display: "flex", alignItems: "baseline" }}>
+                  <div style={{ fontSize: 22, letterSpacing: 3, color: GOLD_LIGHT }}>MINE</div>
+                  <div style={{ marginLeft: 14, fontSize: 54, color: GOLD_LIGHT }}>{formatPHP(group.mine)}</div>
+                </div>
+              </div>
+            )}
+            {p && !auction && !group && flash && <div style={{ fontSize: 18, letterSpacing: 4, color: GOLD, marginBottom: 6 }}>FLASH SALE</div>}
+            {p && !auction && !group && (
               <div style={{ display: "flex", alignItems: "baseline" }}>
                 <div style={{ fontSize: 50, color: sold ? "#8f8676" : GOLD_LIGHT, textDecoration: sold ? "line-through" : "none" }}>{formatPHP(p.price)}</div>
                 {p.compareAtPrice && !sold && <div style={{ marginLeft: 18, fontSize: 26, color: "#8f8676", textDecoration: "line-through" }}>{formatPHP(p.compareAtPrice)}</div>}

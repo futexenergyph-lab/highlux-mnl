@@ -41,12 +41,16 @@ async function load(params: Params) {
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const p = await load(params);
   if (!p) return {};
-  const description = `${p.status === "sold" ? "SOLD — " : ""}${p.title} in ${CONDITION_LABELS[p.condition]} condition. ${formatPHP(p.price)}. 100% authentic, nationwide shipping from Manila.`;
+  // Group flash sale pieces never show the shop price: only was price and Mine/Steal.
+  const g = p.status !== "sold" ? p.groupSale : null;
+  const flash = p.status !== "sold" && (g || p.flashSale);
+  const priceText = g ? `FLASH SALE — Was ${formatPHP(g.was)}, Mine ${formatPHP(g.mine)}${g.steal ? `, Steal ${formatPHP(g.steal)}` : ""}` : `${flash ? "FLASH SALE — " : ""}${formatPHP(p.price)}`;
+  const description = `${p.status === "sold" ? "SOLD — " : ""}${p.title} in ${CONDITION_LABELS[p.condition]} condition. ${priceText}. 100% authentic, nationwide shipping from Manila.`;
   return {
     title: p.title,
     description,
     alternates: { canonical: productHref(p) },
-    openGraph: { title: `${p.title} — ${formatPHP(p.price)}`, description, url: productHref(p), type: "website" },
+    openGraph: { title: g ? `⚡ FLASH SALE · ${p.title} — Mine ${formatPHP(g.mine)}` : `${flash ? "⚡ FLASH SALE · " : ""}${p.title} — ${formatPHP(p.price)}`, description, url: productHref(p), type: "website" },
     twitter: { card: "summary_large_image" },
   };
 }
