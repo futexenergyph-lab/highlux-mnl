@@ -10,7 +10,7 @@ import { formatPHP } from "@/lib/utils";
 import { Badge, Card, PageHeader, fmtDateTime } from "@/components/admin/ui";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { AddItemForm } from "./add-item-form";
-import { DeleteFlashButton } from "./delete-button";
+import { DeleteFlashButton, RestoreButton } from "./delete-button";
 import { ItemControls } from "./item-row";
 
 export const metadata = { title: "Flash sale" };
@@ -38,13 +38,19 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
     <>
       <Link href="/admin/flash-sales" className="mb-4 inline-flex items-center gap-1 text-xs uppercase tracking-wider text-cream-muted hover:text-gold-light"><ArrowLeft className="h-3.5 w-3.5" /> Flash Sale Deals</Link>
       <PageHeader title={event.title} titleAddon={<Badge tone={FLASH_TONE[phase]}>{FLASH_LABEL[phase]}</Badge>} description={`${FLASH_KIND_LABEL[event.kind]} · ${fmtDateTime(event.startsAt)} – ${fmtDateTime(event.endsAt)}`} />
+      {event.deletedAt && (
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-100">
+          <span>This flash sale is deleted — it doesn&rsquo;t show on the site.</span>
+          <RestoreButton id={event.id} />
+        </div>
+      )}
       {searchParams.created && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Flash sale created. Now add the pieces and their sale prices.</p>}
       {searchParams.updated && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Flash sale updated.</p>}
       {searchParams.added && <p role="status" className="mb-5 border border-gold/40 bg-gold/[0.06] p-3 text-sm text-cream">Piece added to the flash sale.</p>}
 
       <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
-          {phase !== "ended" && (
+          {phase !== "ended" && !event.deletedAt && (
             <Card title="Add a piece">
               <AddItemForm key={items.length} eventId={event.id} items={options} was={Object.fromEntries(all.map((p) => [p.id, Math.max(p.compareAtPrice ?? 0, p.price)]))} group={group} />
             </Card>
@@ -102,7 +108,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
             <p className="mt-2 text-xs text-cream-dim">Opens the Flash Sale page with a countdown and every piece on sale.</p>
           </Card>
           <Link href={`/admin/flash-sales/${event.id}/edit`} className="flex h-10 items-center justify-center border border-gold/40 text-xs uppercase tracking-wider text-cream hover:border-gold">{group ? "Edit title, times or group link" : "Edit title or times"}</Link>
-          <DeleteFlashButton id={event.id} title={event.title} />
+          {!event.deletedAt && <DeleteFlashButton id={event.id} title={event.title} />}
         </div>
       </div>
     </>

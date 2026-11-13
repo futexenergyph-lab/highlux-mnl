@@ -17,6 +17,7 @@ export async function listPublicFlashSales(): Promise<PublicFlashEvent[]> {
   const [events, items, catalog] = await Promise.all([repo.listEvents().catch(() => []), repo.listItems().catch(() => []), getCatalog()]);
   const byId = new Map(catalog.map((p) => [p.id, p]));
   return events
+    .filter((event) => !event.deletedAt)
     .map((event) => ({ event, phase: flashPhase(event) }))
     .filter((e) => e.phase !== "ended")
     .sort((x, y) => Number(y.phase === "live") - Number(x.phase === "live") || x.event.startsAt.localeCompare(y.event.startsAt))

@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { FlashInput, FlashRepo } from "./repo";
 import type { FlashEvent, FlashItem, FlashWindow } from "./types";
 
-const mapEvent = (e: any): FlashEvent => ({ id: e.id, title: e.title, kind: e.kind ?? "website", groupLink: e.group_link ?? null, startsAt: e.starts_at, endsAt: e.ends_at, createdAt: e.created_at });
+const mapEvent = (e: any): FlashEvent => ({ id: e.id, title: e.title, kind: e.kind ?? "website", groupLink: e.group_link ?? null, deletedAt: e.deleted_at ?? null, startsAt: e.starts_at, endsAt: e.ends_at, createdAt: e.created_at });
 const mapItem = (i: any): FlashItem => ({ id: i.id, eventId: i.event_id, productId: i.product_id, salePrice: Number(i.sale_price), stealPrice: i.steal_price == null ? null : Number(i.steal_price), createdAt: i.created_at });
 
 /** Website sales only need the base columns, so they still save before the group flash sale SQL is run. */
@@ -32,6 +32,14 @@ export class SupabaseFlashRepo implements FlashRepo {
     if (error) throw error;
   }
   async deleteEvent(id: string) {
+    const { error } = await this.db.from("flash_sale_events").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    if (error) throw new Error("DELETED_SQL");
+  }
+  async restoreEvent(id: string) {
+    const { error } = await this.db.from("flash_sale_events").update({ deleted_at: null }).eq("id", id);
+    if (error) throw error;
+  }
+  async purgeEvent(id: string) {
     const { error } = await this.db.from("flash_sale_events").delete().eq("id", id);
     if (error) throw error;
   }
@@ -62,7 +70,7 @@ export class SupabaseFlashRepo implements FlashRepo {
       .select("*, event:flash_sale_events!inner(*)")
       .gt("event.ends_at", new Date().toISOString());
     if (error) throw error;
-    return (data ?? []).map((r: any) => ({
+    return (data ?? []).filter((r: any) => !r.event.deleted_at).map((r: any) => ({
       productId: r.product_id,
       salePrice: Number(r.sale_price),
       stealPrice: r.steal_price == null ? null : Number(r.steal_price),

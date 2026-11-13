@@ -16,8 +16,11 @@ export interface FlashRepo {
   getEvent(id: string): Promise<FlashEvent | null>;
   createEvent(e: FlashInput): Promise<FlashEvent>;
   updateEvent(id: string, e: FlashInput): Promise<void>;
-  /** Removes the event and its pieces; their regular prices come back at once. */
+  /** Moves the event to the Deleted tab; its pieces' regular prices come back at once. */
   deleteEvent(id: string): Promise<void>;
+  restoreEvent(id: string): Promise<void>;
+  /** Removes the event and its pieces for good. */
+  purgeEvent(id: string): Promise<void>;
   listItems(eventId?: string): Promise<FlashItem[]>;
   addItem(eventId: string, productId: string, salePrice: number, stealPrice?: number | null): Promise<FlashItem>;
   setSalePrice(itemId: string, salePrice: number, stealPrice?: number | null): Promise<void>;

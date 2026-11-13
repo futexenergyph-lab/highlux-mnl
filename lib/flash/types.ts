@@ -9,6 +9,8 @@ export interface FlashEvent {
   kind: FlashKind;
   /** Group flash sales: link to join the group (Viber, Messenger…), shown as "Join group". */
   groupLink: string | null;
+  /** Set when deleted: the event sits in the Deleted tab (no sale prices) until restored or deleted for good. */
+  deletedAt: string | null;
   startsAt: string;
   endsAt: string;
   createdAt: string;

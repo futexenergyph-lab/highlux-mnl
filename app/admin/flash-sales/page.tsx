@@ -4,17 +4,20 @@ import { requireStaff } from "@/lib/admin/auth";
 import { FlashMenu } from "./flash-menu";
 import { getFlashRepo } from "@/lib/flash/repo";
 import { FLASH_LABEL, FLASH_TONE, flashPhase, type FlashPhase } from "@/lib/flash/types";
-import { Badge, PageHeader, btnGold, btnOutline, fmtDateTime } from "@/components/admin/ui";
+import { Badge, PageHeader, Tabs, btnGold, btnOutline, fmtDateTime } from "@/components/admin/ui";
 
 export const metadata = { title: "Flash Sale Deals" };
 export const dynamic = "force-dynamic";
 
-export default async function FlashSalesPage() {
+export default async function FlashSalesPage({ searchParams }: { searchParams: { tab?: string } }) {
   await requireStaff("/admin/flash-sales");
   const repo = await getFlashRepo();
   const [events, items] = await Promise.all([repo.listEvents().catch(() => null), repo.listItems().catch(() => [])]);
   const order: Record<FlashPhase, number> = { live: 0, scheduled: 1, ended: 2 };
+  const tab = searchParams.tab === "deleted" ? "deleted" : "active";
+  const deletedCount = (events ?? []).filter((e) => e.deletedAt).length;
   const rows = (events ?? [])
+    .filter((e) => (tab === "deleted" ? !!e.deletedAt : !e.deletedAt))
     .map((e) => ({ e, phase: flashPhase(e), n: items.filter((i) => i.eventId === e.id).length }))
     .sort((a, b) => order[a.phase] - order[b.phase] || (a.phase === "ended" ? b.e.endsAt.localeCompare(a.e.endsAt) : a.e.startsAt.localeCompare(b.e.startsAt)));
 
@@ -33,7 +36,17 @@ export default async function FlashSalesPage() {
       {events === null && (
         <p className="mb-5 border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">Flash sales need a one-time database update — run <code>supabase/migrations/20261111000018_flash_sales.sql</code> in the Supabase SQL Editor.</p>
       )}
-      {rows.length === 0 ? (
+      <Tabs
+        current={tab}
+        tabs={[
+          { key: "active", label: "Flash sales", href: "/admin/flash-sales", count: (events ?? []).length - deletedCount },
+          { key: "deleted", label: "Deleted", href: "/admin/flash-sales?tab=deleted", count: deletedCount },
+        ]}
+      />
+      {tab === "deleted" && rows.length > 0 && <p className="mb-3 text-xs text-cream-dim">Deleted flash sales don&rsquo;t show on the site. Tap ⋮ → Restore to bring one back with its pieces and prices.</p>}
+      {rows.length === 0 && tab === "deleted" ? (
+        <p className="border border-gold/15 p-10 text-center text-sm text-cream-muted">Nothing deleted. When you delete a flash sale it waits here so you can restore it.</p>
+      ) : rows.length === 0 ? (
         <div className="border border-gold/15 p-10 text-center text-sm text-cream-muted">
           <Zap className="mx-auto mb-3 h-8 w-8 text-gold/60" strokeWidth={1.2} />
           No flash sales yet. Tap <span className="text-gold-light">Website flash sale</span> or <span className="text-gold-light">Group flash sale</span> to set one up.
@@ -48,9 +61,9 @@ export default async function FlashSalesPage() {
                   <span className="block truncate text-sm text-cream">{e.title}</span>
                   <span className="block text-xs text-cream-dim">{e.kind === "group" ? "Group" : "Website"} · {fmtDateTime(e.startsAt)} – {fmtDateTime(e.endsAt)} · {n} piece{n === 1 ? "" : "s"}</span>
                 </span>
-                <Badge tone={FLASH_TONE[phase]}>{FLASH_LABEL[phase]}</Badge>
+                {e.deletedAt ? <Badge tone="red">Deleted</Badge> : <Badge tone={FLASH_TONE[phase]}>{FLASH_LABEL[phase]}</Badge>}
               </Link>
-              <FlashMenu id={e.id} title={e.title} pieces={n} />
+              <FlashMenu id={e.id} title={e.title} pieces={n} deleted={!!e.deletedAt} />
             </li>
           ))}
         </ul>

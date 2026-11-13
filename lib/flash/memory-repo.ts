@@ -12,7 +12,7 @@ export function memoryFlashWindows(): FlashWindow[] {
   const now = Date.now();
   return items().flatMap((i) => {
     const e = events().find((x) => x.id === i.eventId);
-    return e && Date.parse(e.endsAt) > now ? [{ productId: i.productId, salePrice: i.salePrice, stealPrice: i.stealPrice, kind: e.kind, groupLink: e.groupLink, title: e.title, eventId: e.id, startsAt: e.startsAt, endsAt: e.endsAt }] : [];
+    return e && !e.deletedAt && Date.parse(e.endsAt) > now ? [{ productId: i.productId, salePrice: i.salePrice, stealPrice: i.stealPrice, kind: e.kind, groupLink: e.groupLink, title: e.title, eventId: e.id, startsAt: e.startsAt, endsAt: e.endsAt }] : [];
   });
 }
 
@@ -25,7 +25,7 @@ export class MemoryFlashRepo implements FlashRepo {
     return e ? { ...e } : null;
   }
   async createEvent(e: FlashInput) {
-    const ev: FlashEvent = { id: randomUUID(), ...e, createdAt: new Date().toISOString() };
+    const ev: FlashEvent = { id: randomUUID(), ...e, deletedAt: null, createdAt: new Date().toISOString() };
     events().push(ev);
     return { ...ev };
   }
@@ -34,6 +34,14 @@ export class MemoryFlashRepo implements FlashRepo {
     if (ev) Object.assign(ev, e);
   }
   async deleteEvent(id: string) {
+    const ev = events().find((x) => x.id === id);
+    if (ev) ev.deletedAt = new Date().toISOString();
+  }
+  async restoreEvent(id: string) {
+    const ev = events().find((x) => x.id === id);
+    if (ev) ev.deletedAt = null;
+  }
+  async purgeEvent(id: string) {
     g.__highluxFlashEvents = events().filter((x) => x.id !== id);
     g.__highluxFlashItems = items().filter((x) => x.eventId !== id);
   }

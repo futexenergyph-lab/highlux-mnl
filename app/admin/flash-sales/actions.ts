@@ -108,6 +108,35 @@ export async function deleteFlashEventAction(id: string): Promise<{ error?: stri
   const productIds = (await repo.listItems(id)).map((i) => i.productId);
   try {
     await repo.deleteEvent(id);
+  } catch (e) {
+    if ((e as Error).message === "DELETED_SQL") return { error: "Deleting needs a one-time database update — run the flash sale restore SQL in Supabase first." };
+    return { error: "Couldn't delete the flash sale — try again." };
+  }
+  await refresh(id, productIds);
+  return {};
+}
+
+export async function restoreFlashEventAction(id: string): Promise<{ error?: string }> {
+  const denied = await staff();
+  if (denied) return { error: denied };
+  const repo = await getFlashRepo();
+  try {
+    await repo.restoreEvent(id);
+  } catch {
+    return { error: "Couldn't restore the flash sale — try again." };
+  }
+  await refresh(id, (await repo.listItems(id)).map((i) => i.productId));
+  return {};
+}
+
+/** Only from the Deleted tab: removes the event and its pieces for good. */
+export async function purgeFlashEventAction(id: string): Promise<{ error?: string }> {
+  const denied = await staff();
+  if (denied) return { error: denied };
+  const repo = await getFlashRepo();
+  const productIds = (await repo.listItems(id)).map((i) => i.productId);
+  try {
+    await repo.purgeEvent(id);
   } catch {
     return { error: "Couldn't delete the flash sale — try again." };
   }
@@ -142,7 +171,7 @@ export async function addFlashItemAction(_prev: FlashFormState, form: FormData):
   const clash = (await repo.listItems()).find((i) => {
     if (i.productId !== v.productId || i.eventId === v.eventId) return false;
     const e = events.get(i.eventId);
-    return e && Date.parse(e.startsAt) < Date.parse(event.endsAt) && Date.parse(event.startsAt) < Date.parse(e.endsAt);
+    return e && !e.deletedAt && Date.parse(e.startsAt) < Date.parse(event.endsAt) && Date.parse(event.startsAt) < Date.parse(e.endsAt);
   });
   if (clash) return { error: `This piece is already in “${events.get(clash.eventId)?.title}” at the same time.`, field: "productId" };
   try {
