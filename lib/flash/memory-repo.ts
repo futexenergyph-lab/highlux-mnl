@@ -16,6 +16,18 @@ export function memoryFlashWindows(): FlashWindow[] {
   });
 }
 
+/** Ids of the pieces (flash sale items) for a product whose sale is upcoming or running (demo view counter). */
+export function memoryOpenFlashItemIds(productId: string): string[] {
+  const now = Date.now();
+  return items()
+    .filter((i) => i.productId === productId)
+    .filter((i) => {
+      const e = events().find((x) => x.id === i.eventId);
+      return e && !e.deletedAt && Date.parse(e.endsAt) > now;
+    })
+    .map((i) => i.id);
+}
+
 export class MemoryFlashRepo implements FlashRepo {
   async listEvents() {
     return [...events()].sort((a, b) => b.startsAt.localeCompare(a.startsAt)).map((e) => ({ ...e }));

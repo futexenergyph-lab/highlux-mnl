@@ -68,6 +68,7 @@ See `.env.example`. Variables are grouped by the phase that first needs them.
    - `20261111000018_flash_sales.sql`: Flash Sale Deals (sale events, pieces with sale prices; checkout charges the sale price while it runs)
    - `20261113000019_group_flash_sales.sql`: Group flash sales (Mine/Steal prices, group link; site price unchanged)
    - `20261113000020_flash_sale_restore.sql`: deleted flash sales go to a Deleted tab and can be restored
+   - `20261113000021_flash_views.sql`: link-open counter per flash sale piece
 4. Make yourself an admin after signing up:
    ```sql
    update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');

@@ -6,13 +6,31 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const g = globalThis as unknown as { __highluxViews?: Map<string, number> };
 const memory = () => (g.__highluxViews ??= new Map());
 
+const gF = globalThis as unknown as { __highluxFlashViews?: Map<string, number> };
+const flashMemory = () => (gF.__highluxFlashViews ??= new Map());
+
 export async function recordProductView(id: string) {
   if (!isSupabaseConfigured()) {
     memory().set(id, (memory().get(id) ?? 0) + 1);
+    const { memoryOpenFlashItemIds } = await import("@/lib/flash/memory-repo");
+    for (const itemId of memoryOpenFlashItemIds(id)) flashMemory().set(itemId, (flashMemory().get(itemId) ?? 0) + 1);
     return;
   }
   // Errors (e.g. the views migration not run yet) must never break a product page.
-  await createAdminClient().rpc("increment_product_view", { p_id: id }).then(() => undefined, () => undefined);
+  const db = createAdminClient();
+  await Promise.all([
+    db.rpc("increment_product_view", { p_id: id }).then(() => undefined, () => undefined),
+    // Also counts as a link open for the piece's upcoming/running flash sale, if it's in one.
+    db.rpc("increment_flash_views", { p_product: id }).then(() => undefined, () => undefined),
+  ]);
+}
+
+/** flash sale item id → link opens while its sale was upcoming or running. Empty if the SQL hasn't been run. */
+export async function flashViewCounts(): Promise<Map<string, number>> {
+  if (!isSupabaseConfigured()) return new Map(flashMemory());
+  const { data, error } = await createAdminClient().from("flash_sale_items").select("id, view_count").limit(5000);
+  if (error || !data) return new Map();
+  return new Map(data.map((r: { id: string; view_count: number | null }) => [r.id, r.view_count ?? 0]));
 }
 
 /** product id → views. Empty if the view_count column doesn't exist yet. */

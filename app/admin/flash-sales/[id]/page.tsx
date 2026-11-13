@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
 import { getFlashRepo } from "@/lib/flash/repo";
+import { flashViewCounts } from "@/lib/product-views";
 import { FLASH_KIND_LABEL, FLASH_LABEL, FLASH_TONE, flashPhase } from "@/lib/flash/types";
 import { formatPHP } from "@/lib/utils";
 import { Badge, Card, PageHeader, fmtDateTime } from "@/components/admin/ui";
@@ -53,7 +54,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
   const repo = await getFlashRepo();
   const event = await repo.getEvent(params.id).catch(() => null);
   if (!event) notFound();
-  const [items, all] = await Promise.all([repo.listItems(event.id), (await getAdminRepo()).listProducts()]);
+  const [items, all, opens] = await Promise.all([repo.listItems(event.id), (await getAdminRepo()).listProducts(), flashViewCounts()]);
   const products = new Map(all.map((p) => [p.id, p]));
   const inSale = new Set(items.map((i) => i.productId));
   const options = all
@@ -106,6 +107,9 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
                           <span className="block text-sm text-cream-dim">Deleted piece</span>
                         )}
                         {note && <span className="block text-xs text-gold-light/80">{note}</span>}
+                        <span className="mt-0.5 flex items-center gap-1 text-xs tabular-nums text-gold-light/80">
+                          <Eye className="h-3.5 w-3.5" /> {(opens.get(i.id) ?? 0).toLocaleString("en-PH")} link open{opens.get(i.id) === 1 ? "" : "s"}
+                        </span>
                         <ItemControls
                           share={p ? { path: `/${p.category}/${p.slug}`, text: sharePost(event, n + 1, p.title, i.salePrice, i.stealPrice) } : undefined}
                           eventId={event.id} itemId={i.id} title={p?.title ?? "Deleted piece"} salePrice={i.salePrice} stealPrice={i.stealPrice} group={group} current={p?.price ?? i.salePrice} was={Math.max(p?.compareAtPrice ?? 0, p?.price ?? i.salePrice)} />
@@ -125,6 +129,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Starts</dt><dd className="text-right text-cream">{fmtDateTime(event.startsAt)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Ends</dt><dd className="text-right text-cream">{fmtDateTime(event.endsAt)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">Pieces</dt><dd className="text-cream">{items.length}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-cream-dim">Link opens (all items)</dt><dd className="tabular-nums text-cream">{items.reduce((s, i) => s + (opens.get(i.id) ?? 0), 0).toLocaleString("en-PH")}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-cream-dim">{group ? "Total at Mine prices" : "Total at sale prices"}</dt><dd className="tabular-nums text-gold-light">{formatPHP(total)}</dd></div>
               {group && (
                 <div className="flex justify-between gap-3"><dt className="shrink-0 text-cream-dim">Group link</dt><dd className="min-w-0 truncate text-right">{event.groupLink ? <a href={event.groupLink} target="_blank" rel="noopener noreferrer" className="text-gold-light underline">{event.groupLink.replace(/^https?:\/\//, "")}</a> : <span className="text-red-300">Not set — Edit to add it</span>}</dd></div>
