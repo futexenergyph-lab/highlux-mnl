@@ -75,7 +75,13 @@ const fetchCatalog = unstable_cache(
 export const getCatalog = cache(async (): Promise<Product[]> => {
   const [products, windows] = await Promise.all([getBaseCatalog(), flashWindows()]);
   const live = liveSales(windows);
-  return live.size ? products.map((p) => withFlashPrice(p, live)) : products;
+  const group = new Map(windows.filter((w) => w.kind === "group").map((w) => [w.productId, w]));
+  if (!live.size && !group.size) return products;
+  return products.map((p) => {
+    const g = group.get(p.id);
+    const q = withFlashPrice(p, live);
+    return g ? { ...q, groupSale: { mine: g.salePrice, steal: g.stealPrice, was: Math.max(p.compareAtPrice ?? 0, p.price) } } : q;
+  });
 });
 
 const getBaseCatalog = cache(async (): Promise<Product[]> => {

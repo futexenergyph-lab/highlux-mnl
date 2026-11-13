@@ -34,7 +34,7 @@ Phases 1–6 are done (catalog, shop, checkout/payments/layaway, accounts, admin
 - Event = title + start/end; add available pieces with a sale price (must be below the regular price; a piece can't be in two overlapping sales).
 - Nothing is written to products: while a sale runs, `getCatalog()` swaps in the sale price (struck price = was price or regular price) and checkout charges it; `place_order` uses `flash_price()` in SQL so totals match. Regular prices come back by themselves when it ends.
 - Product cards show a "⚡ Flash sale" badge; product page and /flash-sale show the countdown.
-- Two kinds: **Website flash sale** (above) and **Group flash sale** (sold in a group chat: each piece has **Mine** and **Steal** prices, event has a group link shown as "Join group"; site price and checkout unchanged; `flash_price()` ignores group sales).
+- Two kinds: **Website flash sale** (above) and **Group flash sale** (sold in a group chat: each piece has **Mine** and **Steal** prices, event has a group link shown as "Join group"; site price and checkout unchanged; `flash_price()` ignores group sales; customers never see the shop price for these pieces — cards and the product page show only Was/Mine/Steal, and Add to bag is hidden).
 
 **Orders & purchase records**
 - Orders list ⋮ menu: **Proceed** (moves to next step: paid → packed → ready/shipped → delivered), **Edit order**, **Delete order & mark available**.

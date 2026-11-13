@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { listPublicFlashSales, mineSteal } from "@/lib/flash/public";
+import { listPublicFlashSales } from "@/lib/flash/public";
 import { FlashCountdown } from "@/components/flash/flash-countdown";
 import { formatPHP } from "@/lib/utils";
 import { NewArrivalsCarousel } from "./new-arrivals";
@@ -15,7 +15,7 @@ export async function FlashSaleSection() {
   const when = new Date(event.startsAt).toLocaleString("en-PH", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" });
   const group = event.kind === "group";
   const captions = group
-    ? Object.fromEntries(items.map((i) => [i.product.id, mineSteal(i.salePrice, i.stealPrice, formatPHP)]))
+    ? undefined
     : phase === "scheduled"
       ? Object.fromEntries(items.map((i) => [i.product.id, `Flash price ${formatPHP(i.salePrice)} from ${when}`]))
       : undefined;

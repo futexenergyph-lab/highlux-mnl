@@ -139,6 +139,12 @@ export default async function ProductPage({ params }: { params: Params }) {
             </Link>
             <h1 className="mt-2 font-serif text-3xl leading-tight text-cream sm:text-4xl">{p.title}</h1>
 
+            {groupSale && p.status !== "sold" ? (
+              <p className="mt-5 flex flex-wrap items-baseline gap-x-2">
+                <span className="text-xs uppercase tracking-wider text-cream-dim">Was price</span>
+                <span className="font-sans text-2xl tracking-wide text-cream-dim line-through">{formatPHP(Math.max(p.compareAtPrice ?? 0, p.price))}</span>
+              </p>
+            ) : (
             <ProductPrice
               productId={p.id}
               price={p.price}
@@ -151,6 +157,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </>
               }
             />
+            )}
             {p.status === "sold" && <p className="mt-2 text-sm text-cream-muted">This piece has found its new home. Message us and we&rsquo;ll help source a similar one.</p>}
             {p.flashSale && p.status !== "sold" && (
               <FlashCountdown to={p.flashSale.endsAt} label="Flash sale ends in" className="mt-3 inline-block bg-gold-gradient px-3 py-1.5 text-xs uppercase tracking-wider text-ink" />
@@ -173,11 +180,14 @@ export default async function ProductPage({ params }: { params: Params }) {
 
             {p.status !== "sold" && <AuctionBanner productId={p.id} />}
             {p.status !== "sold" && <ManualAuctionRedirect productId={p.id} />}
+            {/* Group flash sale pieces are sold in the group, not through the site. */}
+            {!(groupSale && p.status !== "sold") && (
             <HideDuringAuction productId={p.id}>
               <div id="buy-box">
               <ProductActions product={action} />
             </div>
             </HideDuringAuction>
+            )}
 
             <ul className="mt-6 grid grid-cols-3 gap-2 text-center">
               {[
@@ -244,9 +254,11 @@ export default async function ProductPage({ params }: { params: Params }) {
         <ViewTracker productId={p.id} />
       </div>
 
-      <HideDuringAuction productId={p.id}>
-        <StickyBuyBar product={action} anchorId="buy-box" />
-      </HideDuringAuction>
+      {!(groupSale && p.status !== "sold") && (
+        <HideDuringAuction productId={p.id}>
+          <StickyBuyBar product={action} anchorId="buy-box" />
+        </HideDuringAuction>
+      )}
     </>
   );
 }

@@ -96,6 +96,8 @@ export interface Product {
   createdAt: string;
   /** Set while the piece is in a running flash sale (its price is the sale price). */
   flashSale?: { endsAt: string; eventId: string } | null;
+  /** Set while the piece is in a running or upcoming group flash sale: customers see only Was, Mine and Steal. */
+  groupSale?: { mine: number; steal: number | null; was: number } | null;
 }
 
 export interface Brand {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Zap } from "lucide-react";
-import { listPublicFlashSales, mineSteal } from "@/lib/flash/public";
+import { listPublicFlashSales } from "@/lib/flash/public";
 import { ProductCard } from "@/components/product/product-card";
 import { FlashCountdown } from "@/components/flash/flash-countdown";
 import { formatPHP } from "@/lib/utils";
@@ -50,10 +50,9 @@ export default async function FlashSalePage() {
             <p className="mt-4 text-sm text-cream-muted">Pieces will be announced soon.</p>
           ) : (
             <ul className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-              {items.map(({ product, salePrice, stealPrice }) => (
+              {items.map(({ product, salePrice }) => (
                 <li key={product.id} className="min-w-0">
                   <ProductCard product={product} />
-                  {group && product.status !== "sold" && <p className="mt-1 text-center text-xs font-bold text-gold-light">{mineSteal(salePrice, stealPrice, formatPHP)}</p>}
                   {!group && phase === "scheduled" && product.status !== "sold" && (
                     <p className="mt-1 text-center text-xs font-bold text-gold-light">Flash price {formatPHP(salePrice)} from {when(event.startsAt)}</p>
                   )}
