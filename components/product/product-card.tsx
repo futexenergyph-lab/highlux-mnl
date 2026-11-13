@@ -36,9 +36,9 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         />
         <AuthenticityBadge className="absolute bottom-0 left-1/2 z-[1] w-max -translate-x-1/2 bg-white px-2 py-1 sm:px-2.5" />
         {group ? (
-          <span className="absolute right-3 top-3 bg-[#e8cf8a] px-2 py-1 font-sans text-[0.6rem] font-bold uppercase tracking-[0.14em] text-[#141210]">⚡ Group flash sale</span>
+          <span className="absolute right-2 top-2 z-10 whitespace-nowrap bg-[#e8cf8a] px-1.5 py-0.5 font-sans text-[0.55rem] font-bold uppercase tracking-[0.12em] text-[#141210] sm:right-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[0.6rem]">⚡ Flash sale</span>
         ) : product.compareAtPrice && !sold && (
-          <span className={cn("absolute right-3 top-3 px-2 py-1 font-sans text-[0.6rem] font-bold uppercase tracking-[0.14em]", product.flashSale ? "bg-[#e8cf8a] text-[#141210]" : "bg-[#141210] text-[#e8cf8a]")}>
+          <span className={cn("absolute right-2 top-2 z-10 whitespace-nowrap px-1.5 py-0.5 font-sans text-[0.55rem] font-bold uppercase tracking-[0.12em] sm:right-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[0.6rem]", product.flashSale ? "bg-[#e8cf8a] text-[#141210]" : "bg-[#141210] text-[#e8cf8a]")}>
             {product.flashSale ? "⚡ Flash sale" : "Price drop"}
           </span>
         )}
@@ -52,9 +52,9 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         {group ? (
           <div className="font-sans sm:pt-1">
             <p className="text-[0.7rem] text-cream-dim sm:text-xs">Was <span className="line-through">{formatPHP(group.was)}</span></p>
-            <p className="text-[0.78rem] font-bold text-cream sm:text-sm">
-              <span className="text-gold">Mine</span> {formatPHP(group.mine)}
-              {group.steal && <> · <span className="text-gold">Steal</span> {formatPHP(group.steal)}</>}
+            <p className="text-base font-bold leading-tight text-cream sm:text-lg">
+              <span className="mr-1 align-middle text-[0.6rem] uppercase tracking-[0.14em] text-gold sm:text-[0.65rem]">Mine</span>
+              {formatPHP(group.mine)}
             </p>
           </div>
         ) : (
