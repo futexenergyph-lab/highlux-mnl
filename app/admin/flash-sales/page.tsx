@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, Users, Zap } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
+import { FlashMenu } from "./flash-menu";
 import { getFlashRepo } from "@/lib/flash/repo";
 import { FLASH_LABEL, FLASH_TONE, flashPhase, type FlashPhase } from "@/lib/flash/types";
 import { Badge, PageHeader, btnGold, btnOutline, fmtDateTime } from "@/components/admin/ui";
@@ -40,8 +41,8 @@ export default async function FlashSalesPage() {
       ) : (
         <ul className="grid gap-2 sm:grid-cols-2">
           {rows.map(({ e, phase, n }) => (
-            <li key={e.id}>
-              <Link href={`/admin/flash-sales/${e.id}`} className="flex items-center gap-3 border border-gold/20 bg-ink p-3 hover:border-gold">
+            <li key={e.id} className="flex items-center border border-gold/20 bg-ink hover:border-gold">
+              <Link href={`/admin/flash-sales/${e.id}`} className="flex min-w-0 flex-1 items-center gap-3 p-3">
                 <Zap className="h-6 w-6 shrink-0 text-gold" strokeWidth={1.2} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-cream">{e.title}</span>
@@ -49,6 +50,7 @@ export default async function FlashSalesPage() {
                 </span>
                 <Badge tone={FLASH_TONE[phase]}>{FLASH_LABEL[phase]}</Badge>
               </Link>
+              <FlashMenu id={e.id} title={e.title} pieces={n} />
             </li>
           ))}
         </ul>
