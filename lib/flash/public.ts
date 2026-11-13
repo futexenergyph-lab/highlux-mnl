@@ -7,7 +7,8 @@ import type { Product } from "@/lib/types";
 export interface PublicFlashEvent {
   event: FlashEvent;
   phase: FlashPhase;
-  items: { product: Product; salePrice: number }[];
+  /** salePrice = the sale price (website) or the Mine price (group). */
+  items: { product: Product; salePrice: number; stealPrice: number | null }[];
 }
 
 /** Running and upcoming flash sales with their pieces: running first, then upcoming, soonest first. */
@@ -24,8 +25,11 @@ export async function listPublicFlashSales(): Promise<PublicFlashEvent[]> {
       phase,
       items: items
         .filter((i) => i.eventId === event.id && byId.has(i.productId))
-        .map((i) => ({ product: byId.get(i.productId)!, salePrice: i.salePrice }))
+        .map((i) => ({ product: byId.get(i.productId)!, salePrice: i.salePrice, stealPrice: i.stealPrice }))
         // Pieces still for sale first.
         .sort((a, b) => Number(a.product.status === "sold") - Number(b.product.status === "sold")),
     }));
 }
+
+/** "Mine ₱25,000 · Steal ₱26,000" for a group flash sale piece. */
+export const mineSteal = (mine: number, steal: number | null, fmt: (n: number) => string) => `Mine ${fmt(mine)}${steal ? ` · Steal ${fmt(steal)}` : ""}`;

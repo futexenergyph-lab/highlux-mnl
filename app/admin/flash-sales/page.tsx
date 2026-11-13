@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Plus, Zap } from "lucide-react";
+import { Plus, Users, Zap } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getFlashRepo } from "@/lib/flash/repo";
 import { FLASH_LABEL, FLASH_TONE, flashPhase, type FlashPhase } from "@/lib/flash/types";
-import { Badge, PageHeader, btnGold, fmtDateTime } from "@/components/admin/ui";
+import { Badge, PageHeader, btnGold, btnOutline, fmtDateTime } from "@/components/admin/ui";
 
 export const metadata = { title: "Flash Sale Deals" };
 export const dynamic = "force-dynamic";
@@ -22,7 +22,12 @@ export default async function FlashSalesPage() {
       <PageHeader
         title="Flash Sale Deals"
         description="Put pieces on sale for a set time. The sale price shows and is charged only between the start and the end."
-        actions={<Link href="/admin/flash-sales/new" className={btnGold}><Plus className="h-4 w-4" /> New flash sale</Link>}
+        actions={
+          <>
+            <Link href="/admin/flash-sales/new?kind=website" className={btnGold}><Plus className="h-4 w-4" /> Website flash sale</Link>
+            <Link href="/admin/flash-sales/new?kind=group" className={btnOutline}><Users className="h-4 w-4" /> Group flash sale</Link>
+          </>
+        }
       />
       {events === null && (
         <p className="mb-5 border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">Flash sales need a one-time database update — run <code>supabase/migrations/20261111000018_flash_sales.sql</code> in the Supabase SQL Editor.</p>
@@ -30,7 +35,7 @@ export default async function FlashSalesPage() {
       {rows.length === 0 ? (
         <div className="border border-gold/15 p-10 text-center text-sm text-cream-muted">
           <Zap className="mx-auto mb-3 h-8 w-8 text-gold/60" strokeWidth={1.2} />
-          No flash sales yet. Tap <span className="text-gold-light">New flash sale</span> to set one up.
+          No flash sales yet. Tap <span className="text-gold-light">Website flash sale</span> or <span className="text-gold-light">Group flash sale</span> to set one up.
         </div>
       ) : (
         <ul className="grid gap-2 sm:grid-cols-2">
@@ -40,7 +45,7 @@ export default async function FlashSalesPage() {
                 <Zap className="h-6 w-6 shrink-0 text-gold" strokeWidth={1.2} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-cream">{e.title}</span>
-                  <span className="block text-xs text-cream-dim">{fmtDateTime(e.startsAt)} – {fmtDateTime(e.endsAt)} · {n} piece{n === 1 ? "" : "s"}</span>
+                  <span className="block text-xs text-cream-dim">{e.kind === "group" ? "Group" : "Website"} · {fmtDateTime(e.startsAt)} – {fmtDateTime(e.endsAt)} · {n} piece{n === 1 ? "" : "s"}</span>
                 </span>
                 <Badge tone={FLASH_TONE[phase]}>{FLASH_LABEL[phase]}</Badge>
               </Link>

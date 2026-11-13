@@ -12,7 +12,7 @@ export function memoryFlashWindows(): FlashWindow[] {
   const now = Date.now();
   return items().flatMap((i) => {
     const e = events().find((x) => x.id === i.eventId);
-    return e && Date.parse(e.endsAt) > now ? [{ productId: i.productId, salePrice: i.salePrice, eventId: e.id, startsAt: e.startsAt, endsAt: e.endsAt }] : [];
+    return e && Date.parse(e.endsAt) > now ? [{ productId: i.productId, salePrice: i.salePrice, stealPrice: i.stealPrice, kind: e.kind, groupLink: e.groupLink, title: e.title, eventId: e.id, startsAt: e.startsAt, endsAt: e.endsAt }] : [];
   });
 }
 
@@ -43,15 +43,15 @@ export class MemoryFlashRepo implements FlashRepo {
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
       .map((i) => ({ ...i }));
   }
-  async addItem(eventId: string, productId: string, salePrice: number) {
+  async addItem(eventId: string, productId: string, salePrice: number, stealPrice: number | null = null) {
     if (items().some((i) => i.eventId === eventId && i.productId === productId)) throw new Error("ALREADY_IN_EVENT");
-    const it: FlashItem = { id: randomUUID(), eventId, productId, salePrice, createdAt: new Date().toISOString() };
+    const it: FlashItem = { id: randomUUID(), eventId, productId, salePrice, stealPrice, createdAt: new Date().toISOString() };
     items().push(it);
     return { ...it };
   }
-  async setSalePrice(itemId: string, salePrice: number) {
+  async setSalePrice(itemId: string, salePrice: number, stealPrice: number | null = null) {
     const it = items().find((x) => x.id === itemId);
-    if (it) it.salePrice = salePrice;
+    if (it) Object.assign(it, { salePrice, stealPrice });
   }
   async removeItem(itemId: string) {
     g.__highluxFlashItems = items().filter((x) => x.id !== itemId);

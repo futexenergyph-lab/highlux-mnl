@@ -3,8 +3,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { FlashInput, FlashRepo } from "./repo";
 import type { FlashEvent, FlashItem, FlashWindow } from "./types";
 
-const mapEvent = (e: any): FlashEvent => ({ id: e.id, title: e.title, startsAt: e.starts_at, endsAt: e.ends_at, createdAt: e.created_at });
-const mapItem = (i: any): FlashItem => ({ id: i.id, eventId: i.event_id, productId: i.product_id, salePrice: Number(i.sale_price), createdAt: i.created_at });
+const mapEvent = (e: any): FlashEvent => ({ id: e.id, title: e.title, kind: e.kind ?? "website", groupLink: e.group_link ?? null, startsAt: e.starts_at, endsAt: e.ends_at, createdAt: e.created_at });
+const mapItem = (i: any): FlashItem => ({ id: i.id, eventId: i.event_id, productId: i.product_id, salePrice: Number(i.sale_price), stealPrice: i.steal_price == null ? null : Number(i.steal_price), createdAt: i.created_at });
+
+/** Website sales only need the base columns, so they still save before the group flash sale SQL is run. */
+const eventRow = (e: FlashInput) => ({ title: e.title, starts_at: e.startsAt, ends_at: e.endsAt, ...(e.kind === "group" || e.groupLink ? { kind: e.kind, group_link: e.groupLink } : {}) });
 
 export class SupabaseFlashRepo implements FlashRepo {
   private db = createAdminClient();
@@ -20,12 +23,12 @@ export class SupabaseFlashRepo implements FlashRepo {
     return data ? mapEvent(data) : null;
   }
   async createEvent(e: FlashInput) {
-    const { data, error } = await this.db.from("flash_sale_events").insert({ title: e.title, starts_at: e.startsAt, ends_at: e.endsAt }).select("*").single();
+    const { data, error } = await this.db.from("flash_sale_events").insert(eventRow(e)).select("*").single();
     if (error) throw error;
     return mapEvent(data);
   }
   async updateEvent(id: string, e: FlashInput) {
-    const { error } = await this.db.from("flash_sale_events").update({ title: e.title, starts_at: e.startsAt, ends_at: e.endsAt }).eq("id", id);
+    const { error } = await this.db.from("flash_sale_events").update(eventRow(e)).eq("id", id);
     if (error) throw error;
   }
   async deleteEvent(id: string) {
@@ -39,13 +42,14 @@ export class SupabaseFlashRepo implements FlashRepo {
     if (error) throw error;
     return (data ?? []).map(mapItem);
   }
-  async addItem(eventId: string, productId: string, salePrice: number) {
-    const { data, error } = await this.db.from("flash_sale_items").insert({ event_id: eventId, product_id: productId, sale_price: salePrice }).select("*").single();
+  async addItem(eventId: string, productId: string, salePrice: number, stealPrice: number | null = null) {
+    const row = { event_id: eventId, product_id: productId, sale_price: salePrice, ...(stealPrice != null ? { steal_price: stealPrice } : {}) };
+    const { data, error } = await this.db.from("flash_sale_items").insert(row).select("*").single();
     if (error) throw error.code === "23505" ? new Error("ALREADY_IN_EVENT") : error;
     return mapItem(data);
   }
-  async setSalePrice(itemId: string, salePrice: number) {
-    const { error } = await this.db.from("flash_sale_items").update({ sale_price: salePrice }).eq("id", itemId);
+  async setSalePrice(itemId: string, salePrice: number, stealPrice: number | null = null) {
+    const { error } = await this.db.from("flash_sale_items").update({ sale_price: salePrice, ...(stealPrice != null ? { steal_price: stealPrice } : {}) }).eq("id", itemId);
     if (error) throw error;
   }
   async removeItem(itemId: string) {
@@ -55,9 +59,19 @@ export class SupabaseFlashRepo implements FlashRepo {
   async windows(): Promise<FlashWindow[]> {
     const { data, error } = await this.db
       .from("flash_sale_items")
-      .select("product_id, sale_price, event_id, event:flash_sale_events!inner(starts_at, ends_at)")
+      .select("*, event:flash_sale_events!inner(*)")
       .gt("event.ends_at", new Date().toISOString());
     if (error) throw error;
-    return (data ?? []).map((r: any) => ({ productId: r.product_id, salePrice: Number(r.sale_price), eventId: r.event_id, startsAt: r.event.starts_at, endsAt: r.event.ends_at }));
+    return (data ?? []).map((r: any) => ({
+      productId: r.product_id,
+      salePrice: Number(r.sale_price),
+      stealPrice: r.steal_price == null ? null : Number(r.steal_price),
+      kind: r.event.kind ?? "website",
+      groupLink: r.event.group_link ?? null,
+      title: r.event.title,
+      eventId: r.event_id,
+      startsAt: r.event.starts_at,
+      endsAt: r.event.ends_at,
+    }));
   }
 }

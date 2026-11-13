@@ -15,6 +15,14 @@ export type FlashFormState = { error?: string; field?: string } | null;
 
 const eventSchema = z.object({
   title: z.string().trim().min(2, "Enter a title for the flash sale").max(120),
+  kind: z.enum(["website", "group"]).default("website"),
+  groupLink: z
+    .string()
+    .trim()
+    .max(500)
+    .default("")
+    .transform((v) => (v && !/^https?:\/\//i.test(v) ? `https://${v}` : v) || null)
+    .refine((v) => !v || /^https?:\/\/[^\s.]+\.[^\s]+$/i.test(v), "Enter a valid link, e.g. https://invite.viber.com/…"),
   startsAt: z.string().trim().min(1, "Choose when the sale starts"),
   endsAt: z.string().trim().min(1, "Choose when the sale ends"),
   tz: z.coerce.number().default(-480),
@@ -56,7 +64,7 @@ function parseEvent(form: FormData) {
   const startsAt = toIso(v.startsAt, v.tz);
   const endsAt = toIso(v.endsAt, v.tz);
   if (Date.parse(endsAt) <= Date.parse(startsAt) + 60_000) return { error: "The end must be after the start.", field: "endsAt" } as const;
-  return { value: { title: v.title, startsAt, endsAt } } as const;
+  return { value: { title: v.title, kind: v.kind, groupLink: v.kind === "group" ? v.groupLink : null, startsAt, endsAt } } as const;
 }
 
 export async function createFlashEventAction(_prev: FlashFormState, form: FormData): Promise<FlashFormState> {
@@ -69,7 +77,7 @@ export async function createFlashEventAction(_prev: FlashFormState, form: FormDa
     id = (await (await getFlashRepo()).createEvent(r.value)).id;
   } catch (e) {
     console.error("create flash sale failed", e);
-    return { error: "Couldn't create the flash sale. If this is the first one, run the flash sale SQL in Supabase first." };
+    return { error: r.value.kind === "group" ? "Couldn't create the flash sale. Make sure the group flash sale SQL was run in Supabase." : "Couldn't create the flash sale. If this is the first one, run the flash sale SQL in Supabase first." };
   }
   revalidatePath("/admin/flash-sales");
   redirect(`/admin/flash-sales/${id}?created=1`);
@@ -110,7 +118,9 @@ export async function deleteFlashEventAction(id: string): Promise<{ error?: stri
 export async function addFlashItemAction(_prev: FlashFormState, form: FormData): Promise<FlashFormState> {
   const denied = await staff();
   if (denied) return { error: denied };
-  const parsed = z.object({ eventId: z.string().uuid(), productId: z.string().uuid("Choose the piece"), salePrice: money }).safeParse(Object.fromEntries(form));
+  const parsed = z
+    .object({ eventId: z.string().uuid(), productId: z.string().uuid("Choose the piece"), salePrice: money, stealPrice: z.string().trim().default("") })
+    .safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: parsed.error.issues[0].message, field: String(parsed.error.issues[0].path[0] ?? "") };
   const v = parsed.data;
   const repo = await getFlashRepo();
@@ -119,7 +129,14 @@ export async function addFlashItemAction(_prev: FlashFormState, form: FormData):
   const product = await (await getAdminRepo()).getProduct(v.productId);
   if (!product) return { error: "That piece no longer exists.", field: "productId" };
   if (product.status !== "available") return { error: "Only available pieces can join a flash sale.", field: "productId" };
-  if (v.salePrice >= product.price) return { error: `The flash price must be lower than its current selling price (${formatPHP(product.price)}).`, field: "salePrice" };
+  const group = event.kind === "group";
+  const steal = group ? Number(v.stealPrice.replace(/[^\d.]/g, "")) : null;
+  if (group) {
+    if (!steal || steal <= 0) return { error: "Enter the Steal price", field: "stealPrice" };
+    if (steal <= v.salePrice) return { error: "The Steal price must be higher than the Mine price.", field: "stealPrice" };
+  } else if (v.salePrice >= product.price) {
+    return { error: `The flash price must be lower than its current selling price (${formatPHP(product.price)}).`, field: "salePrice" };
+  }
   // A piece can't be in two flash sales that run at the same time.
   const events = new Map((await repo.listEvents()).map((e) => [e.id, e]));
   const clash = (await repo.listItems()).find((i) => {
@@ -129,17 +146,17 @@ export async function addFlashItemAction(_prev: FlashFormState, form: FormData):
   });
   if (clash) return { error: `This piece is already in “${events.get(clash.eventId)?.title}” at the same time.`, field: "productId" };
   try {
-    await repo.addItem(v.eventId, v.productId, v.salePrice);
+    await repo.addItem(v.eventId, v.productId, v.salePrice, steal);
   } catch (e) {
     if ((e as Error).message === "ALREADY_IN_EVENT") return { error: "This piece is already in this flash sale.", field: "productId" };
     console.error("add flash item failed", e);
-    return { error: "Couldn't add the piece. Please try again." };
+    return { error: group ? "Couldn't add the piece. Make sure the group flash sale SQL was run in Supabase." : "Couldn't add the piece. Please try again." };
   }
   await refresh(v.eventId, [v.productId]);
   redirect(`/admin/flash-sales/${v.eventId}?added=1`);
 }
 
-export async function updateFlashPriceAction(eventId: string, itemId: string, salePrice: number): Promise<{ error?: string }> {
+export async function updateFlashPriceAction(eventId: string, itemId: string, salePrice: number, stealPrice: number | null = null): Promise<{ error?: string }> {
   const denied = await staff();
   if (denied) return { error: denied };
   const parsed = money.safeParse(salePrice);
@@ -147,10 +164,15 @@ export async function updateFlashPriceAction(eventId: string, itemId: string, sa
   const repo = await getFlashRepo();
   const item = (await repo.listItems(eventId)).find((i) => i.id === itemId);
   if (!item) return { error: "This piece is no longer in the flash sale." };
-  const product = await (await getAdminRepo()).getProduct(item.productId);
-  if (product && parsed.data >= product.price) return { error: `Must be lower than the current selling price (${formatPHP(product.price)}).` };
+  const event = await repo.getEvent(eventId);
+  if (event?.kind === "group") {
+    if (!stealPrice || stealPrice <= parsed.data) return { error: "Steal must be higher than Mine." };
+  } else {
+    const product = await (await getAdminRepo()).getProduct(item.productId);
+    if (product && parsed.data >= product.price) return { error: `Must be lower than the current selling price (${formatPHP(product.price)}).` };
+  }
   try {
-    await repo.setSalePrice(itemId, parsed.data);
+    await repo.setSalePrice(itemId, parsed.data, event?.kind === "group" ? stealPrice : null);
   } catch {
     return { error: "Couldn't save — try again." };
   }

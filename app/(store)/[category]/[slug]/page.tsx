@@ -11,6 +11,7 @@ import { ProductActions, StickyBuyBar, type ActionProduct } from "@/components/p
 import { AuthenticityBlock, ConditionMeter, Inclusions, SpecsTable } from "@/components/product/product-details";
 import { ProductCard } from "@/components/product/product-card";
 import { FlashCountdown } from "@/components/flash/flash-countdown";
+import { flashWindows, groupSaleFor } from "@/lib/flash/pricing";
 import { AuctionBanner, HideDuringAuction, ManualAuctionRedirect, ProductPrice } from "@/components/bidding/product-auction";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
 import { ViewTracker } from "@/components/product/view-tracker";
@@ -62,7 +63,9 @@ export default async function ProductPage({ params }: { params: Params }) {
   }
   const cat = categoryBySlug(p.category)!;
   const sub = productType(cat, p.subCategory);
-  const [related, checkout] = await Promise.all([getRelated(p), getCheckoutSettings()]);
+  const [related, checkout, windows] = await Promise.all([getRelated(p), getCheckoutSettings(), flashWindows()]);
+  const groupSale = groupSaleFor(windows, p.id);
+  const groupLive = groupSale ? Date.parse(groupSale.startsAt) <= Date.now() : false;
   const layaway = checkout.layaway.enabled;
   const cardOnline = !checkout.disabledMethods.includes("card");
 
@@ -151,6 +154,19 @@ export default async function ProductPage({ params }: { params: Params }) {
             {p.status === "sold" && <p className="mt-2 text-sm text-cream-muted">This piece has found its new home. Message us and we&rsquo;ll help source a similar one.</p>}
             {p.flashSale && p.status !== "sold" && (
               <FlashCountdown to={p.flashSale.endsAt} label="Flash sale ends in" className="mt-3 inline-block bg-gold-gradient px-3 py-1.5 text-xs uppercase tracking-wider text-ink" />
+            )}
+            {groupSale && p.status !== "sold" && (
+              <div className="mt-4 border border-gold/40 bg-gold/[0.06] p-4">
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-gold">Group flash sale · {groupSale.title}</p>
+                <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-sans text-cream">
+                  <span><span className="text-xs uppercase tracking-wider text-cream-dim">Mine </span><span className="text-xl font-bold">{formatPHP(groupSale.salePrice)}</span></span>
+                  {groupSale.stealPrice && <span><span className="text-xs uppercase tracking-wider text-cream-dim">Steal </span><span className="text-xl font-bold">{formatPHP(groupSale.stealPrice)}</span></span>}
+                </p>
+                <FlashCountdown to={groupLive ? groupSale.endsAt : groupSale.startsAt} label={groupLive ? "Ends in" : "Starts in"} className="mt-3 inline-block bg-gold-gradient px-3 py-1.5 text-xs uppercase tracking-wider text-ink" />
+                {groupSale.groupLink && (
+                  <a href={groupSale.groupLink} target="_blank" rel="noopener noreferrer" className="btn-gold mt-3 flex w-full justify-center px-4 py-2.5 text-[0.7rem]">Join group · comment Mine or Steal</a>
+                )}
+              </div>
             )}
 
             <div className="gold-divider my-6" />

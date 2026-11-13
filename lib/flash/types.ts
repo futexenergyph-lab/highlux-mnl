@@ -1,7 +1,14 @@
 /** A flash sale: a titled window (start → end) in which chosen pieces sell at a lower price. */
+export type FlashKind = "website" | "group";
+export const FLASH_KIND_LABEL: Record<FlashKind, string> = { website: "Website flash sale", group: "Group flash sale" };
+
 export interface FlashEvent {
   id: string;
   title: string;
+  /** "website": sale price shown and charged on the site. "group": sold in the group chat with Mine/Steal prices. */
+  kind: FlashKind;
+  /** Group flash sales: link to join the group (Viber, Messenger…), shown as "Join group". */
+  groupLink: string | null;
   startsAt: string;
   endsAt: string;
   createdAt: string;
@@ -12,7 +19,10 @@ export interface FlashItem {
   id: string;
   eventId: string;
   productId: string;
+  /** Website: the sale price. Group: the "Mine" price. */
   salePrice: number;
+  /** Group flash sales only: the "Steal" price. */
+  stealPrice: number | null;
   createdAt: string;
 }
 
@@ -31,6 +41,10 @@ export function flashPhase(e: Pick<FlashEvent, "startsAt" | "endsAt">, now = Dat
 export interface FlashWindow {
   productId: string;
   salePrice: number;
+  stealPrice: number | null;
+  kind: FlashKind;
+  groupLink: string | null;
+  title: string;
   eventId: string;
   startsAt: string;
   endsAt: string;

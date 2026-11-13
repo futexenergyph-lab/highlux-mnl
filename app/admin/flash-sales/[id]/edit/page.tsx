@@ -14,7 +14,7 @@ export default async function EditFlashSalePage({ params }: { params: { id: stri
   return (
     <>
       <PageHeader title="Edit flash sale" description={event.title} />
-      <FlashEventForm event={event} />
+      <FlashEventForm kind={event.kind} event={event} />
     </>
   );
 }

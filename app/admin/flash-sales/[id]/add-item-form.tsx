@@ -17,10 +17,11 @@ function Submit() {
 }
 
 /** Choose an available piece and its sale price. */
-export function AddItemForm({ eventId, items, was }: { eventId: string; items: ItemOption[]; was: Record<string, number> }) {
+export function AddItemForm({ eventId, items, was, group = false }: { eventId: string; items: ItemOption[]; was: Record<string, number>; group?: boolean }) {
   const [state, action] = useFormState<FlashFormState, FormData>(addFlashItemAction, null);
   const [item, setItem] = React.useState<ItemOption | null>(null);
   const [price, setPrice] = React.useState("");
+  const [steal, setSteal] = React.useState("");
   const err = (f: string) => (state?.field === f ? state.error : undefined);
   const sale = Number(price);
   // Discount is shown from the was price (what customers see crossed out).
@@ -42,12 +43,21 @@ export function AddItemForm({ eventId, items, was }: { eventId: string; items: I
         )}
         {err("productId") && <span className="mt-1 block text-xs text-red-300">{err("productId")}</span>}
       </label>
-      <label className="block">
-        <span className={labelCls}>Sale price (₱)</span>
-        <input name="salePrice" inputMode="decimal" required value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))} className={inputCls} placeholder="e.g. 25000" />
-        {off > 0 && <span className="mt-1 block text-xs text-gold-light">{off}% off the was price · saves {formatPHP(wasPrice - sale)}</span>}
-        {err("salePrice") && <span className="mt-1 block text-xs text-red-300">{err("salePrice")}</span>}
-      </label>
+      <div className={group ? "grid grid-cols-2 gap-3" : ""}>
+        <label className="block">
+          <span className={labelCls}>{group ? "Mine price (₱)" : "Sale price (₱)"}</span>
+          <input name="salePrice" inputMode="decimal" required value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))} className={inputCls} placeholder="e.g. 25000" />
+          {off > 0 && <span className="mt-1 block text-xs text-gold-light">{off}% off the was price{!group && <> · saves {formatPHP(wasPrice - sale)}</>}</span>}
+          {err("salePrice") && <span className="mt-1 block text-xs text-red-300">{err("salePrice")}</span>}
+        </label>
+        {group && (
+          <label className="block">
+            <span className={labelCls}>Steal price (₱)</span>
+            <input name="stealPrice" inputMode="decimal" required value={steal} onChange={(e) => setSteal(e.target.value.replace(/[^\d.]/g, ""))} className={inputCls} placeholder="e.g. 26000" />
+            {err("stealPrice") && <span className="mt-1 block text-xs text-red-300">{err("stealPrice")}</span>}
+          </label>
+        )}
+      </div>
       <Submit />
     </form>
   );

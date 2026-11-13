@@ -21,11 +21,12 @@ export async function flashWindows(fresh = false): Promise<FlashWindow[]> {
   }
 }
 
-/** The running sale for each product right now (lowest price if it's somehow in two). */
+/** The running website sale for each product right now (lowest price if it's somehow in two). */
 export function liveSales(windows: FlashWindow[], now = Date.now()): Map<string, FlashWindow> {
   const live = new Map<string, FlashWindow>();
   for (const w of windows) {
-    if (now < Date.parse(w.startsAt) || now >= Date.parse(w.endsAt)) continue;
+    // Group flash sales happen in the group chat: the site's price doesn't change.
+    if (w.kind === "group" || now < Date.parse(w.startsAt) || now >= Date.parse(w.endsAt)) continue;
     const cur = live.get(w.productId);
     if (!cur || w.salePrice < cur.salePrice) live.set(w.productId, w);
   }
@@ -40,4 +41,9 @@ export function withFlashPrice<T extends { id: string; price: number; compareAtP
   const w = live.get(p.id);
   if (!w || w.salePrice >= p.price) return p;
   return { ...p, price: w.salePrice, compareAtPrice: Math.max(p.compareAtPrice ?? 0, p.price), flashSale: { endsAt: w.endsAt, eventId: w.eventId } };
+}
+
+/** The running or upcoming group flash sale a piece is in (for the product page banner), if any. */
+export function groupSaleFor(windows: FlashWindow[], productId: string): FlashWindow | null {
+  return windows.filter((w) => w.kind === "group" && w.productId === productId).sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0] ?? null;
 }

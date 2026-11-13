@@ -26,7 +26,8 @@ const DURATIONS = [
   ["7 days", 168],
 ] as const;
 
-export function FlashEventForm({ event }: { event?: { id: string; title: string; startsAt: string; endsAt: string } }) {
+export function FlashEventForm({ kind, event }: { kind: "website" | "group"; event?: { id: string; title: string; groupLink: string | null; startsAt: string; endsAt: string } }) {
+  const group = kind === "group";
   const [state, action] = useFormState<FlashFormState, FormData>(event ? updateFlashEventAction : createFlashEventAction, null);
   const [startsAt, setStartsAt] = React.useState("");
   const [endsAt, setEndsAt] = React.useState("");
@@ -51,12 +52,13 @@ export function FlashEventForm({ event }: { event?: { id: string; title: string;
   return (
     <form action={action} className="max-w-2xl space-y-5 border border-gold/15 bg-ink p-5">
       <input type="hidden" name="tz" value={tz} />
+      <input type="hidden" name="kind" value={kind} />
       {event && <input type="hidden" name="id" value={event.id} />}
       {state?.error && !state.field && <p role="alert" className="border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">{state.error}</p>}
 
       <label className="block">
         <span className={labelCls}>Flash sale title</span>
-        <input name="title" required maxLength={120} defaultValue={event?.title} className={inputCls} placeholder="e.g. 11.11 Flash Sale" />
+        <input name="title" required maxLength={120} defaultValue={event?.title} className={inputCls} placeholder={group ? "e.g. Friday Group Flash Sale" : "e.g. 11.11 Flash Sale"} />
         {err("title") && <span className="mt-1 block text-xs text-red-300">{err("title")}</span>}
       </label>
 
@@ -78,8 +80,19 @@ export function FlashEventForm({ event }: { event?: { id: string; title: string;
         </label>
       </div>
 
+      {group && (
+        <label className="block">
+          <span className={labelCls}>Link to join the group</span>
+          <input name="groupLink" type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" defaultValue={event?.groupLink ?? ""} className={inputCls} placeholder="https://invite.viber.com/… (Viber, Messenger, Facebook group)" />
+          <span className="mt-1 block text-xs text-cream-dim">Shown as a &ldquo;Join group&rdquo; button so customers can join and comment Mine or Steal.</span>
+          {err("groupLink") && <span className="mt-1 block text-xs text-red-300">{err("groupLink")}</span>}
+        </label>
+      )}
+
       <p className="border-l-2 border-gold/60 bg-gold/[0.04] px-3 py-2 text-xs leading-relaxed text-cream-muted">
-        {event
+        {group
+          ? "Selling happens in the group: customers comment Mine or Steal. The website shows each piece's Mine and Steal prices with a Join group button, but keeps its regular price at checkout."
+          : event
           ? "The sale prices follow the new times: they show only between the start and the end."
           : "Next, add the pieces and their sale prices. Between the start and the end, the shop shows and charges the sale price; afterwards the regular price comes back by itself."}
       </p>
