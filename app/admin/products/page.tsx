@@ -11,6 +11,7 @@ import { formatPHP } from "@/lib/utils";
 import { Badge, PageHeader, Tabs, btnGold, fmtDate, inputCls } from "@/components/admin/ui";
 import { StatusMenu } from "@/components/admin/status-menu";
 import { SortSelect } from "./sort-select";
+import { BulkBanners } from "./bulk-banners";
 import { PRODUCT_SORTS } from "./sorts";
 import { duplicateGroups } from "@/lib/admin/duplicates";
 import type { Product } from "@/lib/types";
@@ -40,7 +41,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
   // Duplicates: groups of the same model (not sold), narrowed by the search and category like the other tabs.
   const groups = duplicateGroups(all);
   const shownGroups = groups.filter((g) => g.items.some((p) => (!searchParams.category || p.category === searchParams.category) && (!q || matchesQuery(p, q))));
-  const count = (s: string) => (s === "duplicates" ? groups.reduce((n, g) => n + g.items.length, 0) : all.filter((p) => inTab(p, s)).length);
+  // "Download Image Request": available pieces for bulk banner downloads (discounted ones counted).
+  const bannerItems = all
+    .filter((p) => p.status === "available" && (!searchParams.category || p.category === searchParams.category) && (!q || matchesQuery(p, q)))
+    .sort(compare)
+    .map((p) => ({ id: p.id, slug: p.slug, title: p.title, brand: p.brand, price: p.price, was: p.compareAtPrice ?? null, image: p.images[0]?.url ?? null }));
+  const count = (s: string) =>
+    s === "duplicates" ? groups.reduce((n, g) => n + g.items.length, 0)
+    : s === "download" ? all.filter((p) => p.status === "available" && p.compareAtPrice && p.compareAtPrice > p.price).length
+    : all.filter((p) => inTab(p, s)).length;
   const row = (p: Product, big = false) => (
     <li key={p.id} className={`flex gap-4 p-3 sm:p-4 ${big ? "items-start" : "items-center"}`}>
       <Link href={`/admin/products/${p.id}`} className={`relative shrink-0 overflow-hidden border border-gold/15 bg-ink-50 ${big ? "h-24 w-24" : "h-16 w-16"}`}>
@@ -70,7 +79,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
   return (
     <>
       <PageHeader title="Products" description={`${all.length} pieces · each is one of a kind (quantity 1)`} actions={<Link href="/admin/products/new" className={btnGold}><Plus className="h-4 w-4" /> New product</Link>} />
-      <Tabs current={status} tabs={["all", "available", "curated", "duplicates", "reserved", "sold", "hidden"].map((s) => ({ key: s, label: s === "curated" ? "Curated Picks" : s, href: qs(s), count: count(s) }))} />
+      <Tabs current={status} tabs={["all", "available", "curated", "duplicates", "reserved", "sold", "download", "hidden"].map((s) => ({ key: s, label: s === "curated" ? "Curated Picks" : s === "download" ? "Download Image Request" : s, href: qs(s), count: count(s) }))} />
       <form className="mb-5 flex flex-col gap-2 sm:flex-row">
         <input type="hidden" name="status" value={status} />
         {sort !== "newest" && <input type="hidden" name="sort" value={sort} />}
@@ -86,7 +95,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
       </form>
       {status !== "duplicates" && <SortSelect value={sort} />}
 
-      {status === "duplicates" ? (
+      {status === "download" ? (
+        <BulkBanners items={bannerItems} />
+      ) : status === "duplicates" ? (
         shownGroups.length === 0 ? (
           <p className="border border-gold/15 p-10 text-center text-sm text-cream-muted">No look-alike listings found. Pieces of the same brand and model show up here.</p>
         ) : (
