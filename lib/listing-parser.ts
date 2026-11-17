@@ -16,7 +16,7 @@ export interface ParsedListing {
 
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-const ALIASES: Record<string, string> = { lv: "Louis Vuitton", ysl: "Saint Laurent", ap: "Audemars Piguet", vca: "Van Cleef & Arpels", bv: "Bottega Veneta" };
+const ALIASES: Record<string, string> = { lv: "Louis Vuitton", ysl: "YSL", "yves saint laurent": "YSL", "saint laurent": "YSL", ap: "Audemars Piguet", vca: "Van Cleef & Arpels", bv: "Bottega Veneta" };
 
 // Longest phrases first so "very good" wins over "good".
 const CONDITIONS: [RegExp, ConditionGrade][] = [
@@ -84,7 +84,7 @@ export function parseListing(text: string, brands: string[]): ParsedListing {
     const n = norm(b);
     return firstNorm === n || firstNorm.startsWith(n + " ");
   });
-  const alias = Object.keys(ALIASES).find((a) => firstNorm.startsWith(a + " "));
+  const alias = Object.keys(ALIASES).sort((a, b) => b.length - a.length).find((a) => firstNorm.startsWith(a + " "));
   if (known) {
     out.brand = known;
     out.model = first.slice(known.length).trim();

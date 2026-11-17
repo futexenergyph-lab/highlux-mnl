@@ -1,4 +1,5 @@
 "use server";
+import { canonicalBrand } from "@/lib/brand-options";
 import { z } from "zod";
 import { assertStaff } from "@/lib/admin/auth";
 import { AdminError, getAdminRepo } from "@/lib/admin/repo";
@@ -13,7 +14,7 @@ const optText = (max: number) => z.union([z.string().trim().max(max).transform((
 const schema = z
   .object({
     id: z.string().uuid().optional(),
-    brandName: z.string().trim().min(1, "Brand is required").max(80),
+    brandName: z.string().trim().min(1, "Brand is required").max(80).transform(canonicalBrand),
     model: z.string().trim().min(1, "Model is required").max(120),
     title: z.string().trim().min(3, "Title is required").max(200),
     slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "URL slug: lowercase letters, numbers and dashes").max(120),
