@@ -41,11 +41,14 @@ Phases 1–6 are done (catalog, shop, checkout/payments/layaway, accounts, admin
 - Pay-at-meet-up orders awaiting payment show under **Needs action**, a **Meet-ups to arrange** tab, the dashboard's Needs attention list and the Orders badge. For these, use **Record payment** to mark paid, then ⋮ → Proceed.
 - Purchase Records: available listing value per category (Luxury Bags, Watches, Jewelry, Shoes, Accessories) plus total; **Mark as returned** on Edit purchase (cancels the order, removes it from sales totals, puts the piece back on sale).
 
+**Products admin tabs**
+- Sort box (date, price, views); **Download Image Request** tab (bulk Sale/Was Price banners for ticked pieces); **Mens** tab (tick pieces → `products.for_men`; search "men/mens/men's" matches ticked pieces or whole-word "men" in the listing, never "womens").
+
 **Members**
 - Full registration form with ID upload (private `member-ids` bucket).
 
 ## Database migrations
-When adding a migration: add the file in `supabase/migrations/`, list it in README.md under "Added after launch", and run `npm run db:setup-sql` to regenerate `supabase/setup.sql`. Remind the owner to run the new file once in the Supabase SQL Editor. Latest so far: `20261113000021_flash_views.sql`.
+When adding a migration: add the file in `supabase/migrations/`, list it in README.md under "Added after launch", and run `npm run db:setup-sql` to regenerate `supabase/setup.sql`. Remind the owner to run the new file once in the Supabase SQL Editor. Latest so far: `20261117000022_mens.sql`.
 
 ## How to work with the owner
 - The owner works from a phone and is not a developer: explain results in plain language, short, no jargon.

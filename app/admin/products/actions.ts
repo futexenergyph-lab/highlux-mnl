@@ -79,6 +79,19 @@ export async function setProductStatusAction(id: string, status: "available" | "
   return { ok: true };
 }
 
+export async function setForMenAction(id: string, value: boolean) {
+  await assertStaff();
+  const repo = await getAdminRepo();
+  try {
+    await repo.setForMen(id, value);
+  } catch (e) {
+    return { error: e instanceof AdminError ? e.message : "Couldn't save — try again." };
+  }
+  const p = await repo.getProduct(id);
+  refreshStorefront(p ? [p] : []);
+  return { ok: true };
+}
+
 export async function deleteProductAction(id: string) {
   await assertStaff();
   const repo = await getAdminRepo();

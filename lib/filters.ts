@@ -69,12 +69,16 @@ export function normalize(s: string) {
   return s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "");
 }
 
+/** Search words meaning "for men": matched as whole words (so "mens" doesn't hit "womens"), or by the admin's Mens tick. */
+const MEN_TERMS = new Set(["men", "mens", "men's", "man", "male", "for men"]);
+const MEN_WORD = /(^|[^a-z])men(\W?s)?([^a-z]|$)/;
+
 export function matchesQuery(p: Product, q: string) {
   const hay = normalize([p.title, p.brand, p.model, p.color ?? "", p.subCategory, p.category].join(" "));
   return normalize(q)
     .split(/\s+/)
     .filter(Boolean)
-    .every((term) => hay.includes(term));
+    .every((term) => (MEN_TERMS.has(term) || term === "men’s" ? !!p.forMen || MEN_WORD.test(hay) : hay.includes(term)));
 }
 
 const STATUS_RANK: Record<Product["status"], number> = { available: 0, reserved: 1, sold: 2, hidden: 3 };

@@ -135,6 +135,11 @@ export class SupabaseAdminRepo implements AdminRepo {
     this.check(error);
   }
 
+  async setForMen(id: string, value: boolean) {
+    const { error } = await this.db.from("products").update({ for_men: value }).eq("id", id);
+    if (error) throw new AdminError("NOT_ALLOWED", "The Mens tab needs a one-time database update — run the Mens SQL in Supabase first.");
+  }
+
   async setProductStatus(id: string, status: ProductStatus) {
     const { data: cur } = await this.db.from("products").select("reserved_session").eq("id", id).maybeSingle();
     if (cur?.reserved_session?.startsWith("order:")) throw new AdminError("NOT_ALLOWED", "This piece is held by an order — change it from the order instead.");

@@ -13,8 +13,8 @@ import type { CategorySlug, HomeContent, Product, Review } from "./types";
 /** Cache tag — admin mutations call revalidateTag(CATALOG_TAG) (Phase 5). */
 export const CATALOG_TAG = "catalog";
 
-export const PRODUCT_SELECT =
-  "id, slug, model, title, category, sub_category, price, compare_at_price, condition, condition_notes, inclusions, authenticity_method, authenticity_certificate_url, specs, color, video_url, description, status, reserved_until, featured, created_at, brand:brands(name, slug), images:product_images(url, alt, position)";
+// "*" so newer columns (e.g. for_men) are picked up without breaking before their SQL is run.
+export const PRODUCT_SELECT = "*, brand:brands(name, slug), images:product_images(url, alt, position)";
 
 /** A timed hold that has lapsed is available again, even before the cron sweep runs. */
 export function effectiveStatus(status: Product["status"], reservedUntil: string | null | undefined): Product["status"] {
@@ -47,6 +47,7 @@ export function mapProduct(row: any): Product {
       .map(({ url, alt }: { url: string; alt: string }) => ({ url, alt })),
     status: effectiveStatus(row.status, row.reserved_until),
     featured: row.featured,
+    forMen: !!row.for_men,
     createdAt: row.created_at,
   };
 }

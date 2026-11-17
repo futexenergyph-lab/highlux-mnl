@@ -86,6 +86,12 @@ export class MemoryAdminRepo implements AdminRepo {
     this.s.products = this.s.products.filter((p) => p.id !== id);
   }
 
+  async setForMen(id: string, value: boolean) {
+    const p = this.s.products.find((x) => x.id === id);
+    if (!p) throw new AdminError("NOT_FOUND");
+    p.forMen = value;
+  }
+
   async setProductStatus(id: string, status: ProductStatus) {
     const p = this.s.products.find((x) => x.id === id);
     if (!p) throw new AdminError("NOT_FOUND");

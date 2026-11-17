@@ -31,6 +31,8 @@ export interface AdminRepo {
   saveProduct(input: ProductInput): Promise<Product>;
   deleteProduct(id: string): Promise<void>;
   setProductStatus(id: string, status: ProductStatus): Promise<void>;
+  /** Mens tab tick: the piece shows up when customers search "mens". */
+  setForMen(id: string, value: boolean): Promise<void>;
   listBrandNames(): Promise<string[]>;
   /** Capital (what a piece cost) by product id — staff only, never on the storefront. */
   productCosts(): Promise<Map<string, number>>;
