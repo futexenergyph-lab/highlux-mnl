@@ -47,6 +47,9 @@ Phases 1–6 are done (catalog, shop, checkout/payments/layaway, accounts, admin
 **Members**
 - Full registration form with ID upload (private `member-ids` bucket).
 
+## Gotcha: data caching
+Next 14.2 caches server `fetch` forever on public pages (no cookies) even with `dynamic = "force-dynamic"`. `createAdminClient()` therefore forces `cache: "no-store"` — keep it, or new auction events/flash sales won't appear on /bidding, /flash-sale or the homepage. Intentional caching goes through `unstable_cache` (catalog, flash windows).
+
 ## Database migrations
 When adding a migration: add the file in `supabase/migrations/`, list it in README.md under "Added after launch", and run `npm run db:setup-sql` to regenerate `supabase/setup.sql`. Remind the owner to run the new file once in the Supabase SQL Editor. Latest so far: `20261117000022_mens.sql`.
 
