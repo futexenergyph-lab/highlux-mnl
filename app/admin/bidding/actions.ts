@@ -5,7 +5,7 @@ import { z } from "zod";
 import { assertStaff } from "@/lib/admin/auth";
 import { CATALOG_TAG } from "@/lib/data";
 import { getAuctionRepo } from "@/lib/auctions/repo";
-import { cancelAuction } from "@/lib/auctions/service";
+import { cancelAuction, settleDueAuctions } from "@/lib/auctions/service";
 
 export type AuctionFormState = { error?: string; field?: string } | null;
 
@@ -47,6 +47,14 @@ export async function createAuctionAction(_prev: AuctionFormState, form: FormDat
   const endsAt = event ? event.endsAt : toIso(v.endsAt, v.tz);
   if (!event && Date.parse(endsAt) <= Math.max(Date.now(), Date.parse(startsAt)) + 2 * 60_000) return { error: "End time must be at least 2 minutes after the start.", field: "endsAt" };
   if (v.reservePrice != null && v.reservePrice < v.startingBid) return { error: "Reserve must be at least the starting bid.", field: "reservePrice" };
+  // Close out auctions whose time is up first (they still count as "running" until settled),
+  // so a piece from an ended event can join the next one.
+  await settleDueAuctions().catch((e) => console.error("settle before create failed", e));
+  const stillIn = (await repo.list()).find((a) => a.productId === v.productId && a.status === "live");
+  if (stillIn) {
+    const ev = stillIn.eventId ? await repo.getEvent(stillIn.eventId).catch(() => null) : null;
+    return { error: `This piece is still in ${ev ? `“${ev.title}”` : "another auction"}. Remove it there first (⋮ → Remove), then add it here.`, field: "productId" };
+  }
   let id: string;
   try {
     id = (await repo.create({ productId: v.productId, startingBid: v.startingBid, minIncrement: v.minIncrement, reservePrice: v.reservePrice, startsAt, endsAt, eventId: event?.id ?? null })).id;
