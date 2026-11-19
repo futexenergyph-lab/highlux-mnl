@@ -43,7 +43,14 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
   const status = searchParams.status ?? "all";
   const q = searchParams.q?.trim() ?? "";
   // "curated" = featured on the homepage's Curated Picks row (and still for sale, like the homepage).
-  const inTab = (p: (typeof all)[number], s: string) => (s === "all" ? true : s === "curated" ? p.featured && p.status !== "sold" && p.status !== "hidden" : p.status === s);
+  const inTab = (p: (typeof all)[number], s: string) =>
+    s === "all" ? true
+    : s === "curated" ? p.featured && p.status !== "sold" && p.status !== "hidden"
+    // Bidding / Flash Sale tabs follow the status label; Reserved leaves out pieces held by an auction.
+    : s === "bidding" ? p.status !== "sold" && inBidding.has(p.id)
+    : s === "flash" ? p.status !== "sold" && !inBidding.has(p.id) && inFlash.has(p.id)
+    : s === "reserved" ? p.status === "reserved" && !inBidding.has(p.id)
+    : p.status === s;
   const sort = PRODUCT_SORTS.some(([k]) => k === searchParams.sort) ? searchParams.sort! : "newest";
   const compare = (a: Product, b: Product) =>
     sort === "price_desc" ? b.price - a.price || b.createdAt.localeCompare(a.createdAt)
@@ -102,7 +109,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
   return (
     <>
       <PageHeader title="Products" description={`${all.length} pieces · each is one of a kind (quantity 1)`} actions={<Link href="/admin/products/new" className={btnGold}><Plus className="h-4 w-4" /> New product</Link>} />
-      <Tabs current={status} tabs={["all", "available", "curated", "duplicates", "reserved", "sold", "mens", "download", "hidden"].map((s) => ({ key: s, label: s === "curated" ? "Curated Picks" : s === "download" ? "Download Image Request" : s === "mens" ? "Mens" : s, href: qs(s), count: count(s) }))} />
+      <Tabs current={status} tabs={["all", "available", "curated", "duplicates", "reserved", "bidding", "flash", "sold", "mens", "download", "hidden"].map((s) => ({ key: s, label: s === "curated" ? "Curated Picks" : s === "download" ? "Download Image Request" : s === "mens" ? "Mens" : s === "flash" ? "Flash Sale" : s, href: qs(s), count: count(s) }))} />
       <form className="mb-5 flex flex-col gap-2 sm:flex-row">
         <input type="hidden" name="status" value={status} />
         {sort !== "newest" && <input type="hidden" name="sort" value={sort} />}
