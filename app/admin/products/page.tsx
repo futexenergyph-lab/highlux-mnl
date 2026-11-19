@@ -3,6 +3,9 @@ import Link from "next/link";
 import { Eye, Plus, Search } from "lucide-react";
 import { requireStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
+import { getAuctionRepo } from "@/lib/auctions/repo";
+import { auctionPhase } from "@/lib/auctions/types";
+import { flashWindows } from "@/lib/flash/pricing";
 import { allProductViewCounts } from "@/lib/product-views";
 import { matchesQuery } from "@/lib/filters";
 import { CATEGORIES } from "@/lib/catalog";
@@ -23,7 +26,20 @@ const TONE = { available: "green", reserved: "gold", sold: "muted", hidden: "red
 
 export default async function ProductsPage({ searchParams }: { searchParams: { status?: string; q?: string; category?: string; sort?: string } }) {
   await requireStaff("/admin/products");
-  const [all, views] = await Promise.all([(async () => (await getAdminRepo()).listProducts())(), allProductViewCounts()]);
+  const [all, views, auctions, windows] = await Promise.all([
+    (async () => (await getAdminRepo()).listProducts())(),
+    allProductViewCounts(),
+    getAuctionRepo().then((r) => r.list()).catch(() => []),
+    flashWindows(true),
+  ]);
+  // Status shown on each row: pieces in a running/upcoming auction show "Bidding", in a flash sale "Flash Sale".
+  const inBidding = new Set(auctions.filter((a) => a.status === "live" && auctionPhase(a) !== "ended").map((a) => a.productId));
+  const inFlash = new Set(windows.map((w) => w.productId));
+  const badge = (p: Product) =>
+    p.status === "sold" ? <Badge tone="muted">sold</Badge>
+    : inBidding.has(p.id) ? <Badge tone="blue">Bidding</Badge>
+    : inFlash.has(p.id) ? <Badge tone="gold">Flash Sale</Badge>
+    : <Badge tone={TONE[p.status]}>{p.status}</Badge>;
   const status = searchParams.status ?? "all";
   const q = searchParams.q?.trim() ?? "";
   // "curated" = featured on the homepage's Curated Picks row (and still for sale, like the homepage).
@@ -69,7 +85,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
         {!big && <span className="block text-sm tabular-nums text-gold-light sm:hidden">{formatPHP(p.price)}</span>}
         <span className="block text-xs text-cream-dim">{CONDITION_LABELS[p.condition]} · {p.images.length} photo{p.images.length === 1 ? "" : "s"} · added {fmtDate(p.createdAt)}</span>
         <span className="mt-0.5 flex items-center gap-1 text-xs tabular-nums text-gold-light/80"><Eye className="h-3.5 w-3.5" /> {(views.get(p.id) ?? 0).toLocaleString("en-PH")} view{views.get(p.id) === 1 ? "" : "s"}</span>
-        {big && <span className="mt-1.5 block"><Badge tone={TONE[p.status]}>{p.status}</Badge></span>}
+        {big && <span className="mt-1.5 block">{badge(p)}</span>}
       </Link>
       {!big && (
         <div className="hidden text-right sm:block">
@@ -77,7 +93,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: { s
           {p.compareAtPrice && <p className="text-xs text-cream-dim line-through">{formatPHP(p.compareAtPrice)}</p>}
         </div>
       )}
-      {!big && <Badge tone={TONE[p.status]}>{p.status}</Badge>}
+      {!big && badge(p)}
       <StatusMenu product={{ id: p.id, title: p.title, status: p.status, category: p.category, slug: p.slug, description: p.description, images: p.images }} />
     </li>
   );
