@@ -1,5 +1,7 @@
 import { assertStaff } from "@/lib/admin/auth";
+import { cleanPhoto } from "@/lib/banner";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** Staff-only: streams a product photo from our storage so the admin can save it (avoids cross-origin download limits). */
@@ -22,7 +24,12 @@ export async function GET(req: Request) {
     (target.origin === origin && target.pathname.startsWith("/api/media/product-media/")) ||
     (supabase && target.host === supabase && target.pathname.startsWith("/storage/v1/object/public/product-media/"));
   if (!allowed) return new Response("Not allowed", { status: 400 });
+  // ?clean=1: the copy without watermark we kept at upload, when there is one.
+  if (new URL(req.url).searchParams.get("clean") === "1") {
+    const clean = await cleanPhoto(raw);
+    if (clean) return new Response(new Uint8Array(clean), { headers: { "content-type": "image/jpeg", "x-clean": "1", "cache-control": "private, max-age=300" } });
+  }
   const res = await fetch(target, { headers: target.origin === origin ? { cookie: req.headers.get("cookie") ?? "" } : {} });
   if (!res.ok || !res.body) return new Response("Not found", { status: 404 });
-  return new Response(res.body, { headers: { "content-type": res.headers.get("content-type") ?? "image/jpeg", "cache-control": "private, max-age=300" } });
+  return new Response(res.body, { headers: { "content-type": res.headers.get("content-type") ?? "image/jpeg", "x-clean": "0", "cache-control": "private, max-age=300" } });
 }

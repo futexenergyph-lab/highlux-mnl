@@ -6,7 +6,7 @@ import { Check, Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { deleteProductAction, setProductStatusAction } from "@/app/admin/products/actions";
 import { captionWithLink, copyText } from "@/lib/client/clipboard";
 import type { ProductStatus } from "@/lib/types";
-import { downloadBanner, downloadPhotos } from "./download-photos-button";
+import { downloadBanner, downloadCover, downloadPhotos } from "./download-photos-button";
 
 export interface MenuProduct {
   id: string;
@@ -27,9 +27,22 @@ export function StatusMenu({ product: p }: { product: MenuProduct }) {
   const [flash, setFlash] = React.useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
-  const done = (msg: string) => {
+  const done = (msg: string, ms = 2000) => {
     setFlash(msg);
-    setTimeout(() => setFlash(null), 2000);
+    setTimeout(() => setFlash(null), ms);
+  };
+  // A note shown instead of the usual "saved" message (e.g. some photos only had the watermarked copy).
+  const noteRef = React.useRef<string | null>(null);
+  const note = (msg: string) => (noteRef.current = msg);
+  const run = async (ok: string, fail: string, fn: () => Promise<"done" | "cancelled">) => {
+    setBusy(true);
+    noteRef.current = null;
+    try {
+      if ((await fn()) === "done") done(noteRef.current ?? ok, noteRef.current ? 5000 : 2000);
+    } catch {
+      alert(fail);
+    }
+    setBusy(false);
   };
   const setStatus = async (to: "available" | "sold" | "hidden") => {
     setBusy(true);
@@ -50,7 +63,7 @@ export function StatusMenu({ product: p }: { product: MenuProduct }) {
 
   return (
     <div className="relative">
-      {flash && <span className="absolute bottom-full right-0 mb-1 flex items-center gap-1 whitespace-nowrap border border-gold/40 bg-ink px-2 py-1 text-[0.65rem] text-gold-light"><Check className="h-3 w-3" /> {flash}</span>}
+      {flash && <span className="absolute bottom-full right-0 z-10 mb-1 flex w-max max-w-[16rem] items-start gap-1 border border-gold/40 bg-ink px-2 py-1 text-[0.65rem] text-gold-light"><Check className="h-3 w-3" /> {flash}</span>}
       <Dropdown.Root>
         <Dropdown.Trigger className="p-2 text-cream-muted hover:text-cream" aria-label="Product actions">
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
@@ -59,43 +72,52 @@ export function StatusMenu({ product: p }: { product: MenuProduct }) {
           <Dropdown.Content align="end" className="z-50 min-w-56 border border-gold/25 bg-ink py-1 shadow-luxe">
             {p.status !== "available" && <Dropdown.Item onSelect={() => setStatus("available")} className={itemCls}>Mark available</Dropdown.Item>}
             {p.status === "available" && (
-              <Dropdown.Item onSelect={() => router.push(`/admin/purchases/new?product=${p.id}`)} className={itemCls}>Mark sold → record sale</Dropdown.Item>
+              <Dropdown.Item onSelect={() => router.push(`/admin/purchases/new?product=${p.id}`)} className={itemCls}>Mark as sold – Record Sale</Dropdown.Item>
             )}
             {p.status === "reserved" && <Dropdown.Item onSelect={() => setStatus("sold")} className={itemCls}>Mark sold</Dropdown.Item>}
             {p.status !== "hidden" && <Dropdown.Item onSelect={() => setStatus("hidden")} className={itemCls}>Hide from site</Dropdown.Item>}
+            <Dropdown.Item onSelect={() => window.open(`/${p.category}/${p.slug}`, "_blank", "noopener")} className={itemCls}>Preview site listing</Dropdown.Item>
             <Dropdown.Separator className="my-1 h-px bg-gold/15" />
             <Dropdown.Item
               disabled={!p.images.length}
-              onSelect={async () => {
-                setBusy(true);
-                try {
-                  if ((await downloadPhotos(p.images, p.slug)) === "done") done("Photos saved");
-                } catch {
-                  alert("Couldn't download the photos — try again.");
-                }
-                setBusy(false);
-              }}
+              onSelect={() =>
+                run("Cover saved", "Couldn't make the cover — try again.", () =>
+                  downloadCover(p.id, p.slug, () => note("Saved — this photo only has the watermarked copy (uploaded before clean copies were kept)")),
+                )
+              }
               className={itemCls}
             >
-              Download all photos ({p.images.length})
+              Download listing image cover w/o watermark
             </Dropdown.Item>
+            <Dropdown.Item
+              disabled={!p.images.length}
+              onSelect={() =>
+                run("Photos saved", "Couldn't download the photos — try again.", () =>
+                  downloadPhotos(p.images, p.slug, { clean: true, onWatermarked: (n) => note(`Saved — ${n} of ${p.images.length} only have the watermarked copy (uploaded before clean copies were kept)`) }),
+                )
+              }
+              className={itemCls}
+            >
+              Download all photos w/o watermark ({p.images.length})
+            </Dropdown.Item>
+            <Dropdown.Item
+              disabled={!p.images.length}
+              onSelect={() => run("Photos saved", "Couldn't download the photos — try again.", () => downloadPhotos(p.images, p.slug))}
+              className={itemCls}
+            >
+              Download all photos with watermark ({p.images.length})
+            </Dropdown.Item>
+            <Dropdown.Separator className="my-1 h-px bg-gold/15" />
             {(["was", "sale"] as const).map((type) => (
               <Dropdown.Item
                 key={type}
-                onSelect={async () => {
-                  setBusy(true);
-                  try {
-                    if ((await downloadBanner(p.id, p.slug, type)) === "done") done("Banner saved");
-                  } catch {
-                    alert("Couldn't make the banner — try again.");
-                  }
-                  setBusy(false);
-                }}
+                onSelect={() => run("Banner saved", "Couldn't make the banner — try again.", () => downloadBanner(p.id, p.slug, type))}
                 className={itemCls}
               >
-                {type === "was" ? "Download Banner + Was Price" : "Download Banner + Sale Price"}
+                {type === "was" ? "Download banner + Was Price" : "Download banner + Sale Price"}
               </Dropdown.Item>
             ))}
+            <Dropdown.Separator className="my-1 h-px bg-gold/15" />
             <Dropdown.Item
               onSelect={async () => {
                 await copyText(captionWithLink(`/${p.category}/${p.slug}`));
@@ -103,7 +125,7 @@ export function StatusMenu({ product: p }: { product: MenuProduct }) {
               }}
               className={itemCls}
             >
-              Copy link
+              Copy listing link
             </Dropdown.Item>
             <Dropdown.Item
               onSelect={async () => {

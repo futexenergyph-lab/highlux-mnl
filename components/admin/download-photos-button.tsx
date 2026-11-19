@@ -9,16 +9,19 @@ import { btnOutline } from "./ui";
  * Phones get the share sheet ("Save images" → Photos/Gallery); elsewhere each file downloads.
  */
 /** Fetches every photo (full stored quality) and saves them: share sheet on phones, file downloads elsewhere. */
-export async function downloadPhotos(images: { url: string }[], name: string): Promise<"done" | "cancelled"> {
+export async function downloadPhotos(images: { url: string }[], name: string, opts: { clean?: boolean; onWatermarked?: (n: number) => void } = {}): Promise<"done" | "cancelled"> {
+  let watermarked = 0;
   const files = await Promise.all(
     images.map(async (im, i) => {
-      const res = await fetch(`/api/admin/photo?url=${encodeURIComponent(im.url)}`);
+      const res = await fetch(`/api/admin/photo?url=${encodeURIComponent(im.url)}${opts.clean ? "&clean=1" : ""}`);
       if (!res.ok) throw new Error("fetch failed");
+      if (opts.clean && res.headers.get("x-clean") !== "1") watermarked++;
       const blob = await res.blob();
       const ext = blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : blob.type.includes("svg") ? "svg" : "jpg";
-      return new File([blob], `${name}-${String(i + 1).padStart(2, "0")}.${ext}`, { type: blob.type || "image/jpeg" });
+      return new File([blob], `${name}-${opts.clean ? "clean-" : ""}${String(i + 1).padStart(2, "0")}.${ext}`, { type: blob.type || "image/jpeg" });
     }),
   );
+  if (watermarked) opts.onWatermarked?.(watermarked);
   return saveFiles(files);
 }
 
@@ -43,6 +46,14 @@ export async function saveFiles(files: File[]): Promise<"done" | "cancelled"> {
     await new Promise((r) => setTimeout(r, 250));
   }
   return "done";
+}
+
+/** Square listing cover without watermark (whole piece centred). Reports if only a watermarked photo existed. */
+export async function downloadCover(productId: string, name: string, onWatermarked?: () => void): Promise<"done" | "cancelled"> {
+  const res = await fetch(`/api/admin/banner?id=${encodeURIComponent(productId)}&type=cover`);
+  if (!res.ok) throw new Error("cover failed");
+  if (res.headers.get("x-clean") !== "1") onWatermarked?.();
+  return saveFiles([new File([await res.blob()], `${name}-cover.jpg`, { type: "image/jpeg" })]);
 }
 
 /** Builds a banner JPEG for a product ("was": 9:16 Was Price, "sale": square Sale Price) and saves it. */

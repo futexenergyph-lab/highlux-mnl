@@ -23,14 +23,17 @@ const bannerFonts = () =>
     readFile(join(process.cwd(), "assets/fonts/Montserrat-Bold.ttf")).then((data) => ({ name: "Montserrat", data, weight: 700 as const, style: "normal" as const })),
   ]));
 
+/** The clean (unwatermarked) copy of a product photo we kept at upload, if there is one. */
+export async function cleanPhoto(url: string | undefined): Promise<Buffer | null> {
+  const key = url ? originalPathFor(url) : null;
+  return key ? readPrivate("product-originals", key).catch(() => null) : null;
+}
+
 /** The first photo, clean (no watermark) when we kept an original; otherwise the stored watermarked one. */
 async function firstPhoto(url: string | undefined): Promise<Buffer | null> {
   if (!url) return null;
-  const key = originalPathFor(url);
-  if (key) {
-    const clean = await readPrivate("product-originals", key).catch(() => null);
-    if (clean) return clean;
-  }
+  const clean = await cleanPhoto(url);
+  if (clean) return clean;
   if (url.startsWith("/api/media/") && !isSupabaseConfigured()) {
     const f = memoryMedia().get(url.slice("/api/media/".length));
     return f ? Buffer.from(f.bytes) : null;
@@ -142,4 +145,14 @@ export async function renderSalePriceBanner(p: Product): Promise<Buffer> {
     { width: SQ, height: SQ, fonts: await bannerFonts() },
   );
   return sharp(Buffer.from(await png.arrayBuffer())).flatten({ background: "#ffffff" }).jpeg({ quality: 92, mozjpeg: true }).toBuffer();
+}
+
+/** Square listing cover (1080×1080 JPEG): the first photo without watermark, whole piece centred. */
+export async function renderCoverSquare(p: Product): Promise<{ jpg: Buffer; clean: boolean }> {
+  const url = p.images[0]?.url;
+  const clean = await cleanPhoto(url);
+  const raw = clean ?? (await firstPhoto(url));
+  if (!raw) throw new Error("NO_PHOTO");
+  const jpg = await sharp(await fitPhoto(raw, SQ, SQ)).jpeg({ quality: 92, mozjpeg: true }).toBuffer();
+  return { jpg, clean: !!clean };
 }
