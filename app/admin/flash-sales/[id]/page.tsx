@@ -92,6 +92,10 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
     .filter((p) => p.status === "available" && !inSale.has(p.id))
     .sort((a, b) => a.title.localeCompare(b.title))
     .map((p) => ({ id: p.id, label: p.title, price: p.price, image: p.images[0]?.url ?? null }));
+  const bannerItems = items.flatMap((i, n) => {
+    const p = products.get(i.productId);
+    return p ? [{ itemId: i.id, itemNo: n + 1, productId: p.id, slug: p.slug, title: p.title, image: p.images[0]?.url ?? null }] : [];
+  });
   const phase = flashPhase(event);
   const group = event.kind === "group";
   const total = items.reduce((s, i) => s + i.salePrice, 0);
@@ -118,6 +122,11 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
             </Card>
           )}
           <Card title={`Pieces on flash sale (${items.length})`}>
+            {items.length > 0 && (
+              <div className="-mt-2 mb-3">
+                <FlashBulkBanners group={group} items={bannerItems} compact />
+              </div>
+            )}
             {items.length === 0 ? (
               <p className="text-sm text-cream-muted">No pieces yet.</p>
             ) : (
@@ -176,13 +185,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
           <Card title="Share">
             <CopyLinkButton path={`/flash-sale?event=${event.id}`} label="Copy flash sale page link" />
             <p className="mt-2 text-xs text-cream-dim">Opens the Flash Sale page with a countdown and every piece on sale.</p>
-            <FlashBulkBanners
-              group={group}
-              items={items.flatMap((i, n) => {
-                const p = products.get(i.productId);
-                return p ? [{ itemId: i.id, itemNo: n + 1, productId: p.id, slug: p.slug, title: p.title, image: p.images[0]?.url ?? null }] : [];
-              })}
-            />
+            <FlashBulkBanners group={group} items={bannerItems} />
             <p className="mt-2 text-xs text-cream-dim">Choose the kind of banner and the pieces, then save them all at once.</p>
           </Card>
           <Link href={`/admin/flash-sales/${event.id}/edit`} className="flex h-10 items-center justify-center border border-gold/40 text-xs uppercase tracking-wider text-cream hover:border-gold">{group ? "Edit title, times or group link" : "Edit title or times"}</Link>

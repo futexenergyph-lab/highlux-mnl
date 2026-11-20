@@ -23,7 +23,7 @@ const KINDS: Record<Kind, string> = {
 };
 
 /** "Download banners" on a flash sale: pick the banner kind and the pieces, then save them all at once. */
-export function FlashBulkBanners({ items, group }: { items: FlashBannerItem[]; group: boolean }) {
+export function FlashBulkBanners({ items, group, compact = false }: { items: FlashBannerItem[]; group: boolean; compact?: boolean }) {
   const kinds: Kind[] = group ? ["minesteal", "was", "cover"] : ["sale", "was", "cover"];
   const [open, setOpen] = React.useState(false);
   const [kind, setKind] = React.useState<Kind>(kinds[0]);
@@ -70,7 +70,7 @@ export function FlashBulkBanners({ items, group }: { items: FlashBannerItem[]; g
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} disabled={!items.length} className={`${btnOutline} mt-3 w-full`}>
+      <button type="button" onClick={() => setOpen(true)} disabled={!items.length} className={compact ? btnGold : `${btnOutline} mt-3 w-full`}>
         <Images className="h-4 w-4" /> Download banners
       </button>
       {open && (
