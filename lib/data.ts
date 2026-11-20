@@ -109,6 +109,12 @@ export async function queryProducts(filters: Filters) {
   };
 }
 
+/** The piece as a regular listing: regular price, no flash sale or group sale info. */
+export const getBaseProduct = cache(async (category: CategorySlug, slug: string) => {
+  const catalog = await getBaseCatalog();
+  return catalog.find((p) => p.slug === slug && p.category === category) ?? null;
+});
+
 export const getProduct = cache(async (category: CategorySlug, slug: string) => {
   const catalog = await getCatalog();
   return catalog.find((p) => p.slug === slug && p.category === category) ?? null;

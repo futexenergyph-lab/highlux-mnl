@@ -3,7 +3,7 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { getProduct } from "@/lib/data";
+import { getBaseProduct, getProduct } from "@/lib/data";
 import { CREAM, GOLD, GOLD_LIGHT, INK, OG_SIZE, ogFonts, ogImageSrc } from "@/lib/og";
 import { site } from "@/lib/site";
 import { CONDITION_LABELS, type CategorySlug } from "@/lib/types";
@@ -11,9 +11,9 @@ import { formatPHP } from "@/lib/utils";
 
 /** Share card: photo left, brand / title / price / condition right, in the site's gold-on-black style. */
 /** `auction` swaps the price for the was price and adds the Item # line (manual live auctions). */
-export async function renderProductCard(category: string, slug: string, auction?: { itemNumber: number | null; manual?: boolean }) {
+export async function renderProductCard(category: string, slug: string, auction?: { itemNumber: number | null; manual?: boolean }, regular = false) {
   const params = { category, slug };
-  const p = await getProduct(params.category as CategorySlug, params.slug);
+  const p = await (regular ? getBaseProduct : getProduct)(params.category as CategorySlug, params.slug);
   const fonts = await ogFonts();
   const photo = await ogImageSrc(p?.images[0]?.url);
   const sold = p?.status === "sold";

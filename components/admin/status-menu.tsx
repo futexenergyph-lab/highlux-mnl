@@ -136,6 +136,15 @@ export function StatusMenu({ product: p }: { product: MenuProduct }) {
             >
               Copy description + link
             </Dropdown.Item>
+            <Dropdown.Item
+              onSelect={async () => {
+                await copyText(captionWithLink(`/${p.category}/${p.slug}/regular`, p.description));
+                done("Copied (regular listing)");
+              }}
+              className={itemCls}
+            >
+              Copy description + link (Regular)
+            </Dropdown.Item>
             <Dropdown.Separator className="my-1 h-px bg-gold/15" />
             <Dropdown.Item onSelect={() => setConfirmDelete(true)} className={`${itemCls} !text-red-400 data-[highlighted]:bg-red-500/10`}>
               Delete listing

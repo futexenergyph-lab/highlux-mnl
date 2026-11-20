@@ -49,8 +49,10 @@ export function useProductAuction(productId: string) {
 }
 
 /** Price block. While the piece is in a manual live auction only the "was" price is shown. */
-export function ProductPrice({ productId, price, compareAtPrice, status, note }: { productId: string; price: number; compareAtPrice: number | null; status: string; note: React.ReactNode }) {
-  const info = useProductAuction(productId);
+export function ProductPrice({ productId, price, compareAtPrice, status, note, ignoreAuction = false }: { productId: string; price: number; compareAtPrice: number | null; status: string; note: React.ReactNode; ignoreAuction?: boolean }) {
+  const auction = useProductAuction(productId);
+  // The regular listing link shows the normal price even while the piece is in an auction.
+  const info = ignoreAuction ? null : auction;
   const sold = status === "sold";
   if (info?.manual) {
     return (
