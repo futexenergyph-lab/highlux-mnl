@@ -35,7 +35,10 @@ export async function GET(req: Request) {
       headers: { "content-type": "image/jpeg", "x-clean": cover.clean ? "1" : "0", "content-disposition": `attachment; filename="${p.slug}-cover.jpg"`, "cache-control": "private, no-store" },
     });
   }
-  const jpg = await (sale ? renderSalePriceBanner(p) : renderWasPriceBanner(p));
+  // ?item=… on a Sale Price banner: use that flash sale piece's sale price (was price = its old price).
+  const flashItem = sale && q.get("item") ? (await (await getFlashRepo()).listItems().catch(() => [])).find((i) => i.id === q.get("item") && i.productId === p.id) : null;
+  const priced = flashItem ? { ...p, price: flashItem.salePrice, compareAtPrice: Math.max(p.compareAtPrice ?? 0, p.price) } : p;
+  const jpg = await (sale ? renderSalePriceBanner(priced) : renderWasPriceBanner(p));
   return new Response(new Uint8Array(jpg), {
     headers: { "content-type": "image/jpeg", "content-disposition": `attachment; filename="${p.slug}-${sale ? "sale" : "was"}-banner.jpg"`, "cache-control": "private, no-store" },
   });
