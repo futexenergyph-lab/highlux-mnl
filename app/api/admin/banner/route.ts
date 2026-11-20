@@ -1,6 +1,7 @@
 import { assertStaff } from "@/lib/admin/auth";
 import { getAdminRepo } from "@/lib/admin/repo";
-import { renderCoverSquare, renderSalePriceBanner, renderWasPriceBanner } from "@/lib/banner";
+import { renderCoverSquare, renderMineStealBanner, renderSalePriceBanner, renderWasPriceBanner } from "@/lib/banner";
+import { getFlashRepo } from "@/lib/flash/repo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,15 @@ export async function GET(req: Request) {
   const sale = q.get("type") === "sale";
   const p = id ? await (await getAdminRepo()).getProduct(id) : null;
   if (!p) return new Response("Not found", { status: 404 });
+  if (q.get("type") === "minesteal") {
+    // Facebook banner for a group flash sale piece: prices from its flash sale item (?item=…).
+    const item = (await (await getFlashRepo()).listItems().catch(() => [])).find((i) => i.id === q.get("item") && i.productId === p.id);
+    if (!item) return new Response("Not in this flash sale", { status: 404 });
+    const out = await renderMineStealBanner(p, item.salePrice, item.stealPrice);
+    return new Response(new Uint8Array(out.jpg), {
+      headers: { "content-type": "image/jpeg", "x-clean": out.clean ? "1" : "0", "content-disposition": `attachment; filename="${p.slug}-mine-steal.jpg"`, "cache-control": "private, no-store" },
+    });
+  }
   if (q.get("type") === "cover") {
     // Square cover from the first photo, without watermark when a clean copy exists.
     const cover = await renderCoverSquare(p).catch(() => null);

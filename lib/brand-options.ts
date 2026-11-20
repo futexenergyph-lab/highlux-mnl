@@ -20,3 +20,18 @@ export function canonicalBrand(name: string) {
   const t = name.trim();
   return SAME_BRAND[t.toLowerCase().replace(/\s+/g, " ")] ?? t;
 }
+
+/** The item name without the brand in front ("Louis Vuitton Soufflot MM" → "Soufflot MM"), e.g. for Facebook posts. */
+export function modelOnly(title: string, brand: string) {
+  let t = title.trim();
+  const names = [brand, ...Object.entries(SAME_BRAND).filter(([, v]) => v === canonicalBrand(brand)).map(([k]) => k)]
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+  for (const n of names) {
+    if (t.toLowerCase().startsWith(`${n.toLowerCase()} `)) {
+      t = t.slice(n.length).trim();
+      break;
+    }
+  }
+  return t.replace(/^[-–·:\s]+/, "") || title.trim();
+}

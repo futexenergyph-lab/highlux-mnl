@@ -9,6 +9,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { site } from "@/lib/site";
 import type { Product } from "@/lib/types";
 import { formatPHP } from "@/lib/utils";
+import { modelOnly } from "@/lib/brand-options";
 
 const W = 1080;
 const PHOTO = 1068;
@@ -154,5 +155,50 @@ export async function renderCoverSquare(p: Product): Promise<{ jpg: Buffer; clea
   const raw = clean ?? (await firstPhoto(url));
   if (!raw) throw new Error("NO_PHOTO");
   const jpg = await sharp(await fitPhoto(raw, SQ, SQ)).jpeg({ quality: 92, mozjpeg: true }).toBuffer();
+  return { jpg, clean: !!clean };
+}
+
+/**
+ * Facebook banner for a group flash sale piece (square 1080×1080 JPEG): photo without watermark,
+ * the item name WITHOUT the brand, and the Mine and Steal prices. Reports if only a watermarked photo existed.
+ */
+export async function renderMineStealBanner(p: Product, mine: number, steal: number | null): Promise<{ jpg: Buffer; clean: boolean }> {
+  const url = p.images[0]?.url;
+  const clean = await cleanPhoto(url);
+  const raw = clean ?? (await firstPhoto(url));
+  const photo = raw ? `data:image/jpeg;base64,${(await fitPhoto(raw, SQ, SQ_PHOTO)).toString("base64")}` : null;
+  const name = modelOnly(p.title, p.brand);
+  const nameSize = name.length > 48 ? 26 : name.length > 32 ? 30 : 34;
+  const mineText = formatPHP(mine);
+  const mineSize = Math.min(64, Math.floor(330 / (mineText.length * 0.64)));
+  const png = new ImageResponse(
+    (
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#f3ede1", fontFamily: "Montserrat" }}>
+        <div style={{ width: SQ, height: SQ_PHOTO, display: "flex", background: "#e9e4da" }}>
+          {photo && <img src={photo} width={SQ} height={SQ_PHOTO} alt="" />}
+        </div>
+        <div style={{ height: SQ_STRIP, display: "flex" }}>
+          <div style={{ width: 560, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 30px 0 46px", background: "#f3ede1" }}>
+            <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: 6, color: "#b3913f" }}>FLASH SALE</div>
+            <div style={{ marginTop: 8, fontSize: nameSize, fontWeight: 500, lineHeight: 1.2, color: "#1c1a17", display: "flex", maxHeight: 92, overflow: "hidden" }}>{name}</div>
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 34px", background: "#dcc27f", color: "#2b1a0e" }}>
+            <div style={{ display: "flex", alignItems: "baseline" }}>
+              <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: 3, width: 118 }}>MINE</div>
+              <div style={{ fontSize: mineSize, fontWeight: 700, lineHeight: 1.05 }}>{mineText}</div>
+            </div>
+            {steal && (
+              <div style={{ marginTop: 6, display: "flex", alignItems: "baseline" }}>
+                <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: 3, width: 118 }}>STEAL</div>
+                <div style={{ fontSize: Math.round(mineSize * 0.62), fontWeight: 700 }}>{formatPHP(steal)}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    ),
+    { width: SQ, height: SQ, fonts: await bannerFonts() },
+  );
+  const jpg = await sharp(Buffer.from(await png.arrayBuffer())).flatten({ background: "#ffffff" }).jpeg({ quality: 92, mozjpeg: true }).toBuffer();
   return { jpg, clean: !!clean };
 }

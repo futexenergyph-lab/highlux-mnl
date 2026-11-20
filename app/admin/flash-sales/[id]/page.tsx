@@ -8,6 +8,7 @@ import { getFlashRepo } from "@/lib/flash/repo";
 import { flashViewCounts } from "@/lib/product-views";
 import { FLASH_KIND_LABEL, FLASH_LABEL, FLASH_TONE, flashPhase } from "@/lib/flash/types";
 import { formatPHP } from "@/lib/utils";
+import { modelOnly } from "@/lib/brand-options";
 import { Badge, Card, PageHeader, fmtDateTime } from "@/components/admin/ui";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { AddItemForm } from "./add-item-form";
@@ -42,6 +43,35 @@ function sharePost(e: { title: string; startsAt: string; endsAt: string; kind: s
     `🔴 Ends: ${when(e.endsAt)}`,
     "",
     "📢 IMPORTANT REMINDER",
+    "",
+    "Once we received the payment, we can deliver the item same day.",
+  ].join("\n");
+}
+
+/** Facebook version: item name without the brand, Mine/Steal rules. {LINK} is filled in by the browser. */
+function facebookPost(e: { title: string; startsAt: string; endsAt: string }, itemNo: number, model: string, mine: number, steal: number | null) {
+  return [
+    e.title,
+    `🏷 Item #: ${itemNo}`,
+    model,
+    "",
+    "Click the link below to view the actual photos and complete description of the item.",
+    "",
+    "🔗 Listing Link: {LINK}",
+    "",
+    `🔴 Mine: ${formatPHP(mine)}`,
+    `🔵 Steal: ${steal ? formatPHP(steal) : ""}`,
+    "",
+    "📌 Commenting steal price means sold!",
+    "",
+    "🗓️ Flash Sale Schedule",
+    "",
+    `🟢 Starts: ${when(e.startsAt)}`,
+    `🔴 Ends: ${when(e.endsAt)}`,
+    "",
+    "📢 IMPORTANT REMINDER",
+    "",
+    "Comment “MINE” to claim the item at the posted MINE price. The first valid MINE wins unless someone comments “STEAL” before bidding closes. Once a STEAL is confirmed, the item is SOLD to that bidder.",
     "",
     "Once we received the payment, we can deliver the item same day.",
   ].join("\n");
@@ -112,6 +142,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
                         </span>
                         <ItemControls
                           share={p ? { path: `/${p.category}/${p.slug}`, text: sharePost(event, n + 1, p.title, i.salePrice, i.stealPrice) } : undefined}
+                          facebook={p && group ? { productId: p.id, slug: p.slug, path: `/${p.category}/${p.slug}`, text: facebookPost(event, n + 1, modelOnly(p.title, p.brand), i.salePrice, i.stealPrice) } : undefined}
                           eventId={event.id} itemId={i.id} title={p?.title ?? "Deleted piece"} salePrice={i.salePrice} stealPrice={i.stealPrice} group={group} current={p?.price ?? i.salePrice} was={Math.max(p?.compareAtPrice ?? 0, p?.price ?? i.salePrice)} />
                       </div>
                     </li>
