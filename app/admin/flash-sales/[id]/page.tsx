@@ -151,6 +151,7 @@ export default async function FlashSaleEventPage({ params, searchParams }: { par
                           <Eye className="h-3.5 w-3.5" /> {(opens.get(i.id) ?? 0).toLocaleString("en-PH")} link open{opens.get(i.id) === 1 ? "" : "s"}
                         </span>
                         <ItemControls
+                          saleProductId={p && p.status !== "sold" ? p.id : undefined}
                           share={p ? { path: `/${p.category}/${p.slug}`, text: sharePost(event, n + 1, p.title, i.salePrice, i.stealPrice) } : undefined}
                           facebook={p && group ? { productId: p.id, slug: p.slug, path: `/${p.category}/${p.slug}`, text: facebookPost(event, n + 1, modelOnly(p.title, p.brand), i.salePrice, i.stealPrice) } : undefined}
                           eventId={event.id} itemId={i.id} title={p?.title ?? "Deleted piece"} salePrice={i.salePrice} stealPrice={i.stealPrice} group={group} current={p?.price ?? i.salePrice} was={Math.max(p?.compareAtPrice ?? 0, p?.price ?? i.salePrice)} />

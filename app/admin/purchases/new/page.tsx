@@ -6,7 +6,7 @@ import { ManualPurchaseForm } from "./manual-form";
 export const metadata = { title: "Manual purchase" };
 export const dynamic = "force-dynamic";
 
-export default async function ManualPurchasePage({ searchParams }: { searchParams: { product?: string } }) {
+export default async function ManualPurchasePage({ searchParams }: { searchParams: { product?: string; amount?: string } }) {
   await requireStaff("/admin/purchases/new");
   const repo = await getAdminRepo();
   const [products, costs] = await Promise.all([repo.listProducts(), repo.productCosts()]);
@@ -17,7 +17,7 @@ export default async function ManualPurchasePage({ searchParams }: { searchParam
   return (
     <>
       <PageHeader title="Manual purchase" description="Record a sale made outside the website — meet-up, walk-in or chat." />
-      <ManualPurchaseForm items={items} preselect={searchParams.product} />
+      <ManualPurchaseForm items={items} preselect={searchParams.product} presetAmount={searchParams.amount && /^\d+(\.\d+)?$/.test(searchParams.amount) ? searchParams.amount : undefined} />
     </>
   );
 }

@@ -13,7 +13,7 @@ const itemCls = "cursor-pointer px-4 py-2.5 text-sm text-cream outline-none data
 const digits = (v: string) => v.replace(/[^\d.]/g, "");
 
 /** Prices of one piece in a flash sale, with ⋮ → Edit prices / Remove. */
-export function ItemControls({ share, facebook, eventId, itemId, title, salePrice, stealPrice = null, current, was, group = false }: { share?: { path: string; text: string }; facebook?: { productId: string; slug: string; path: string; text: string }; eventId: string; itemId: string; title: string; salePrice: number; stealPrice?: number | null; current: number; was: number; group?: boolean }) {
+export function ItemControls({ share, facebook, saleProductId, eventId, itemId, title, salePrice, stealPrice = null, current, was, group = false }: { saleProductId?: string; share?: { path: string; text: string }; facebook?: { productId: string; slug: string; path: string; text: string }; eventId: string; itemId: string; title: string; salePrice: number; stealPrice?: number | null; current: number; was: number; group?: boolean }) {
   const router = useRouter();
   const [mode, setMode] = React.useState<"edit" | "remove" | null>(null);
   const [value, setValue] = React.useState(String(salePrice));
@@ -103,6 +103,14 @@ export function ItemControls({ share, facebook, eventId, itemId, title, salePric
         </Dropdown.Trigger>
         <Dropdown.Portal>
           <Dropdown.Content align="end" className="z-50 min-w-44 border border-gold/25 bg-ink py-1 shadow-luxe">
+            {saleProductId && (
+              <>
+                <Dropdown.Item onSelect={() => router.push(`/admin/purchases/new?product=${saleProductId}&amount=${salePrice}`)} className={itemCls}>
+                  Mark as sold – Record Purchase
+                </Dropdown.Item>
+                <Dropdown.Separator className="my-1 h-px bg-gold/15" />
+              </>
+            )}
             {share && <Dropdown.Item onSelect={sharePost} className={itemCls}>Share product link for posting</Dropdown.Item>}
             {facebook && (
               <>

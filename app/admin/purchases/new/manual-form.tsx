@@ -48,11 +48,12 @@ function Field({ label, error, children, hint }: { label: string; error?: string
 const item0Price = (items: ItemOption[], id?: string) => { const i = items.find((x) => x.id === id); return i ? String(i.price) : ""; };
 const money = (v: string) => v.replace(/[^\d.]/g, "");
 
-export function ManualPurchaseForm({ items = [], initial, preselect }: { items?: ItemOption[]; initial?: PurchaseInitial; preselect?: string }) {
+/** `presetAmount`: the price agreed elsewhere (e.g. a flash sale's Mine price), filled in instead of the listed price. */
+export function ManualPurchaseForm({ items = [], initial, preselect, presetAmount }: { items?: ItemOption[]; initial?: PurchaseInitial; preselect?: string; presetAmount?: string }) {
   const editing = !!initial;
   const [state, action] = useFormState<ManualState, FormData>(editing ? updatePurchaseAction : createManualPurchase, null);
   const [item, setItem] = React.useState<ItemOption | null>(() => items.find((i) => i.id === preselect) ?? null);
-  const [amount, setAmount] = React.useState(initial ? String(initial.amount) : item0Price(items, preselect));
+  const [amount, setAmount] = React.useState(initial ? String(initial.amount) : presetAmount ?? item0Price(items, preselect));
   const [capital, setCapital] = React.useState(() => {
     const c = initial ? initial.capital : items.find((i) => i.id === preselect)?.capital;
     return c != null ? String(c) : "";
