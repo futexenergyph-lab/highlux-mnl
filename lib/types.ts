@@ -95,6 +95,8 @@ export interface Product {
   featured: boolean;
   /** Ticked in admin's Mens tab: shows up when customers search "mens". */
   forMen?: boolean;
+  /** Shop page views (for the "Most Viewed" sort). */
+  viewCount?: number;
   createdAt: string;
   /** Set while the piece is in a running flash sale (its price is the sale price). */
   flashSale?: { endsAt: string; eventId: string } | null;

@@ -48,6 +48,7 @@ export function mapProduct(row: any): Product {
     status: effectiveStatus(row.status, row.reserved_until),
     featured: row.featured,
     forMen: !!row.for_men,
+    viewCount: Number(row.view_count ?? 0),
     createdAt: row.created_at,
   };
 }
@@ -88,9 +89,10 @@ export const getCatalog = cache(async (): Promise<Product[]> => {
 const getBaseCatalog = cache(async (): Promise<Product[]> => {
   if (!isSupabaseConfigured()) {
     // Sample mode reads the in-memory store so checkout holds and sales show up live.
+    const views = await (await import("./product-views")).productViewCounts();
     return memoryStore()
       .products.filter((p) => p.status !== "hidden")
-      .map(({ reservedSession: _s, reservedUntil, soldAt: _x, ...p }) => ({ ...p, status: effectiveStatus(p.status, reservedUntil) }));
+      .map(({ reservedSession: _s, reservedUntil, soldAt: _x, ...p }) => ({ ...p, status: effectiveStatus(p.status, reservedUntil), viewCount: views.get(p.id) ?? 0 }));
   }
   return fetchCatalog();
 });

@@ -5,6 +5,7 @@ export const SORTS = {
   newest: "Newest",
   "price-asc": "Price: Low to High",
   "price-desc": "Price: High to Low",
+  popular: "Most Viewed",
 } as const;
 export type SortKey = keyof typeof SORTS;
 
@@ -87,7 +88,7 @@ const STATUS_RANK: Record<Product["status"], number> = { available: 0, reserved:
 export function compareProducts(sort: SortKey) {
   return (a: Product, b: Product) =>
     STATUS_RANK[a.status] - STATUS_RANK[b.status] ||
-    (sort === "price-asc" ? a.price - b.price : sort === "price-desc" ? b.price - a.price : 0) ||
+    (sort === "price-asc" ? a.price - b.price : sort === "price-desc" ? b.price - a.price : sort === "popular" ? (b.viewCount ?? 0) - (a.viewCount ?? 0) : 0) ||
     b.createdAt.localeCompare(a.createdAt);
 }
 
