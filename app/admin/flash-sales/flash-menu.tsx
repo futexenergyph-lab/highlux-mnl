@@ -4,12 +4,40 @@ import { useRouter } from "next/navigation";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import { Check, Loader2, MoreVertical } from "lucide-react";
 import { copyText } from "@/lib/client/clipboard";
+import { boldText } from "@/lib/client/fancy-text";
 import { deleteFlashEventAction, purgeFlashEventAction, restoreFlashEventAction } from "./actions";
 
 const itemCls = "cursor-pointer px-4 py-2.5 text-sm text-cream outline-none data-[highlighted]:bg-gold/10 data-[highlighted]:text-gold-light";
 
 /** ⋮ on a flash sale in the list: edit or delete it; in the Deleted tab, restore it or delete it for good. */
-export function FlashMenu({ id, title, pieces, deleted = false }: { id: string; title: string; pieces: number; deleted?: boolean }) {
+const when = (iso: string) => new Date(iso).toLocaleString("en-PH", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" });
+
+/** The Facebook post for a whole flash sale (bold title, Mine/Steal how-to). */
+function facebookEventPost(title: string, startsAt: string, endsAt: string) {
+  const b = boldText;
+  return [
+    `‼️ ${b("FLASH SALE ALERT")} ‼️`,
+    `👜${b(`HIGHLUX MNL | ${title.toUpperCase()}`)}`,
+    "",
+    `Comment “${b("MINE")}” or “${b("STEAL")}” to grab your flash deal! 🔥`,
+    "",
+    `🟢 ${b("Starts")} — ${when(startsAt)}`,
+    `🔴 ${b("Ends")} — ${when(endsAt)}`,
+    "🇵🇭 Philippine time",
+    "",
+    `📢 ${b("HOW TO CLAIM")}`,
+    "",
+    `💬 Comment “${b("MINE")}” to claim the item at the posted MINE price. The first valid MINE wins if no one comments “STEAL” before the sale ends.`,
+    "",
+    `⚡ Comment “${b("STEAL")}” to secure the item immediately. Once confirmed, it’s ${b("SOLD")} to you!`,
+    "",
+    `🚚 ${b("Same-day delivery")} is available once we receive your payment.`,
+    "",
+    `🛍️ ${b("Grab your favorite bag while it’s still available!")}`,
+  ].join("\n");
+}
+
+export function FlashMenu({ id, title, pieces, deleted = false, schedule }: { id: string; title: string; pieces: number; deleted?: boolean; schedule?: { startsAt: string; endsAt: string } }) {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
   const [confirm, setConfirm] = React.useState(false);
@@ -45,6 +73,18 @@ export function FlashMenu({ id, title, pieces, deleted = false }: { id: string; 
               <>
                 <Dropdown.Item onSelect={() => router.push(`/admin/flash-sales/${id}/edit`)} className={itemCls}>Edit</Dropdown.Item>
                 <Dropdown.Item onSelect={share} className={itemCls}>Share event link listing</Dropdown.Item>
+                {schedule && (
+                  <Dropdown.Item
+                    onSelect={async () => {
+                      await copyText(facebookEventPost(title, schedule.startsAt, schedule.endsAt));
+                      setFlash("Facebook post copied");
+                      setTimeout(() => setFlash(null), 2200);
+                    }}
+                    className={itemCls}
+                  >
+                    Share event listing (Facebook)
+                  </Dropdown.Item>
+                )}
               </>
             )}
             <Dropdown.Separator className="my-1 h-px bg-gold/15" />

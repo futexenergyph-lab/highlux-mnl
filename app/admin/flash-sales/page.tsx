@@ -63,7 +63,7 @@ export default async function FlashSalesPage({ searchParams }: { searchParams: {
                 </span>
                 {e.deletedAt ? <Badge tone="red">Deleted</Badge> : <Badge tone={FLASH_TONE[phase]}>{FLASH_LABEL[phase]}</Badge>}
               </Link>
-              <FlashMenu id={e.id} title={e.title} pieces={n} deleted={!!e.deletedAt} />
+              <FlashMenu id={e.id} title={e.title} pieces={n} deleted={!!e.deletedAt} schedule={e.kind === "group" ? { startsAt: e.startsAt, endsAt: e.endsAt } : undefined} />
             </li>
           ))}
         </ul>
